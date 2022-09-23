@@ -41,11 +41,11 @@ jcvi_variables = generate_jcvi_variables(index_date="covid_vax_disease_3_date - 
 ############################################################
 ## matching variables
 from variables_matching import generate_matching_variables 
-matching_variables = generate_matching_variables(index_date="covid_vax_disease_3_date - 1 day")
+matching_variables = generate_matching_variables(index_date="covid_vax_disease_3_date - 1 day", firstdose3_date=firstdose3_date)
 ############################################################
 ## outcome variables
 from variables_outcome import generate_outcome_variables 
-outcome_variables = generate_outcome_variables(index_date="covid_vax_disease_3_date", start_date=firstdose3_date)
+outcome_variables = generate_outcome_variables(index_date="covid_vax_disease_3_date")
 ############################################################
 
 # Specify study definition
@@ -73,7 +73,7 @@ study = StudyDefinition(
     """,
     
     **inclusion_variables,    
-    
+
   ),
   
   #################################################################

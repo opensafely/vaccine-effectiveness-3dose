@@ -155,7 +155,7 @@ action_1matchround <- function(cohort, matching_round){
 }
 
 # test function
-#action_1matchround("over12", 2)
+#action_1matchround("pfizer", 2)
 
 # create all necessary actions for n matching rounds
 action_extract_and_match <- function(cohort, n_matching_rounds){
@@ -163,33 +163,6 @@ action_extract_and_match <- function(cohort, n_matching_rounds){
   allrounds <- map(seq_len(n_matching_rounds), ~action_1matchround(cohort, .x)) %>% flatten
   
   splice(
-    
-    # all treated people
-    action(
-      name = glue("extract_treated_{cohort}"),
-      run = glue(
-        "cohortextractor:latest generate_cohort", 
-        " --study-definition study_definition_treated", 
-        " --output-file output/{cohort}/extract/input_treated.feather",
-        " --param cohort={cohort}",
-      ),
-      highly_sensitive = lst(
-        extract = glue("output/{cohort}/extract/input_treated.feather")
-      ),
-    ),
-    
-    # all treated people
-    action(
-      name = glue("process_treated_{cohort}"),
-      run = glue("r:latest analysis/treated/process_treated.R"),
-      arguments = c(cohort),
-      needs = namelesslst(
-        glue("extract_treated_{cohort}")
-      ),
-      highly_sensitive = lst(
-        rds = glue("output/{cohort}/treated/*.rds")
-      ),
-    ),
     
     allrounds,
     
@@ -232,7 +205,7 @@ action_extract_and_match <- function(cohort, n_matching_rounds){
 }
 
 # test action
-# action_extract_and_match("over12", 2)
+# action_extract_and_match("pfizer", 2)
 
 
 action_km <- function(cohort, subgroup, outcome){
@@ -311,92 +284,136 @@ actions_list <- splice(
           "# # # # # # # # # # # # # # # # # # #",
            " "
           ),
-
   
   comment("# # # # # # # # # # # # # # # # # # #", 
-          "Over 12s cohort", 
+          "Preliminaries", 
           "# # # # # # # # # # # # # # # # # # #"),
-  
-  comment("# # # # # # # # # # # # # # # # # # #", 
-          "Extract and match"),
-  
-  action_extract_and_match("over12", n_matching_rounds),
-  
-  action_table1("over12"),
-  
-  comment("# # # # # # # # # # # # # # # # # # #", 
-          "Model"),
-
-  action_km("over12", "all", "postest"),
-  action_km("over12", "all", "emergency"),
-  action_km("over12", "all", "covidemergency"),
-  action_km("over12", "all", "covidadmitted"),
-  action_km("over12", "all", "covidcritcare"),
-  action_km("over12", "all", "coviddeath"),
-  action_km("over12", "all", "noncoviddeath"),
-  
-  action_km("over12", "prior_covid_infection", "postest"),
-  action_km("over12", "prior_covid_infection", "emergency"),
-  action_km("over12", "prior_covid_infection", "covidemergency"),
-  action_km("over12", "prior_covid_infection", "covidadmitted"),
-  action_km("over12", "prior_covid_infection", "covidcritcare"),
-  action_km("over12", "prior_covid_infection", "coviddeath"),
-  action_km("over12", "prior_covid_infection", "noncoviddeath"),
-  
-  
-  action_km_combine("over12"),
-  
-  
-  comment("# # # # # # # # # # # # # # # # # # #", 
-          "Under 12s cohort", 
-          "# # # # # # # # # # # # # # # # # # #"),
-  
-  comment("# # # # # # # # # # # # # # # # # # #", 
-          "Extract and match"),
-  
-  action_extract_and_match("under12", n_matching_rounds),
-  
-  action_table1("under12"),
-  
-  comment("# # # # # # # # # # # # # # # # # # #", 
-          "Model"),
-  
-  action_km("under12", "all", "postest"),
-  action_km("under12", "all", "emergency"),
-  action_km("under12", "all", "covidemergency"),
-  action_km("under12", "all", "covidadmitted"),
-  action_km("under12", "all", "covidcritcare"),
-  action_km("under12", "all", "coviddeath"),
-  action_km("under12", "all", "noncoviddeath"),
-  
-  action_km("under12", "prior_covid_infection", "postest"),
-  action_km("under12", "prior_covid_infection", "emergency"),
-  action_km("under12", "prior_covid_infection", "covidemergency"),
-  action_km("under12", "prior_covid_infection", "covidadmitted"),
-  action_km("under12", "prior_covid_infection", "covidcritcare"),
-  action_km("under12", "prior_covid_infection", "coviddeath"),
-  action_km("under12", "prior_covid_infection", "noncoviddeath"),
-  
-  action_km_combine("under12"),
-  
-  comment("# # # # # # # # # # # # # # # # # # #", 
-          "Move files for release", 
-          "# # # # # # # # # # # # # # # # # # #"),
-  
   action(
-    name = "release",
-    run = glue("r:latest analysis/release_objects.R"),
-    needs = namelesslst(
-      glue("combine_km_over12"),
-      glue("table1_over12"),
-      glue("combine_km_under12"),
-      glue("table1_under12"),
-    ),
-    highly_sensitive = lst(
-      txt = glue("output/meta-release/*.txt"),
-      csv = glue("output/release/*.csv"),
+    name = "design",
+    run = glue("r:latest analysis/design.R"),
+    moderately_sensitive = lst(
+      lib = glue("lib/design/study-dates.json")
     ),
   ),
+  
+  comment("# # # # # # # # # # # # # # # # # # #", 
+          "Extract and process treated data", 
+          "# # # # # # # # # # # # # # # # # # #"),
+  # all treated people
+  action(
+    name = "extract_treated",
+    run = glue(
+      "cohortextractor:latest generate_cohort", 
+      " --study-definition study_definition_treated", 
+      " --output-file output/treated/extract/input_treated.feather",
+    ),
+    needs = namelesslst(
+      "design"
+    ),
+    highly_sensitive = lst(
+      extract = "output/treated/extract/input_treated.feather"
+    ),
+  ),
+  
+  # all treated people
+  action(
+    name = "process_treated",
+    run = "r:latest analysis/treated/process_treated.R",
+    needs = namelesslst(
+      "extract_treated"
+    ),
+    highly_sensitive = lst(
+      eligible = "output/treated/eligible/*.rds",
+      pfizer = "output/pfizer/treated/*.rds",
+      moderna = "output/moderna/treated/*.rds"
+    ),
+  ),
+
+  
+  # comment("# # # # # # # # # # # # # # # # # # #", 
+  #         "Pfizer cohort", 
+  #         "# # # # # # # # # # # # # # # # # # #"),
+  # 
+  # comment("# # # # # # # # # # # # # # # # # # #", 
+  #         "Extract and match"),
+  # 
+  # action_extract_and_match("pfizer", n_matching_rounds),
+  # 
+  # action_table1("pfizer"),
+  # 
+  # comment("# # # # # # # # # # # # # # # # # # #", 
+  #         "Model"),
+  # 
+  # action_km("pfizer", "all", "postest"),
+  # action_km("pfizer", "all", "emergency"),
+  # action_km("pfizer", "all", "covidemergency"),
+  # action_km("pfizer", "all", "covidadmitted"),
+  # action_km("pfizer", "all", "covidcritcare"),
+  # action_km("pfizer", "all", "coviddeath"),
+  # action_km("pfizer", "all", "noncoviddeath"),
+  # 
+  # action_km("pfizer", "prior_covid_infection", "postest"),
+  # action_km("pfizer", "prior_covid_infection", "emergency"),
+  # action_km("pfizer", "prior_covid_infection", "covidemergency"),
+  # action_km("pfizer", "prior_covid_infection", "covidadmitted"),
+  # action_km("pfizer", "prior_covid_infection", "covidcritcare"),
+  # action_km("pfizer", "prior_covid_infection", "coviddeath"),
+  # action_km("pfizer", "prior_covid_infection", "noncoviddeath"),
+  # 
+  # 
+  # action_km_combine("pfizer"),
+  
+  
+  # comment("# # # # # # # # # # # # # # # # # # #", 
+  #         "Under 12s cohort", 
+  #         "# # # # # # # # # # # # # # # # # # #"),
+  # 
+  # comment("# # # # # # # # # # # # # # # # # # #", 
+  #         "Extract and match"),
+  # 
+  # action_extract_and_match("under12", n_matching_rounds),
+  # 
+  # action_table1("under12"),
+  # 
+  # comment("# # # # # # # # # # # # # # # # # # #", 
+  #         "Model"),
+  # 
+  # action_km("under12", "all", "postest"),
+  # action_km("under12", "all", "emergency"),
+  # action_km("under12", "all", "covidemergency"),
+  # action_km("under12", "all", "covidadmitted"),
+  # action_km("under12", "all", "covidcritcare"),
+  # action_km("under12", "all", "coviddeath"),
+  # action_km("under12", "all", "noncoviddeath"),
+  # 
+  # action_km("under12", "prior_covid_infection", "postest"),
+  # action_km("under12", "prior_covid_infection", "emergency"),
+  # action_km("under12", "prior_covid_infection", "covidemergency"),
+  # action_km("under12", "prior_covid_infection", "covidadmitted"),
+  # action_km("under12", "prior_covid_infection", "covidcritcare"),
+  # action_km("under12", "prior_covid_infection", "coviddeath"),
+  # action_km("under12", "prior_covid_infection", "noncoviddeath"),
+  # 
+  # action_km_combine("under12"),
+  # 
+  # comment("# # # # # # # # # # # # # # # # # # #", 
+  #         "Move files for release", 
+  #         "# # # # # # # # # # # # # # # # # # #"),
+  # 
+  # action(
+  #   name = "release",
+  #   run = glue("r:latest analysis/release_objects.R"),
+  #   needs = namelesslst(
+  #     glue("combine_km_pfizer"),
+  #     glue("table1_pfizer"),
+  #     glue("combine_km_under12"),
+  #     glue("table1_under12"),
+  #   ),
+  #   highly_sensitive = lst(
+  #     txt = glue("output/meta-release/*.txt"),
+  #     csv = glue("output/release/*.csv"),
+  #   ),
+  # ),
 
   comment("#### End ####")
 )

@@ -115,18 +115,10 @@ code,term
 237351003,Mild postnatal psychosis
 237352005,Severe postnatal psychosis
 23741000119105,Severe manic bipolar I disorder
-238972008,Cutaneous monosymptomatic delusional psychosis
-238973003,Delusions of parasitosis
-238974009,Delusions of infestation
-238975005,Delusion of foul odor
-238977002,Delusional hyperhidrosis
-238978007,Hyperschemazia
-238979004,Hyposchemazia
 247804008,Schizophrenic prodrome
 26025008,Residual schizophrenia
 261000119107,Severe depressed bipolar I disorder
 26203008,"Severe depressed bipolar I disorder with psychotic features, mood-incongruent"
-26472000,Paraphrenia
 26530004,"Severe bipolar disorder with psychotic features, mood-incongruent"
 268612007,Senile and presenile organic psychotic conditions
 268617001,Acute schizophrenic episode
@@ -159,7 +151,6 @@ code,term
 31446002,"Bipolar I disorder, most recent episode hypomanic"
 31658008,Chronic paranoid schizophrenia
 33078009,"Severe recurrent major depression with psychotic features, mood-congruent"
-33323008,Somatic delusion disorder
 33380008,"Severe manic bipolar I disorder with psychotic features, mood-incongruent"
 33736005,"Severe major depression with psychotic features, mood-congruent"
 34315001,"Bipolar II disorder, most recent episode major depressive with melancholic features"
@@ -177,10 +168,8 @@ code,term
 371599001,Severe bipolar I disorder
 371600003,Severe bipolar disorder
 371604007,Severe bipolar II disorder
-38295006,Involutional paraphrenia
 38368003,"Schizoaffective disorder, bipolar type"
 39610001,Undifferentiated schizophrenia in remission
-403595006,Pinocchio syndrome
 408858002,Infantile psychosis
 40926005,Moderate mixed bipolar I disorder
 41552001,"Mild bipolar I disorder, single manic episode"
@@ -245,8 +234,6 @@ code,term
 719717006,Psychosis co-occurrent and due to Parkinson's disease
 71984005,Mild manic bipolar I disorder
 723899008,Delusional disorder currently symptomatic
-723900003,Delusional disorder currently in partial remission
-723901004,Delusional disorder currently in full remission
 723903001,Bipolar type I disorder currently in full remission
 723905008,Bipolar type II disorder currently in full remission
 724755002,Positive symptoms co-occurrent and due to primary psychotic disorder
@@ -256,7 +243,6 @@ code,term
 724760003,Cognitive impairment co-occurrent and due to primary psychotic disorder
 726772006,Major depression with psychotic features
 73471000,"Bipolar I disorder, most recent episode mixed with catatonic features"
-737225007,Secondary psychotic syndrome with hallucinations and delusions
 73867007,Severe major depression with psychotic features
 74686005,Mild depressed bipolar I disorder
 75360000,"Bipolar I disorder, single manic episode, in remission"

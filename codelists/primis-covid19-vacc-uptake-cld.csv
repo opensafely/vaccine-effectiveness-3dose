@@ -1,17 +1,13 @@
 code,term
-1003567000,Agenesis of bile duct
-1010616001,Cirrhosis of liver due to classical cystic fibrosis
 10295004,Chronic viral hepatitis
 103611000119102,Cirrhosis of liver due to hepatitis B
 10690671000119109,Stage 3 hepatic fibrosis
-1092801000119102,Hepatic ascites co-occurrent with chronic active hepatitis due to toxic liver disease
 109819003,Obstructive biliary cirrhosis
 1116000,Chronic aggressive type B viral hepatitis
 11179002,"Glycogen storage disease, type IV"
 111891008,Viral hepatitis B without hepatic coma
 123604002,Toxic cirrhosis
 123605001,Nutritional cirrhosis
-123606000,Cholangiolitic cirrhosis
 123607009,Septal fibrosis of liver
 12368000,Secondary biliary cirrhosis
 123716002,Latent cirrhosis
@@ -28,7 +24,6 @@ code,term
 15999000,Mixed micro and macronodular cirrhosis
 16060001,Hepatic coma due to viral hepatitis A
 16070004,Syphilitic cirrhosis
-16098491000119109,Chronic autoimmune hepatitis
 174425003,Orthotopic liver transplant
 174426002,Heterotopic liver transplant
 174427006,Replacement of previous liver transplant
@@ -41,10 +36,7 @@ code,term
 186639003,Chronic viral hepatitis B without delta-agent
 190944000,Alpha-1-antitrypsin hepatitis
 192008,Congenital syphilitic hepatomegaly
-19682006,Lupus hepatitis
 197279005,Cirrhosis and chronic liver disease
-197284004,Chronic active hepatitis
-197286002,Recurrent hepatitis
 197291001,Unilobular portal cirrhosis
 197293003,Diffuse nodular cirrhosis
 197294009,Fatty portal cirrhosis
@@ -58,7 +50,6 @@ code,term
 197316009,Portal fibrosis without cirrhosis
 197321007,Steatosis of liver
 197324004,Liver abscess and sequelae of chronic liver disease
-197347003,Hepatitis in late syphilis
 197348008,Hepatitis in secondary syphilis
 197355005,Toxic liver disease with cholestasis
 197356006,Toxic liver disease with hepatic necrosis
@@ -86,14 +77,12 @@ code,term
 235865005,Hepatitis D superinfection of hepatitis B carrier
 235869004,Chronic viral hepatitis B with hepatitis D
 235870003,Chronic non-A non-B hepatitis
-235875008,Alcoholic hepatitis
 235877000,Ischemic hepatitis
 235880004,Alcoholic fibrosis and sclerosis of liver
 235881000,Alcoholic hepatic failure
 235884008,Fulminant hepatic failure
 235885009,Subfulminant hepatic failure
 235886005,Chronic hepatic failure
-235889003,Drug-induced chronic hepatitis
 235890007,Autoimmune liver disease
 235895002,"Laennec's cirrhosis, non-alcoholic"
 235896001,Infectious cirrhosis
@@ -149,7 +138,6 @@ code,term
 301009006,Calcific chronic pancreatitis
 30102006,Glucose-6-phosphate transport defect
 30188007,Alpha-1-antitrypsin deficiency
-307757001,Chronic alcoholic hepatitis
 308129003,Esophageal varices in cirrhosis of the liver
 309783001,Esophageal varices in alcoholic cirrhosis of the liver
 31005002,Hepatorenal syndrome due to a procedure
@@ -173,11 +161,9 @@ code,term
 397575003,"Viral hepatitis, type G"
 406584008,"Non-A, non-B, non-C hepatitis"
 407000,Congenital hepatomegaly
-408335007,Autoimmune hepatitis
 40946000,Hepatic coma due to viral hepatitis
 41309000,Alcoholic liver damage
 41527003,Glycogen storage disease type VIII
-41889008,Chronic persistent hepatitis
 419097006,Danon disease
 419728003,Portal cirrhosis
 420054005,Alcoholic cirrhosis
@@ -197,15 +183,14 @@ code,term
 442134007,Hepatitis B associated with Human immunodeficiency virus infection
 442191002,Steatohepatitis
 442374005,Hepatitis B and hepatitis C
-442685003,Nonalcoholic steatohepatitis
 444707001,Glycogen storage disease type Ia
 444918006,Sequela of chronic liver disease
+44553005,Dubin-Johnson syndrome
 446698005,Reactivation of hepatitis B viral hepatitis
 450880008,Chronic hepatitis E
 45256007,Cruveilhier-Baumgarten syndrome
 459062008,Fatal congenital nonlysosomal heart glycogenosis
 50167007,Chronic active type B viral hepatitis
-50325005,Alcoholic fatty liver
 50711007,Viral hepatitis type C
 51038004,Congenital obstruction of bile duct
 51292008,Hepatorenal syndrome
@@ -213,8 +198,6 @@ code,term
 536002,Glissonian cirrhosis
 55912009,"Glycogen storage disease, type V"
 5667009,"Hunter's syndrome, mild form"
-57339008,Chronic lobular hepatitis
-58282009,Relapsing viral hepatitis
 59927004,Hepatic failure
 60037002,Chronic persistent viral hepatitis
 60498001,Congenital viral hepatitis B infection
@@ -231,7 +214,6 @@ code,term
 698305006,Awaiting transplantation of liver
 699189004,North American Indian childhood cirrhosis
 702777009,Liver transplant recipient
-702969000,Reactivation of hepatitis C viral hepatitis
 703866000,Chronic hepatitis C with stage 2 fibrosis
 704201006,Liver transplant planned
 707341005,Viral hepatitis type D
@@ -258,9 +240,6 @@ code,term
 720394008,Congenital tracheobiliary fistula
 721099001,Adult polyglucosan body disease
 721710005,Fibrosis of liver caused by alcohol
-721711009,Autoimmune hepatitis type 1
-721712002,Autoimmune hepatitis type 2
-721713007,Autoimmune hepatitis type 3
 721847002,Joubert syndrome with congenital hepatic fibrosis
 722302009,Glycogen storage disease type II infantile onset
 722343009,Glycogen storage disease type II late onset
@@ -269,7 +248,6 @@ code,term
 722871007,Groove pancreatitis
 723360007,Familial hypercholanemia
 723583009,Steroid dehydrogenase deficiency and dental anomaly syndrome
-723829000,"Pulmonary fibrosis, hepatic hyperplasia, bone marrow hypoplasia syndrome"
 724278007,"Neonatal sclerosing cholangitis, ichthyosis, hypotrichosis syndrome"
 724540009,Tropical calcific chronic pancreatitis
 724766009,Chorea co-occurrent and due to Wilson disease
@@ -291,11 +269,9 @@ code,term
 74973004,Chronic fibrosing pancreatitis
 76301009,Florid cirrhosis
 764962002,Hepatoencephalopathy due to combined oxidative phosphorylation defect type 1
-765482002,Steatohepatitis caused by ingestible alcohol
 767291004,Chronic pancreatitis due to acute alcohol intoxication
 767809001,Chronic hepatitis C caused by hepatitis C virus genotype 6
 767810006,Chronic hepatitis C caused by hepatitis C virus genotype 5
-76783007,Chronic hepatitis
 768006009,Chronic hepatitis C caused by Hepatitis C virus genotype 3
 768125005,Chronic hepatitis C caused by Hepatitis C virus genotype 2
 768126006,Chronic hepatitis C caused by Hepatitis C virus genotype 4
@@ -308,7 +284,6 @@ code,term
 773737004,Nephrocystin 3-related Meckel-like syndrome
 774148007,Polyglucosan body myopathy type 1
 774151000,Ferro-cerebro-cutaneous syndrome
-774204006,"Growth retardation, mild developmental delay, chronic hepatitis syndrome"
 77480004,Congenital biliary atresia
 776981000000103,Cirrhosis associated with cystic fibrosis
 78208005,Pigment cirrhosis
@@ -328,6 +303,7 @@ code,term
 824901000000104,Hepatitis C genotype 6
 82821008,Congenital atresia of extrahepatic bile duct
 831000119103,Cirrhosis of liver due to chronic hepatitis C
+838305005,Benign intrahepatic cholestasis type 1
 838375006,Chronic infectious pancreatitis
 838377003,Chronic hepatitis C co-occurrent with human immunodeficiency virus infection
 838380002,Chronic hepatitis B co-occurrent with hepatitis C and hepatitis D
@@ -340,9 +316,7 @@ code,term
 870517000,Periportal fibrosis
 871619002,Cirrhosis of liver due to and following cardiac procedure
 88518009,Wilson's disease
-890201000,Congenital absence of cystic duct
 89580002,Cryptogenic cirrhosis
 89597008,"Glycogen storage disease, type VII"
 89789003,Chronic aggressive viral hepatitis
 96601000119101,Aftercare for liver transplant done
-9843006,Chronic lymphocytic cholangitis-cholangiohepatitis

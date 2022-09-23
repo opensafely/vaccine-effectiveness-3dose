@@ -3,9 +3,10 @@ from codelists import *
 import json
 import codelists
 import re
+from variables_functions import days
 
 
-def generate_matching_variables(index_date):
+def generate_matching_variables(index_date, firstdose3_date):
 
   index_date_stem=re.findall("^.*_date", index_date)[0]
 
@@ -258,6 +259,16 @@ def generate_matching_variables(index_date):
     on_or_before=index_date,
     find_last_match_in_period=True,
   ),
+
+    # test frequency in six months prior to earliest start date in cohort
+    prior_covid_test_frequency=patients.with_test_result_in_sgss(
+      pathogen="SARS-CoV-2",
+      test_result="any",
+      between=[days(firstdose3_date, -182), days(firstdose3_date, -1)], # 182 days = 26 weeks
+      returning="number_of_matches_in_period", 
+      date_format="YYYY-MM-DD",
+      restrict_to_earliest_specimen_date=False,
+    ),
   
   )
   return matching_variables

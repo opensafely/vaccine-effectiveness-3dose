@@ -46,6 +46,8 @@ study_dates <- lst(
   firstpossiblevax_date = "2020-06-01", # used to catch "real" vaccination dates (eg not 1900-01-01)
 )
 
+study_dates$index_date = study_dates$pfizer$start_date
+
 extract_increment <- 14
 
 study_dates$pfizer$control_extract_dates = as.Date(study_dates$pfizer$start_date) + (0:26)*extract_increment

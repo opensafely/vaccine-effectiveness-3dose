@@ -15,17 +15,12 @@ from cohortextractor import (
   params
 )
 
-cohort = params["cohort"]
-
 # import study dates defined in "./analysis/design.R" script
 with open("./lib/design/study-dates.json") as f:
   study_dates = json.load(f)
 
 # change these in design.R if necessary
-# cohort-specific dates
-start_date = study_dates[cohort]["start_date"]
-end_date = study_dates[cohort]["end_date"]
-# non-cohort-specific dates
+firstdose3_date = study_dates["pfizer"]["start_date"]
 firstpossiblevax_date = study_dates["firstpossiblevax_date"]
 studyend_date = study_dates["studyend_date"]
 firstpfizer_date = study_dates["firstpfizer_date"]
@@ -46,7 +41,7 @@ matching_variables = generate_matching_variables(index_date="covid_vax_disease_3
 ############################################################
 ## outcome variables
 from variables_outcome import generate_outcome_variables 
-outcome_variables = generate_outcome_variables(index_date="covid_vax_disease_3_date", start_date=start_date)
+outcome_variables = generate_outcome_variables(index_date="covid_vax_disease_3_date", start_date=firstdose3_date)
 ############################################################
 
 # Specify study definition
@@ -54,7 +49,7 @@ study = StudyDefinition(
   
   # Configure the expectations framework
   default_expectations={
-    "date": {"earliest": "2020-01-01", "latest": end_date},
+    "date": {"earliest": "2020-01-01", "latest": studyend_date},
     "rate": "uniform",
     "incidence": 0.2,
     "int": {"distribution": "normal", "mean": 1000, "stddev": 100},
@@ -71,9 +66,7 @@ study = StudyDefinition(
     NOT has_died
     AND 
     covid_vax_disease_2_date
-    """,
-  start_date = patients.fixed_value(start_date),
-  end_date = patients.fixed_value(end_date),  
+    """
   ),
   
   #################################################################

@@ -7,7 +7,7 @@ import codelists
 from variables_functions import *
 ############################################################
 
-def generate_outcome_variables(index_date, start_date):
+def generate_outcome_variables(index_date):
   outcome_variables = dict(
   
     # deregistration date
@@ -117,15 +117,6 @@ def generate_outcome_variables(index_date, start_date):
       restrict_to_earliest_specimen_date=False,
       returning="date",
       date_format="YYYY-MM-DD",
-    ),
-    # # test frequency in six months prior to earliest start date in cohort
-    prior_covid_test_frequency=patients.with_test_result_in_sgss(
-      pathogen="SARS-CoV-2",
-      test_result="any",
-      between=[days(start_date, -182), days(start_date, -1)], # 182 days = 26 weeks
-      returning="number_of_matches_in_period", 
-      date_format="YYYY-MM-DD",
-      restrict_to_earliest_specimen_date=False,
     ),
 
     # Covid-related death

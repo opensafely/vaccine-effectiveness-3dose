@@ -35,6 +35,10 @@ from variables_functions import vaccination_date_X
 from variables_inclusion import generate_inclusion_variables 
 inclusion_variables = generate_inclusion_variables(index_date="covid_vax_disease_3_date - 1 day")
 ############################################################
+## jcvi variables
+from variables_jcvi import generate_jcvi_variables 
+jcvi_variables = generate_jcvi_variables(index_date="covid_vax_disease_3_date - 1 day")
+############################################################
 ## matching variables
 from variables_matching import generate_matching_variables 
 matching_variables = generate_matching_variables(index_date="covid_vax_disease_3_date - 1 day")
@@ -66,7 +70,10 @@ study = StudyDefinition(
     NOT has_died
     AND 
     covid_vax_disease_2_date
-    """
+    """,
+    
+    **inclusion_variables,    
+    
   ),
   
   #################################################################
@@ -106,11 +113,11 @@ study = StudyDefinition(
     n = 4,
     target_disease_matches="SARS-2 CORONAVIRUS"
   ),
-
+  
+  ###############################################################################
+  # jcvi variables
   ##############################################################################
-  # inclusion
-  ##############################################################################
-  **inclusion_variables,    
+  **jcvi_variables, 
   
   ###############################################################################
   # matching

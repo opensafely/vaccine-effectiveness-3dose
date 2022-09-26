@@ -1,5 +1,4 @@
 code,term
-1003551006,Agenesis of spleen
 10759351000119103,Sickle cell anemia in mother complicating childbirth
 111572002,"beta^0^ Thalassemia, nondeletion type"
 123617004,Fleckmilz
@@ -8,6 +7,9 @@ code,term
 127040003,Sickle cell-hemoglobin SS disease
 127041004,Sickle cell-beta-thalassemia
 127042006,Sickle cell beta plus thalassemia
+127043001,Sickle cell-beta^0^-thalassemia
+127044007,Sickle cell-delta beta^0^-thalassemia
+127045008,Sickle cell anemia with coexistent alpha-thalassemia
 127047000,Sickle cell-hemoglobin Lepore disease
 127048005,Sickle cell-Hemoglobin O Arab disease
 161626009,History of splenectomy
@@ -41,6 +43,7 @@ code,term
 314118002,Laparoscopic total splenectomy
 33479006,Distal subtotal pancreatectomy with splenectomy and pancreaticojejunostomy
 35434009,Sickle cell-hemoglobin C disease
+36472007,Sickle cell-thalassemia disease
 38096003,Functional asplenia
 38970002,Doan-Wright syndrome
 396330006,Celiac crisis

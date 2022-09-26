@@ -16,12 +16,14 @@ code,term
 110141000119100,Ulcer of lower limb due to type 1 diabetes mellitus
 110171000119107,Ulcer of lower limb due to type 2 diabetes mellitus
 110181000119105,Peripheral sensory neuropathy due to type 2 diabetes mellitus
+1102351000000105,Ketosis-prone diabetes mellitus
 111231000119109,Dyslipidemia with high density lipoprotein below reference range and triglyceride above reference range due to type 2 diabetes mellitus
 111307005,Leprechaunism syndrome
 111552007,Diabetes mellitus without complication
 111556005,Ketoacidosis without coma due to diabetes mellitus
 112991000000101,Lipoatrophic diabetes mellitus without complication
 11530004,Brittle diabetes mellitus
+11687002,Gestational diabetes mellitus
 119831000119106,Hypoglycemia unawareness due to type 2 diabetes mellitus
 120711000119108,Hypoglycemic unawareness due to type 1 diabetes mellitus
 120731000119103,Hypoglycemia due to type 2 diabetes mellitus
@@ -32,8 +34,6 @@ code,term
 127012008,Lipoatrophic diabetes
 127013003,Disorder of kidney due to diabetes mellitus
 127014009,Peripheral angiopathy due to diabetes mellitus
-127991000119101,Hypertension concurrent and due to end stage renal disease on dialysis due to type 2 diabetes mellitus
-128001000119105,Hypertension concurrent and due to end stage renal disease on dialysis due to type 1 diabetes mellitus
 137931000119102,Hyperlipidemia due to type 2 diabetes mellitus
 137941000119106,Hyperlipidemia due to type 1 diabetes mellitus
 138881000119106,Mild nonproliferative retinopathy due to type 1 diabetes mellitus
@@ -44,10 +44,8 @@ code,term
 140111000119107,Hypertension in chronic kidney disease stage 4 due to type 2 diabetes mellitus
 140121000119100,Hypertension in chronic kidney disease stage 3 due to type 2 diabetes mellitus
 140131000119102,Hypertension in chronic kidney disease stage 2 due to type 2 diabetes mellitus
-140381000119104,Neuropathic ulcer of toe due to type 2 diabetes mellitus
 140391000119101,Ulcer of toe due to type 2 diabetes mellitus
 140521000119107,Ischemic ulcer of foot due to type 2 diabetes mellitus
-140531000119105,Neuropathic ulcer of foot due to type 2 diabetes mellitus
 1481000119100,Diabetes mellitus type 2 without retinopathy
 1491000119102,Vitreous hemorrhage due to type 2 diabetes mellitus
 1501000119109,Proliferative retinopathy due to type 2 diabetes mellitus
@@ -57,41 +55,9 @@ code,term
 1551000119108,Nonproliferative retinopathy due to type 2 diabetes mellitus
 1571000119104,Mixed hyperlipidemia due to type 1 diabetes mellitus
 157141000119108,Proteinuria due to type 2 diabetes mellitus
-15936501000119100,Inflammatory dermatosis due to type 2 diabetes mellitus
 164881000119109,Ulcer of foot due to type 1 diabetes mellitus
 164971000119101,Type 2 diabetes mellitus controlled by diet
-16697421000119103,Moderate nonproliferative retinopathy of left eye due to diabetes mellitus type 1
-16697471000119102,Moderate nonproliferative retinopathy of right eye due to diabetes mellitus type 1
-16697521000119104,Moderate nonproliferative retinopathy of bilateral eyes due to diabetes mellitus type 1
-16745051000119107,Nonproliferative retinopathy of right eye due to diabetes mellitus type 2
-16745131000119100,Nonproliferative retinopathy of left eye due to diabetes mellitus type 2
-16745211000119100,Nonproliferative retinopathy of left eye due to diabetes mellitus type 1
-16745411000119104,Mild nonproliferative retinopathy of bilateral eyes due to diabetes mellitus type 1
-16745531000119108,Mild nonproliferative retinopathy of left eye due to diabetes mellitus type 2
-16745611000119102,Mild nonproliferative retinopathy of right eye due to diabetes mellitus type 1
-16745651000119101,Mild nonproliferative retinopathy of right eye due to diabetes mellitus type 2
-16745891000119105,Mild nonproliferative retinopathy of left eye due to diabetes mellitus type 1
-16745931000119102,Mild nonproliferative retinopathy of bilateral eyes due to diabetes mellitus type 2
-16746131000119105,Moderate nonproliferative retinopathy of left eye due to diabetes mellitus type 2
-16746261000119108,Moderate nonproliferative retinopathy of right eye due to diabetes mellitus type 2
-16746341000119103,Moderate nonproliferative retinopathy of bilateral eyes due to diabetes mellitus type 2
-16746661000119106,Nonproliferative retinopathy of bilateral eyes due to diabetes mellitus type 1
-16746741000119102,Nonproliferative retinopathy of right eye due to diabetes mellitus type 1
-16746901000119101,Severe nonproliferative retinopathy of left eye due to diabetes mellitus type 2
-16746941000119104,Severe nonproliferative retinopathy of left eye due to diabetes mellitus type 1
-16747021000119109,Severe nonproliferative retinopathy of bilateral eyes due to diabetes mellitus type 2
-16747101000119101,Severe nonproliferative retinopathy of bilateral eyes due to diabetes mellitus type 1
-16747141000119104,Severe nonproliferative retinopathy of right eye due to diabetes mellitus type 2
-16747341000119101,Severe nonproliferative retinopathy of right eye due to diabetes mellitus type 1
-16747661000119109,Nonproliferative retinopathy of bilateral eyes due to diabetes mellitus type 2
-16747741000119100,Proliferative retinopathy of left eye due to diabetes mellitus type 1
-16747901000119104,Proliferative retinopathy of left eye due to diabetes mellitus type 2
-16748141000119100,Proliferative retinopathy of bilateral eyes due to diabetes mellitus type 2
-16748741000119101,Proliferative retinopathy of right eye due to diabetes mellitus type 1
-16749661000119102,Proliferative retinopathy of right eye due to diabetes mellitus type 2
-16749781000119101,Proliferative retinopathy of bilateral eyes due to diabetes mellitus type 1
 16891151000119103,Coronary artery disease due to type 2 diabetes mellitus
-16891191000119108,Coronary artery disease due to type 1 diabetes mellitus
 170745003,Diabetic on diet only
 170746002,Diabetic on oral treatment
 170747006,Diabetic on insulin
@@ -121,13 +87,16 @@ code,term
 197605007,Nephrotic syndrome due to diabetes mellitus
 198121000000103,Hypoglycaemic warning impaired
 198131000000101,Hypoglycaemic warning good
+199225007,Diabetes mellitus during pregnancy - baby delivered
+199226008,Diabetes mellitus in the puerperium - baby delivered during current episode of care
+199227004,Diabetes mellitus during pregnancy - baby not yet delivered
+199228009,Diabetes mellitus in the puerperium - baby delivered during previous episode of care
 199229001,Pre-existing type 1 diabetes mellitus
 199230006,Pre-existing type 2 diabetes mellitus
 199231005,Pre-existing malnutrition-related diabetes mellitus
 200687002,Cellulitis of foot due to diabetes mellitus
 201000119106,Disorder due to well controlled type 2 diabetes mellitus
 201250006,Ischemic ulcer of foot due to diabetes mellitus
-201251005,Neuropathic ulcer of foot due to diabetes mellitus
 201252003,Mixed diabetic ulcer - foot
 201723002,Cheiroarthropathy due to diabetes mellitus
 201724008,Neuropathic arthropathy due to diabetes mellitus
@@ -148,12 +117,8 @@ code,term
 237600004,Malnutrition-related diabetes mellitus - fibrocalculous
 237601000,Secondary endocrine diabetes mellitus
 237604008,"Maturity onset diabetes of the young, type 2"
-237610008,"Acrorenal field defect, ectodermal dysplasia, and lipoatrophic diabetes"
-237611007,"Muscular atrophy, ataxia, retinitis pigmentosa, and diabetes mellitus"
 237612000,"Photomyoclonus, diabetes mellitus, deafness, nephropathy and cerebral dysfunction"
-237614004,"Bird-headed dwarfism with progressive ataxia, insulin-resistant diabetes, goiter, and primary gonadal insufficiency"
 237617006,"Megaloblastic anemia, thiamine-responsive, with diabetes mellitus and sensorineural deafness"
-237618001,Insulin-dependent diabetes mellitus secretory diarrhea syndrome
 237619009,Diabetes-deafness syndrome maternally transmitted
 237620003,Abnormal metabolic state due to diabetes mellitus
 237621004,Severe hyperglycemia due to diabetes mellitus
@@ -171,7 +136,6 @@ code,term
 24471000000103,Type 2 diabetic on insulin
 24481000000101,Type 2 diabetic on diet only
 25093002,Disorder of eye due to diabetes mellitus
-254066006,Wolcott-Rallison dysplasia
 25412000,Microaneurysm of retinal artery due to diabetes mellitus
 26298008,Ketoacidotic coma due to diabetes mellitus
 267604001,Myasthenic syndrome due to diabetic mellitus
@@ -205,37 +169,20 @@ code,term
 314015001,Mixed maculopathy due to diabetes mellitus
 314194001,Diabetic on insulin and oral treatment
 314537004,Optic papillopathy due to diabetes mellitus
-314771006,Type I diabetes mellitus with hypoglycemic coma
 314893005,Arthropathy due to type 1 diabetes mellitus
 314902007,Peripheral angiopathy due to type 2 diabetes mellitus
 314903002,Arthropathy due to type 2 diabetes mellitus
-314904008,Type II diabetes mellitus with neuropathic arthropathy
 33559001,Pineal hyperplasia AND diabetes mellitus syndrome
 335621000000101,Maternally inherited diabetes mellitus
-34041001,Achard-Thiers syndrome
 35777006,Mononeuropathy multiplex due to diabetes mellitus
 359611005,Neuropathy with neurologic complication due to diabetes mellitus
 359642000,Diabetes mellitus type 2 in nonobese
 361216007,Femoral mononeuropathy due to diabetes mellitus
-367211000119103,Inflammatory dermatosis due to type 1 diabetes mellitus
-367241000119104,Hyperosmolar coma due to drug induced diabetes mellitus
 367261000119100,Hyperosmolarity due to drug induced diabetes mellitus
 367991000119101,Hyperglycemia due to type 1 diabetes mellitus
 368051000119109,Hyperglycemia due to type 2 diabetes mellitus
-368141000119106,Autonomic neuropathy due to drug induced diabetes mellitus
-368151000119108,Cataract due to drug induced diabetes mellitus
 368171000119104,Dermatitis due to drug induced diabetes mellitus
-368181000119101,Ulcer of foot due to drug induced diabetes mellitus
-368201000119100,Disorder of kidney due to drug induced diabetes mellitus
-368251000119101,Polyneuropathy due to drug induced diabetes mellitus
-368421000119108,Chronic kidney disease stage 1 due to drug induced diabetes mellitus
-368431000119106,Chronic kidney disease stage 2 due to drug induced diabetes mellitus
-368441000119102,Chronic kidney disease stage 3 due to drug induced diabetes mellitus
-368451000119100,Chronic kidney disease stage 4 due to drug induced diabetes mellitus
-368461000119103,Chronic kidney disease stage 5 due to drug induced diabetes mellitus
-368471000119109,End stage renal disease on dialysis due to drug induced diabetes mellitus
 368521000119107,Disorder of nerve co-occurrent and due to type 1 diabetes mellitus
-368541000119101,Cheiroarthropathy due to diabetes mellitus type 1
 368551000119104,Dyslipidemia due to type 1 diabetes mellitus
 368561000119102,Hyperosmolarity due to type 1 diabetes mellitus
 368581000119106,Neuropathy due to type 2 diabetes mellitus
@@ -270,11 +217,19 @@ code,term
 399875001,Non-high-risk proliferative retinopathy with clinically significant macular edema due to diabetes mellitus
 399876000,Very severe nonproliferative retinopathy due to diabetes mellitus
 399877009,Very severe nonproliferative retinopathy with clinically significant macular edema due to diabetes mellitus
-401110002,Type 1 diabetes mellitus with persistent microalbuminuria
 402864004,Wet gangrene of foot due to diabetes mellitus
+408409007,On examination - right eye background diabetic retinopathy
+408410002,On examination - left eye background diabetic retinopathy
+408411003,On examination - right eye preproliferative diabetic retinopathy
+408412005,On examination - left eye preproliferative diabetic retinopathy
+408413000,On examination - right eye proliferative diabetic retinopathy
+408414006,On examination - left eye proliferative diabetic retinopathy
 408539000,Insulin autoimmune syndrome
 408540003,Diabetes mellitus caused by non-steroid drugs
 413183008,Diabetes mellitus caused by non-steroid drugs without complication
+414894003,On examination - left eye stable treated proliferative diabetic retinopathy
+414910007,On examination - right eye stable treated proliferative diabetic retinopathy
+417677008,On examination - sight threatening diabetic retinopathy
 419100001,Infection of foot due to diabetes mellitus
 41911000119107,Glaucoma due to type 2 diabetes mellitus
 420270002,Ketoacidosis due to type 1 diabetes mellitus
@@ -434,6 +389,7 @@ code,term
 75682002,Diabetes mellitus caused by insulin receptor antibodies
 761000119102,Dyslipidemia due to type 2 diabetes mellitus
 762489000,Acute complication due to diabetes mellitus
+76751001,"Diabetes mellitus in mother complicating pregnancy, childbirth AND/OR puerperium"
 768792007,Cataract of right eye due to diabetes mellitus
 768793002,Cataract of left eye due to diabetes mellitus
 768794008,Cataract of bilateral eyes due to diabetes mellitus
@@ -485,15 +441,12 @@ code,term
 789562001,Ulcer of heel due to diabetes mellitus
 789567007,Ulcer of heel due to type 2 diabetes mellitus
 789568002,Ulcer of midfoot due to diabetes mellitus
-789569005,Neuropathic ulcer of heel due to type 2 diabetes mellitus
-789570006,Neuropathic ulcer of midfoot due to type 2 diabetes mellitus
 789571005,Ulcer of heel due to type 1 diabetes mellitus
 789572003,Ulcer of midfoot due to type 1 diabetes mellitus
 789585000,Sensory polyneuropathy due to diabetes mellitus
 791000119109,Angina due to type 2 diabetes mellitus
 792926007,Armanni-Ebstein kidney due to diabetes mellitus
 79554005,Asymmetric proximal motor neuropathy due to diabetes mellitus
-80660001,Mauriac's syndrome
 81531005,Diabetes mellitus type 2 in obese
 816067005,"Diabetes, hypogonadism, deafness, intellectual disability syndrome"
 816177009,Nonproliferative retinopathy of left eye due to diabetes mellitus
@@ -526,7 +479,6 @@ code,term
 87491000119107,Ulcer of forefoot due to type 1 diabetes mellitus
 87921000119104,Cranial nerve palsy due to type 2 diabetes mellitus
 8801005,Secondary diabetes mellitus
-890171006,Ketosis-prone diabetes mellitus
 894741000000107,Hypoglycaemic warning absent
 90721000119101,Chronic kidney disease stage 1 due to type 1 diabetes mellitus
 90731000119103,Chronic kidney disease stage 2 due to type 1 diabetes mellitus

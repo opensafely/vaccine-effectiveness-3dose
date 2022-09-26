@@ -1,21 +1,9 @@
 code,term
 10041001,Tracheal stenosis following tracheostomy
-1010333003,Emphysema of left lung
-1010334009,Emphysema of right lung
-1010623000,Disorder of lung due to immunoglobulin A vasculitis
-1010657008,Secondary hypoplasia of bilateral lungs
-1010670004,Chronic endogenous lipoid pneumonia
-1017196003,Interstitial pulmonary fibrosis due to inhalation of substance
-1017197007,Interstitial pulmonary fibrosis due to inhalation of drug
 102361000119104,Chronic pneumonia
 103851000119100,Restrictive lung disease due to amyotrophic lateral sclerosis
 103871000119109,Restrictive lung disease due to Parkinson disease
 10501004,Pulmonary alveolar proteinosis
-105041000119109,Secondary squamous cell carcinoma of lung
-105051000119106,Secondary undifferentiated large cell carcinoma of lung
-106001000119101,Chronic obstructive lung disease co-occurrent with acute bronchitis
-10672271000119100,Acute-on-chronic hypoxemic respiratory failure
-10692761000119107,Asthma-chronic obstructive pulmonary disease overlap syndrome
 10713006,Diffuse interstitial rheumatoid disease of lung
 10785007,Vinyard sprayers' lung
 1078881000119102,Primary adenocarcinoma of lower lobe of left lung
@@ -35,7 +23,6 @@ code,term
 12240951000119107,Squamous cell carcinoma of left lung
 12240991000119102,Squamous cell carcinoma of right lung
 12295008,Bronchiectasis
-12310001,Childhood bronchiectasis
 123713005,Chronic atelectasis
 1259003,Schistosis
 129451001,Respiratory bronchiolitis associated interstitial lung disease
@@ -45,7 +32,6 @@ code,term
 13274008,Atrophic fibrosis of lung
 13394002,Suberosis
 133971000119108,Chronic pulmonary embolism
-135836000,End stage chronic obstructive airways disease
 13645005,Chronic obstructive lung disease
 146081000119104,Lung disease due to connective tissue disorder
 14700006,Bauxite fibrosis of lung
@@ -54,20 +40,16 @@ code,term
 15956181000119102,Secondary adenocarcinoma of bilateral lungs
 15956341000119105,Adenocarcinoma of left lung
 15956381000119100,Adenocarcinoma of right lung
-16003001,Giant bullous emphysema
 161672008,History of being lung transplant recipient
+162974009,On examination - fibrosis of lung present
 16419651000119103,Dependence on biphasic positive airway pressure ventilation due to central sleep apnea syndrome
 1661000119106,Metastasis to lung from adenocarcinoma
 16623004,Coffee-workers' lung
-16846004,Obstructive emphysema
 17097001,Chronic disease of respiratory system
 17385007,Graphite fibrosis of lung
 174802006,Allotransplant of heart and lung
-1751000119100,Acute exacerbation of chronic obstructive airways disease with asthma
 17996008,Pneumoconiosis caused by inorganic dust
-18121009,Chronic berylliosis
 18354001,Chronic induration of lung
-185086009,Chronic obstructive bronchitis
 186175002,Infiltrative lung tuberculosis
 186177005,Tuberculosis of lung with cavitation
 186193001,"Tuberculosis of lung, confirmed by sputum microscopy with or without culture"
@@ -92,19 +74,9 @@ code,term
 190966007,Extreme obesity with alveolar hypoventilation
 192658007,Giant cell interstitial pneumonitis
 19274004,Grain-handlers' disease
-19325002,Traction bronchiectasis
-195949008,Chronic asthmatic bronchitis
-195951007,Acute exacerbation of chronic obstructive airways disease
-195953005,Mixed simple and mucopurulent chronic bronchitis
-195957006,Chronic bullous emphysema
-195958001,Segmental bullous emphysema
-195959009,Zonal bullous emphysema
-195984007,Recurrent bronchiectasis
 195985008,Post-infective bronchiectasis
 195989002,Pituitary snuff-takers' disease
-196001008,Chronic obstructive pulmonary disease with acute lower respiratory infection
 196017002,Pneumoconiosis associated with tuberculosis
-196026004,Chronic emphysema caused by chemical fumes
 196028003,Chronic pulmonary fibrosis caused by chemical fumes
 196049002,Chronic pulmonary radiation disease
 196051003,Drug-induced interstitial lung disorder
@@ -116,7 +88,6 @@ code,term
 196190001,Chronic pulmonary insufficiency following surgery
 196191002,Postprocedural subglottic stenosis
 197367007,Hepatic granulomas in berylliosis
-20091000175107,Acute on chronic hypoxemic and hypercapnic respiratory failure
 204550009,"Congenital stenosis of larynx, trachea and bronchus"
 204551008,Congenital bronchial stenosis
 204552001,Congenital subglottic stenosis
@@ -137,16 +108,9 @@ code,term
 233627004,Congenital cystic bronchiectasis
 233628009,Acquired bronchiectasis
 233629001,Idiopathic bronchiectasis
-233630006,Obstructive bronchiectasis
-233631005,Toxin-induced bronchiectasis
-233632003,Bronchiectasis caused by toxic aspiration
-233633008,Bronchiectasis caused by toxic inhalation
 233634002,Post-lung transplantation bronchiectasis
 233659006,Asbestos-induced pleural plaque
 233672007,Byssinosis grade 3
-233674008,Pulmonary emphysema in alpha-1 primary immunodeficiency deficiency
-233675009,Toxic emphysema
-233677001,Scar emphysema
 233694004,Dog house disease
 233695003,Dry rot lung
 233696002,Lycoperdonosis
@@ -157,13 +121,13 @@ code,term
 233701009,Sewage workers' lung
 233702002,Summer-type hypersensitivity pneumonitis
 233703007,Interstitial lung disease
-233713004,Seasonal cryptogenic organizing pneumonia with biochemical cholestasis
 233716007,Micronodular pulmonary ossification
 233717003,Diffuse pulmonary neurofibromatosis
 233718008,Pulmonary tuberous sclerosis
 233724002,Toxic diffuse interstitial pulmonary fibrosis
 233725001,Drug-induced diffuse interstitial pulmonary fibrosis
 233726000,Localized pulmonary fibrosis
+233737004,Familial fibrous mediastinitis
 233744008,Hilar lymph node sarcoidosis
 233748006,Simple pneumoconiosis
 233749003,Complicated pneumoconiosis
@@ -197,13 +161,9 @@ code,term
 236302005,Acute interstitial pneumonia
 236432001,Pulmonary renal syndrome
 238676008,Lofgrens syndrome
-23958009,Vanishing lung
 240702004,Chronic necrotizing pulmonary aspergillosis
-240742009,Chronic pulmonary African histoplasmosis
-240747003,Chronic pulmonary blastomycosis
 24369008,Pulmonary sarcoidosis
 249460003,Supraglottic stenosis
-25050002,"Alpha heavy chain disease, respiratory form"
 254625005,Malignant tumor of lung parenchyma
 254626006,Adenocarcinoma of lung
 254628007,Carcinoma of lung parenchyma
@@ -218,10 +178,7 @@ code,term
 254639005,Carcinoma in situ of lung parenchyma
 25897000,Malt-workers' lung
 26427008,Chronic pulmonary histoplasmosis
-266355005,Bullous emphysema with collapse
-266356006,Atrophic (senile) emphysema
 266368002,Post-inflammatory pulmonary fibrosis
-266404004,Chronic chemical respiratory disease
 269464000,"Malignant neoplasm of upper lobe, bronchus or lung"
 276635001,Acquired subglottic stenosis in newborn
 276636000,Post-intubation subglottic stenosis
@@ -229,20 +186,13 @@ code,term
 277486008,Pulmonary hypoplasia associated with short gestation
 277656005,Primary pulmonary hypoplasia
 277844007,Pulmonary lymphangioleiomyomatosis
-285381006,Acute infective exacerbation of chronic obstructive airways disease
 285604008,Metastasis to lung of unknown primary
-28791000119105,Chronic coccidioidomycotic pneumonia
 2912004,Cystic-bullous disease of the lung
-293241000119100,Acute exacerbation of chronic obstructive bronchitis
-293991000000106,Very severe chronic obstructive pulmonary disease
 29422001,Coal workers' pneumoconiosis
 30042003,Confluent fibrosis of lung
 30188007,Alpha-1-antitrypsin deficiency
 302913000,Diffuse pulmonary calcinosis
 312603000,Lung transplant rejection
-313296004,Mild chronic obstructive pulmonary disease
-313297008,Moderate chronic obstructive pulmonary disease
-313299006,Severe chronic obstructive pulmonary disease
 313353007,Squamous cell carcinoma of bronchus in left lower lobe
 313354001,Squamous cell carcinoma of bronchus in left upper lobe
 313355000,Squamous cell carcinoma of bronchus in right lower lobe
@@ -250,13 +200,11 @@ code,term
 313357008,Squamous cell carcinoma of bronchus in right upper lobe
 314954002,Local recurrence of malignant tumor of lung
 317931000119101,Pulmonary disease due to allergic granulomatosis angiitis
-31898008,Paraseptal emphysema
 319841000119107,Rheumatoid lung disease with rheumatoid arthritis
 32139003,Mixed dust pneumoconiosis
 32477003,Heart-lung transplant with recipient cardiectomy-pneumonectomy
 328641000119109,Genetic disorder of surfactant dysfunction
 328661000119108,Interstitial lung disease of childhood
-33325001,Compensatory emphysema
 33548005,Anthracosilicosis
 34004002,Siderosilicosis
 35037009,Primary atypical interstitial pneumonia
@@ -268,19 +216,19 @@ code,term
 361196000,Idiopathic hilar fibrosis
 363358000,Malignant tumor of lung
 36485005,Restrictive lung disease
-36599006,Chronic fibrosis of lung
 36696005,Kaolinosis
 371067004,Hepatopulmonary syndrome
 37180002,Chronic nonspecific lung disease
 372110008,"Primary malignant neoplasm of lower lobe, bronchus or lung"
 372111007,"Carcinoma of lower lobe, bronchus or lung"
+372112000,"Primary malignant neoplasm of middle lobe, bronchus or lung"
 372113005,"Carcinoma of middle lobe, bronchus or lung"
+372135002,"Primary malignant neoplasm of upper lobe, bronchus or lung"
 372136001,"Carcinoma of upper lobe, bronchus or lung"
 37471005,Extrinsic allergic alveolitis
 37711000,Cadmium pneumonitis
 38729007,Wheat weevil disease
 398640008,Rheumatoid pneumoconiosis
-39871006,Chronic respiratory failure
 398726004,Rheumatoid lung disease
 39905002,Scimitar syndrome
 40122008,Pneumoconiosis
@@ -290,7 +238,6 @@ code,term
 405570007,Pulmonary fibrosis due to and following radiotherapy
 40640008,Massive fibrosis of lung co-occurrent and due to silicosis
 413839001,Chronic lung disease
-417688002,Chronic progressive coccidioidal pneumonia
 41997000,Asthmatic pulmonary alveolitis
 422968005,"Non-small cell carcinoma of lung, TNM stage 3"
 423050000,"Large cell carcinoma of lung, TNM stage 2"
@@ -298,19 +245,15 @@ code,term
 423295000,"Squamous cell carcinoma of lung, TNM stage 1"
 423468007,"Squamous cell carcinoma of lung, TNM stage 2"
 423600008,"Large cell carcinoma of lung, TNM stage 4"
-42402006,Kartagener syndrome
 424132000,"Non-small cell carcinoma of lung, TNM stage 1"
 424938000,"Large cell carcinoma of lung, TNM stage 1"
 424970000,"Large cell carcinoma of lung, TNM stage 3"
 425048006,"Non-small cell carcinoma of lung, TNM stage 2"
 425230006,"Squamous cell carcinoma of lung, TNM stage 3"
 425376008,"Squamous cell carcinoma of lung, TNM stage 4"
-425748003,Acute exacerbation of chronic bronchitis
 425951002,Shrinking lung syndrome
-426437004,Familial idiopathic pulmonary fibrosis
 426705001,Diabetes mellitus co-occurrent and due to cystic fibrosis
 426853005,Pneumoconiosis caused by silicate
-426896000,Chronic hypercapnic respiratory failure
 426964009,"Non-small cell lung cancer, positive for epidermal growth factor receptor expression"
 427038005,"Non-small cell lung cancer, negative for epidermal growth factor receptor expression"
 427123006,Interstitial lung disease due to collagen vascular disease
@@ -318,22 +261,17 @@ code,term
 427896006,Chronic respiratory insufficiency
 427908002,Restrictive lung disease due to kyphoscoliosis
 427928003,Disorder related to lung transplantation
-428173007,Chronic hypoxemic respiratory failure
 428697002,Inactive tuberculosis of lung
 429091008,Dependence on biphasic positive airway pressure ventilation
 429332008,Transplantation of single lobe of lung
 429487005,Dependence on continuous positive airway pressure ventilation
-430476004,Diffuse panbronchiolitis
-430969000,Recurrent aspiration pneumonia
 431223003,Acute rejection of lung transplant
 431507002,Accelerated rejection of lung transplant
 432066002,Lung disorder due to autoimmune disorder
 432774005,Hyperacute rejection of lung transplant
-432958009,Chronic rejection of lung transplant
 438773007,Recurrent pulmonary embolism
 440173001,Nonsquamous nonsmall cell neoplasm of lung
 44165003,Complication of transplanted lung
-442025000,Acute exacerbation of chronic asthmatic bronchitis
 44274007,Lymphoid interstitial pneumonia
 444932008,Dependence on ventilator
 445378003,Acute exacerbation of bronchiectasis
@@ -350,17 +288,12 @@ code,term
 448993007,Malignant epithelial neoplasm of lung
 46847001,Chronic pulmonary edema
 47515009,Simple silicosis
-47895001,Congenital emphysema
-47938003,Chronic obliterative bronchiolitis
 48347002,Humidifier lung
-49691004,Occupational bronchitis
-4981000,Panacinar emphysema
 49840000,Complicated silicosis
 50076003,Baritosis
 50196008,Perialveolar fibrosis of lung
 50581000,Goodpasture's syndrome
 50589003,Silver polishers' lung disease
-51068008,Adult bronchiectasis
 51277007,Stannosis
 51615001,Fibrosis of lung
 52333004,Mushroom workers' lung
@@ -377,35 +310,27 @@ code,term
 59940009,Hypersensitivity alveolitis in lungworm infection
 60631000119109,Dependence on home ventilator
 60651000119103,Dependence on continuous supplemental oxygen
-60805002,Hemolytic anemia with emphysema AND cutis laxa
-61937009,Simple chronic bronchitis
 62371005,Pulmonary siderosis
 62511003,Autotransplant of lung
 63480004,Chronic bronchitis
 63841001,Chronic pulmonary congestion
 64631008,Fullers' earth disease
 64667001,Interstitial pneumonia
-66987001,Congenital lobar emphysema
 67242002,Bagassosis
 67811000119102,"Primary small cell malignant neoplasm of lung, TNM stage 1"
 67821000119109,"Primary small cell malignant neoplasm of lung, TNM stage 2"
 67831000119107,"Primary small cell malignant neoplasm of lung, TNM stage 3"
 67841000119103,"Primary small cell malignant neoplasm of lung, TNM stage 4"
-67905004,Acute-on-chronic respiratory failure
-68328006,Centriacinar emphysema
 68333005,Furriers' lung
 683991000119103,Extensive stage primary small cell carcinoma of lung
 69339004,Bird-fanciers' lung
 69454006,Chronic respiratory condition caused by fumes AND/OR vapors
 697921005,Pulmonary hypertension in sarcoidosis
 697923008,Pulmonary hypertension in lymphangioleiomyomatosis
-699014000,Recurrent pneumonia
 700249006,Idiopathic interstitial pneumonia
-700250006,Idiopathic pulmonary fibrosis
 702432006,"Diaphragmatic hernia, abnormal face and distal limb anomalies"
 703228009,Non-small cell lung cancer with mutation in epidermal growth factor receptor
 703230006,Non-small cell lung cancer without mutation in epidermal growth factor receptor
-704345008,Chronic interstitial pneumonia
 707403002,Primary fetal adenocarcinoma of lung
 707404008,Primary mixed subtype adenocarcinoma of lung
 707405009,Primary adenosquamous carcinoma of lung
@@ -437,9 +362,6 @@ code,term
 707469001,Primary non-mucinous bronchiolo-alveolar carcinoma of lung
 707470000,Primary mucinous bronchiolo-alveolar carcinoma of lung
 707510005,Secondary pulmonary alveolar proteinosis
-707534000,Chronic lung disease due to surfactant disorder
-707553005,Chronic exogenous lipoid pneumonia
-70756004,Bronchial atresia with segmental pulmonary emphysema
 707595001,Primary mucinous cystadenocarcinoma of lung
 707596000,Primary carcinosarcoma of lung
 707670009,Pleuropulmonary blastoma
@@ -448,13 +370,10 @@ code,term
 707673006,Pleuropulmonary blastoma type III
 707766007,Exocrine pancreatic manifestation co-occurrent and due to cystic fibrosis
 708026002,Chronic pneumonitis of infancy
-708030004,Pulmonary emphysema co-occurrent with fibrosis of lung
 711379004,Interstitial lung disease due to connective tissue disease
 711414003,Primary clear cell adenocarcinoma of lung
 71193007,Fibrosis of lung caused by radiation
 713244007,Drug induced pulmonary fibrosis
-713525001,Recurrent bacterial pneumonia
-713526000,Recurrent bacterial pneumonia co-occurrent with human immunodeficiency virus infection
 714203003,Acute bronchitis co-occurrent with bronchiectasis
 716088000,Follicular hamartoma with alopecia and cystic fibrosis syndrome
 716198008,Growth delay with hydrocephalus and lung hypoplasia syndrome
@@ -475,7 +394,6 @@ code,term
 724058006,Malignant neoplasm of upper lobe of left lung
 724059003,Malignant neoplasm of lower lobe of left lung
 724060008,Malignant neoplasm of right upper lobe of lung
-724500003,Idiopathic chronic eosinophilic pneumonia
 725052002,Fetal cystic fibrosis
 725415009,House allergic alveolitis
 73144008,Pneumoconiosis caused by talc
@@ -484,8 +402,6 @@ code,term
 733497009,Chronic suppuration of bronchus
 7343008,Liparitosis
 73448002,Fish-meal workers' lung
-7361000175106,Acute-on-chronic hypercapnic respiratory failure
-737180005,Chronic bronchiolitis
 737181009,Interstitial lung disease due to systemic disease
 737182002,Interstitial lung disease due to granulomatous disease
 737183007,Interstitial lung disease due to metabolic disease
@@ -493,7 +409,6 @@ code,term
 737281001,Artificial larynx in situ
 7436001,Alveolar pneumopathy
 74387008,Tuberculosis of hilar lymph nodes
-74417001,Mucopurulent chronic bronchitis
 7548000,Rheumatic pneumonia
 75547007,Stenosis of larynx
 76157009,Bituminosis
@@ -503,15 +418,10 @@ code,term
 762618008,Bronchiolitis obliterans syndrome due to and after lung transplantation
 770674007,Tubercular lesion of lung
 770760006,16q24.1 microdeletion syndrome
-771306007,"Hereditary fibrosing poikiloderma, tendon contractures, myopathy, pulmonary fibrosis syndrome"
 77593006,Congenital bronchiectasis
-77690003,Interstitial emphysema of lung
-783182004,Chronic respiratory distress with surfactant metabolism deficiency
 784266000,History of heart-lung transplant recipient
 785345002,Pneumoconiosis caused by sisal dust
-785736001,Chronic bronchitis co-occurrent with wheeze
 78723001,Cannabinosis
-789574002,Acute exacerbation of idiopathic pulmonary fibrosis
 79031000119101,Dependence on respirator
 79877004,Stenosis of bronchus
 805002,Pneumoconiosis caused by silica
@@ -529,15 +439,8 @@ code,term
 830060005,Reactive oxygen species 1 negative non-small cell lung cancer
 830151004,Anaplastic lymphoma kinase fusion oncogene positive non-small cell lung cancer
 83457000,Cylindrical bronchiectasis
-836477007,Chronic emphysema caused by vapor
-840350008,Chronic obliterative bronchiolitis caused by chemical fumes
-840351007,Chronic obliterative bronchiolitis caused by vapor
-84409004,Fetid chronic bronchitis
 846634000,Chronic respiratory condition caused by fumes
 846635004,Chronic respiratory condition caused by vapors
-846636003,Chronic respiratory condition caused by chemical fumes
-846637007,Chronic pulmonary fibrosis caused by chemical vapors
-847091000000104,Acute non-infective exacerbation of chronic obstructive pulmonary disease
 85438006,Diatomaceous earth disease
 8549006,Desquamative interstitial pneumonia
 85761009,Byssinosis
@@ -551,20 +454,9 @@ code,term
 870573008,Interstitial pneumonia with autoimmune features
 87119009,Congenital cystic lung
 87153008,Pulmonary alveolar microlithiasis
-87433001,Pulmonary emphysema
 87909002,Hard metal pneumoconiosis
-879963005,Exacerbation of bronchiectasis caused by infection
 88039007,Transplant of lung
 88687001,Manganese pneumonitis
-890354000,Congenital subglottic stenosis Cotton-Meyer grade 3
-890355004,Congenital subglottic stenosis Cotton-Meyer grade 4
-890386005,Congenital subglottic stenosis Cotton-Meyer grade 1
-890387001,Congenital subglottic stenosis Cotton-Meyer grade 2
-890428007,Primary congenital hypoplasia of bilateral lungs
-890528009,Primary malignant neoplasm of left lung
-890529001,Primary malignant neoplasm of right lung
-890534002,Primary malignant neoplasm of bilateral lungs
-89099002,Chronic allergic bronchitis
 89201000119106,Dependence on supplemental oxygen when ambulating
 89241000119108,Dependence on nocturnal oxygen therapy
 90117007,Tuberculous fibrosis of lung
@@ -609,4 +501,3 @@ code,term
 94523002,Secondary malignant neoplasm of right middle lobe of lung
 94524008,Secondary malignant neoplasm of right upper lobe of lung
 9660004,Congenital stenosis of trachea
-971918681000119107,Chronic respiratory failure due to obstructive sleep apnea

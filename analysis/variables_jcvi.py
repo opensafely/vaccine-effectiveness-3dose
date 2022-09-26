@@ -1,11 +1,8 @@
 from cohortextractor import patients
 from codelists import *
 import codelists
-import re
 
 def generate_jcvi_variables(index_date):
-
-  index_date_stem=re.findall("^.*_date", index_date)[0]
 
   jcvi_variables = dict(
 
@@ -13,7 +10,7 @@ def generate_jcvi_variables(index_date):
     # should this be 2020 or 2021?
     # maybe wrong in the old repo? https://github.com/opensafely/booster-effectiveness/blob/2b38698e4d9d7d9ce62522e4e8937cb3c85e92c6/analysis/study_definition.py#L329
     age_aug2021=patients.age_as_of( 
-      "2020-08-31",
+      "2021-08-31",
     ),
 
     # BMI category
@@ -29,7 +26,7 @@ def generate_jcvi_variables(index_date):
       },
       
       bmi_value=patients.most_recent_bmi(
-        on_or_after=f"{index_date_stem} - 5 years",
+        on_or_after=f"{index_date} - 5 years",
         minimum_age_at_measurement=16
       ),
     
@@ -59,31 +56,31 @@ def generate_jcvi_variables(index_date):
       astadm=patients.with_these_clinical_events(
         codelists.astadm,
         returning="binary_flag",
-        on_or_before=index_date,
+        on_or_before=f"{index_date} - 1 day",
       ),
       # Asthma Diagnosis code
       ast = patients.with_these_clinical_events(
         codelists.ast,
         returning="binary_flag",
-        on_or_before=index_date,
+        on_or_before=f"{index_date} - 1 day",
       ),
       # Asthma systemic steroid prescription code in month 1
       astrxm1=patients.with_these_medications(
         codelists.astrx,
         returning="binary_flag",
-        between=[f"{index_date_stem} - 30 days", index_date],
+        between=[f"{index_date} - 30 days", index_date],
       ),
       # Asthma systemic steroid prescription code in month 2
       astrxm2=patients.with_these_medications(
         codelists.astrx,
         returning="binary_flag",
-        between=[f"{index_date_stem} - 60 days", f"{index_date_stem} - 31 days"],
+        between=[f"{index_date} - 60 days", f"{index_date} - 31 days"],
       ),
       # Asthma systemic steroid prescription code in month 3
       astrxm3=patients.with_these_medications(
         codelists.astrx,
         returning="binary_flag",
-        between=[f"{index_date_stem} - 90 days", f"{index_date_stem} - 61 days"],
+        between=[f"{index_date} - 90 days", f"{index_date} - 61 days"],
       ),
     ),
 
@@ -91,7 +88,7 @@ def generate_jcvi_variables(index_date):
     chronic_neuro_disease=patients.with_these_clinical_events(
       codelists.cns_cov,
       returning="binary_flag",
-      on_or_before=index_date,
+      on_or_before=f"{index_date} - 1 day",
     ),
 
     # Chronic Respiratory Disease
@@ -100,7 +97,7 @@ def generate_jcvi_variables(index_date):
       resp_cov=patients.with_these_clinical_events(
         codelists.resp_cov,
         returning="binary_flag",
-        on_or_before=index_date,
+        on_or_before=f"{index_date} - 1 day",
       ),
     ),
 
@@ -114,7 +111,7 @@ def generate_jcvi_variables(index_date):
         codelists.bmi_stage,
         returning="date",
         find_last_match_in_period=True,
-        on_or_before=index_date,
+        on_or_before=f"{index_date} - 1 day",
         date_format="YYYY-MM-DD",
       ),
 
@@ -123,7 +120,7 @@ def generate_jcvi_variables(index_date):
         returning="date",
         find_last_match_in_period=True,
         ignore_missing_values=True,
-        between= ["bmi_stage_date", index_date],
+        between= ["bmi_stage_date", f"{index_date} - 1 day"],
         date_format="YYYY-MM-DD",
       ),
 
@@ -132,7 +129,7 @@ def generate_jcvi_variables(index_date):
         returning="date",
         ignore_missing_values=True,
         find_last_match_in_period=True,
-        on_or_before=index_date,
+        on_or_before=f"{index_date} - 1 day",
         date_format="YYYY-MM-DD",
       ),
 
@@ -141,7 +138,7 @@ def generate_jcvi_variables(index_date):
         returning="numeric_value",
         ignore_missing_values=True,
         find_last_match_in_period=True,
-        on_or_before=index_date,
+        on_or_before=f"{index_date} - 1 day",
       ),
     ),
 
@@ -152,7 +149,7 @@ def generate_jcvi_variables(index_date):
         codelists.diab,
         returning="date",
         find_last_match_in_period=True,
-        on_or_before=index_date,
+        on_or_before=f"{index_date} - 1 day",
         date_format="YYYY-MM-DD",
       ),
 
@@ -160,7 +157,7 @@ def generate_jcvi_variables(index_date):
         codelists.dmres,
         returning="date",
         find_last_match_in_period=True,
-        on_or_before=index_date,
+        on_or_before=f"{index_date} - 1 day",
         date_format="YYYY-MM-DD",
       ),
     ),
@@ -173,7 +170,7 @@ def generate_jcvi_variables(index_date):
         codelists.sev_mental,
         returning="date",
         find_last_match_in_period=True,
-        on_or_before=index_date,
+        on_or_before=f"{index_date} - 1 day",
         date_format="YYYY-MM-DD",
       ),
     
@@ -182,7 +179,7 @@ def generate_jcvi_variables(index_date):
         codelists.smhres,
         returning="date",
         find_last_match_in_period=True,
-        on_or_before=index_date,
+        on_or_before=f"{index_date} - 1 day",
         date_format="YYYY-MM-DD",
       ),
     ),
@@ -191,7 +188,7 @@ def generate_jcvi_variables(index_date):
   chronic_heart_disease=patients.with_these_clinical_events(
     codelists.chd_cov,
     returning="binary_flag",
-    on_or_before=index_date,
+    on_or_before=f"{index_date} - 1 day",
   ),
 
   chronic_kidney_disease=patients.satisfying(
@@ -205,7 +202,7 @@ def generate_jcvi_variables(index_date):
       codelists.ckd15,
       returning="date",
       find_last_match_in_period=True,
-      on_or_before=index_date,
+      on_or_before=f"{index_date} - 1 day",
       date_format="YYYY-MM-DD",
     ),
 
@@ -214,7 +211,7 @@ def generate_jcvi_variables(index_date):
       codelists.ckd35,
       returning="date",
       find_last_match_in_period=True,
-      on_or_before=index_date,
+      on_or_before=f"{index_date} - 1 day",
       date_format="YYYY-MM-DD",
     ),
 
@@ -222,7 +219,7 @@ def generate_jcvi_variables(index_date):
     ckd=patients.with_these_clinical_events(
       codelists.ckd_cov,
       returning="binary_flag",
-      on_or_before=index_date,
+      on_or_before=f"{index_date} - 1 day",
     ),
   ),
 
@@ -230,7 +227,7 @@ def generate_jcvi_variables(index_date):
   chronic_liver_disease=patients.with_these_clinical_events(
     codelists.cld,
     returning="binary_flag",
-    on_or_before=index_date,
+    on_or_before=f"{index_date} - 1 day",
   ),
 
   # imunosuppression
@@ -241,14 +238,13 @@ def generate_jcvi_variables(index_date):
     immdx=patients.with_these_clinical_events(
       codelists.immdx_cov,
       returning="binary_flag",
-      on_or_before=index_date,
+      on_or_before=f"{index_date} - 1 day",
     ),
     # Immunosuppression medication codes
     immrx=patients.with_these_medications(
       codelists.immrx,
       returning="binary_flag",
-      between=[f"{index_date_stem} - 182 days", index_date],
-      # between=[f"{index_date} - 181 days", index_date]
+      between=[f"{index_date} - 182 days", f"{index_date} - 1 day"],
     ),
   ),
 
@@ -256,14 +252,14 @@ def generate_jcvi_variables(index_date):
   asplenia=patients.with_these_clinical_events(
     codelists.spln_cov,
     returning="binary_flag",
-    on_or_before=index_date,
+    on_or_before=f"{index_date} - 1 day",
   ),
 
   # Wider Learning Disability
   learndis=patients.with_these_clinical_events(
     codelists.learndis,
     returning="binary_flag",
-    on_or_before=index_date,
+    on_or_before=f"{index_date} - 1 day",
   ),
 
   ########################################################################
@@ -275,7 +271,7 @@ def generate_jcvi_variables(index_date):
   
   # care home category
   care_home_type=patients.care_home_status_as_of(
-      index_date,
+      f"{index_date} - 1 day",
       categorised_as={
           "Carehome": """
             IsPotentialCareHome
@@ -305,7 +301,7 @@ def generate_jcvi_variables(index_date):
   # patients in long-stay nursing and residential care
   care_home_code=patients.with_these_clinical_events(
       codelists.carehome,
-      on_or_before=index_date,
+      on_or_before=f"{index_date} - 1 day",
       returning="binary_flag",
       return_expectations={"incidence": 0.01},
   ),
@@ -314,7 +310,7 @@ def generate_jcvi_variables(index_date):
   cev_ever = patients.with_these_clinical_events(
     codelists.shield,
     returning="binary_flag",
-    on_or_before=index_date,
+    on_or_before=f"{index_date} - 1 day",
     find_last_match_in_period = True,
   ),
 
@@ -329,7 +325,7 @@ def generate_jcvi_variables(index_date):
     severely_clinically_vulnerable=patients.with_these_clinical_events(
       codelists.shield,
       returning="binary_flag",
-      on_or_before=index_date,
+      on_or_before=f"{index_date} - 1 day",
       find_last_match_in_period = True,
     ),
 
@@ -342,7 +338,7 @@ def generate_jcvi_variables(index_date):
     ### NOT SHIELDED GROUP (medium and low risk) - only flag if later than 'shielded'
     less_vulnerable=patients.with_these_clinical_events(
       codelists.nonshield,
-      between=["date_severely_clinically_vulnerable + 1 day", index_date],
+      between=["date_severely_clinically_vulnerable + 1 day", f"{index_date} - 1 day"],
     ),
 
   ),
@@ -357,13 +353,13 @@ def generate_jcvi_variables(index_date):
     midazolam = patients.with_these_medications(
       codelists.midazolam,
       returning="binary_flag",
-      on_or_before=index_date,
+      on_or_before=f"{index_date} - 1 day",
     ),
     
     endoflife_coding = patients.with_these_clinical_events(
       codelists.eol,
       returning="binary_flag",
-      on_or_before=index_date,
+      on_or_before=f"{index_date} - 1 day",
       find_last_match_in_period = True,
     ),
         
@@ -378,7 +374,7 @@ def generate_jcvi_variables(index_date):
         
     housebound_date=patients.with_these_clinical_events( 
       codelists.housebound, 
-      on_or_before=index_date,
+      on_or_before=f"{index_date} - 1 day",
       find_last_match_in_period = True,
       returning="date",
       date_format="YYYY-MM-DD",

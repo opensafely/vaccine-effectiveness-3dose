@@ -33,15 +33,15 @@ from variables_functions import vaccination_date_X
 ############################################################
 ## inclusion variables
 from variables_inclusion import generate_inclusion_variables 
-inclusion_variables = generate_inclusion_variables(index_date="covid_vax_disease_3_date - 1 day")
+inclusion_variables = generate_inclusion_variables(index_date="covid_vax_disease_3_date")
 ############################################################
 ## jcvi variables
 from variables_jcvi import generate_jcvi_variables 
-jcvi_variables = generate_jcvi_variables(index_date="covid_vax_disease_3_date - 1 day")
+jcvi_variables = generate_jcvi_variables(index_date="covid_vax_disease_3_date")
 ############################################################
 ## matching variables
 from variables_matching import generate_matching_variables 
-matching_variables = generate_matching_variables(index_date="covid_vax_disease_3_date - 1 day", firstdose3_date=firstdose3_date)
+matching_variables = generate_matching_variables(index_date="covid_vax_disease_3_date")
 ############################################################
 ## outcome variables
 from variables_outcome import generate_outcome_variables 

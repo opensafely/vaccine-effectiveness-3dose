@@ -2,23 +2,19 @@ from cohortextractor import patients, combine_codelists
 from codelists import *
 import json
 import codelists
-import re
-from variables_functions import days
 
 
-def generate_matching_variables(index_date, firstdose3_date):
-
-  index_date_stem=re.findall("^.*_date", index_date)[0]
+def generate_matching_variables(index_date):
 
   matching_variables = dict(
 
   has_follow_up_previous_6weeks=patients.registered_with_one_practice_between(
-    start_date=f"{index_date_stem} - 42 days",
-    end_date=index_date,
+    start_date=f"{index_date} - 42 days",
+    end_date=f"{index_date} - 1 day",
   ),
 
   age=patients.age_as_of( 
-    index_date,
+    f"{index_date} - 1 day",
   ),
     
   sex=patients.sex(
@@ -56,7 +52,7 @@ def generate_matching_variables(index_date, firstdose3_date):
   ################################################################################################
   # practice pseudo id
   practice_id=patients.registered_practice_as_of(
-    index_date,
+    f"{index_date} - 1 day",
     returning="pseudo_id",
     return_expectations={
       "int": {"distribution": "normal", "mean": 1000, "stddev": 100},
@@ -66,7 +62,7 @@ def generate_matching_variables(index_date, firstdose3_date):
   
   # msoa
   msoa=patients.address_as_of(
-    index_date,
+    f"{index_date} - 1 day",
     returning="msoa",
     return_expectations={
       "rate": "universal",
@@ -79,7 +75,7 @@ def generate_matching_variables(index_date, firstdose3_date):
 
   # stp is an NHS administration region based on geography
   stp=patients.registered_practice_as_of(
-    index_date,
+    f"{index_date} - 1 day",
     returning="stp_code",
     return_expectations={
       "rate": "universal",
@@ -102,7 +98,7 @@ def generate_matching_variables(index_date, firstdose3_date):
 
   # NHS administrative region
   region=patients.registered_practice_as_of(
-    index_date,
+    f"{index_date} - 1 day",
     returning="nuts1_region_name",
     return_expectations={
       "rate": "universal",
@@ -138,7 +134,7 @@ def generate_matching_variables(index_date, firstdose3_date):
       "category": {"ratios": {"Unknown": 0.02, "1 (most deprived)": 0.18, "2": 0.2, "3": 0.2, "4": 0.2, "5 (least deprived)": 0.2}},
     },
     imd=patients.address_as_of(
-      index_date,
+      f"{index_date} - 1 day",
       returning="index_of_multiple_deprivation",
       round_to_nearest=100,
       return_expectations={
@@ -149,7 +145,7 @@ def generate_matching_variables(index_date, firstdose3_date):
 
   #rurality
   rural_urban=patients.address_as_of(
-    index_date,
+    f"{index_date} - 1 day",
     returning="rural_urban_classification",
     return_expectations={
       "rate": "universal",
@@ -165,7 +161,7 @@ def generate_matching_variables(index_date, firstdose3_date):
   covid_test_0_date=patients.with_test_result_in_sgss(
     pathogen="SARS-CoV-2",
     test_result="any",
-    on_or_before=index_date,
+    on_or_before=f"{index_date} - 1 day",
     returning="date",
     date_format="YYYY-MM-DD",
     find_last_match_in_period=True,
@@ -178,7 +174,7 @@ def generate_matching_variables(index_date, firstdose3_date):
       test_result="positive",
       returning="date",
       date_format="YYYY-MM-DD",
-      on_or_before=index_date,
+      on_or_before=f"{index_date} - 1 day",
       # no earliest date set, which assumes any date errors are for tests occurring before study start date
       find_last_match_in_period=True,
       restrict_to_earliest_specimen_date=False,
@@ -187,7 +183,7 @@ def generate_matching_variables(index_date, firstdose3_date):
   # any emergency attendance for covid
   covidemergency_0_date=patients.attended_emergency_care(
     returning="date_arrived",
-    on_or_before=index_date,
+    on_or_before=f"{index_date} - 1 day",
     with_these_diagnoses = codelists.covid_emergency,
     date_format="YYYY-MM-DD",
     find_last_match_in_period=True,
@@ -196,7 +192,7 @@ def generate_matching_variables(index_date, firstdose3_date):
   # unplanned hospital admission
   admitted_unplanned_0_date=patients.admitted_to_hospital(
     returning="date_admitted",
-    on_or_before=index_date,
+    on_or_before=f"{index_date} - 1 day",
     # see https://github.com/opensafely-core/cohort-extractor/pull/497 for codes
     # see https://docs.opensafely.org/study-def-variables/#sus for more info
     with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
@@ -206,7 +202,7 @@ def generate_matching_variables(index_date, firstdose3_date):
   ),
   discharged_unplanned_0_date=patients.admitted_to_hospital(
     returning="date_discharged",
-    on_or_before=index_date,
+    on_or_before=f"{index_date} - 1 day",
     # see https://github.com/opensafely-core/cohort-extractor/pull/497 for codes
     # see https://docs.opensafely.org/study-def-variables/#sus for more info
     with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
@@ -218,7 +214,7 @@ def generate_matching_variables(index_date, firstdose3_date):
   # planned hospital admission
   admitted_planned_0_date=patients.admitted_to_hospital(
     returning="date_admitted",
-    on_or_before=index_date,
+    on_or_before=f"{index_date} - 1 day",
     # see https://github.com/opensafely-core/cohort-extractor/pull/497 for codes
     # see https://docs.opensafely.org/study-def-variables/#sus for more info
     with_admission_method=["11", "12", "13", "81"],
@@ -228,7 +224,7 @@ def generate_matching_variables(index_date, firstdose3_date):
   ),
   discharged_planned_0_date=patients.admitted_to_hospital(
     returning="date_discharged",
-    on_or_before=index_date,
+    on_or_before=f"{index_date} - 1 day",
     # see https://github.com/opensafely-core/cohort-extractor/pull/497 for codes
     # see https://docs.opensafely.org/study-def-variables/#sus for more info
     with_admission_method=["11", "12", "13", "81"],
@@ -242,7 +238,7 @@ def generate_matching_variables(index_date, firstdose3_date):
     returning="date_admitted",
     with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
     with_these_diagnoses=codelists.covid_icd10,
-    on_or_before=index_date,
+    on_or_before=f"{index_date} - 1 day",
     date_format="YYYY-MM-DD",
     find_last_match_in_period=True,
   ),
@@ -256,7 +252,7 @@ def generate_matching_variables(index_date, firstdose3_date):
     ),
     returning="date",
     date_format="YYYY-MM-DD",
-    on_or_before=index_date,
+    on_or_before=f"{index_date} - 1 day",
     find_last_match_in_period=True,
   ),
 
@@ -264,7 +260,7 @@ def generate_matching_variables(index_date, firstdose3_date):
     prior_covid_test_frequency=patients.with_test_result_in_sgss(
       pathogen="SARS-CoV-2",
       test_result="any",
-      between=[days(firstdose3_date, -182), days(firstdose3_date, -1)], # 182 days = 26 weeks
+      between=[f"{index_date} - 182 days", f"{index_date} - 1 day"], # 182 days = 26 weeks
       returning="number_of_matches_in_period", 
       date_format="YYYY-MM-DD",
       restrict_to_earliest_specimen_date=False,

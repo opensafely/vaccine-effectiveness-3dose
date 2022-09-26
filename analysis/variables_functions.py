@@ -3,17 +3,6 @@ from codelists import *
 import codelists
 
 ####################################################################################################
-## function to add days to a string date
-from datetime import datetime, timedelta
-def days(datestring, days):
-  
-  dt = datetime.strptime(datestring, "%Y-%m-%d").date()
-  dt_add = dt + timedelta(days)
-  datestring_add = datetime.strftime(dt_add, "%Y-%m-%d")
-
-  return datestring_add
-
-####################################################################################################
 
 def vaccination_date_X(name, index_date, n, product_name_matches=None, target_disease_matches=None):
   # vaccination date, given product_name

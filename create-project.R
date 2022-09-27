@@ -107,7 +107,7 @@ action_1matchround <- function(cohort, matching_round){
       run = glue("r:latest analysis/matching/match_potential.R"),
       arguments = c(cohort, matching_round),
       needs = c(
-        glue("process_treated_{cohort}"), 
+        glue("process_treated"), 
         glue("process_controlpotential_{cohort}_{matching_round}"),
         if(matching_round>1) {glue("process_controlactual_{cohort}_{matching_round-1}")} else {NULL}
       ) %>% as.list,
@@ -140,7 +140,7 @@ action_1matchround <- function(cohort, matching_round){
       run = glue("r:latest analysis/matching/process_controlactual.R"),
       arguments = c(cohort, matching_round),
       needs = c(
-        glue("process_treated_{cohort}"),
+        glue("process_treated"),
         glue("match_potential_{cohort}_{matching_round}"), 
         glue("extract_controlpotential_{cohort}_{matching_round}"),  # this is only necessary for the dummy data
         glue("extract_controlactual_{cohort}_{matching_round}"),
@@ -195,7 +195,7 @@ action_extract_and_match <- function(cohort, n_matching_rounds){
           ~glue("process_controlactual_{cohort}_",.x)
         ),
         glue("extract_controlfinal_{cohort}"),
-        glue("process_treated_{cohort}")
+        glue("process_treated")
       ),
       highly_sensitive = lst(
         extract = glue("output/{cohort}/match/*.rds")

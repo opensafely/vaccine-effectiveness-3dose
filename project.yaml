@@ -72,7 +72,7 @@ actions:
   match_potential_pfizer_1:
     run: r:latest analysis/matching/match_potential.R pfizer 1
     needs:
-    - process_treated_pfizer
+    - process_treated
     - process_controlpotential_pfizer_1
     outputs:
       highly_sensitive:
@@ -92,7 +92,7 @@ actions:
   process_controlactual_pfizer_1:
     run: r:latest analysis/matching/process_controlactual.R pfizer 1
     needs:
-    - process_treated_pfizer
+    - process_treated
     - match_potential_pfizer_1
     - extract_controlpotential_pfizer_1
     - extract_controlactual_pfizer_1
@@ -123,7 +123,7 @@ actions:
   match_potential_pfizer_2:
     run: r:latest analysis/matching/match_potential.R pfizer 2
     needs:
-    - process_treated_pfizer
+    - process_treated
     - process_controlpotential_pfizer_2
     - process_controlactual_pfizer_1
     outputs:
@@ -144,7 +144,7 @@ actions:
   process_controlactual_pfizer_2:
     run: r:latest analysis/matching/process_controlactual.R pfizer 2
     needs:
-    - process_treated_pfizer
+    - process_treated
     - match_potential_pfizer_2
     - extract_controlpotential_pfizer_2
     - extract_controlactual_pfizer_2
@@ -170,7 +170,7 @@ actions:
     - process_controlactual_pfizer_1
     - process_controlactual_pfizer_2
     - extract_controlfinal_pfizer
-    - process_treated_pfizer
+    - process_treated
     outputs:
       highly_sensitive:
         extract: output/pfizer/match/*.rds

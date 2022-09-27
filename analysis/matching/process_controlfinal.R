@@ -58,13 +58,13 @@ fs::dir_create(ghere("output", cohort, "match"))
 # check variables are as they should be
 if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
   
-  #source(here("analysis", "dummy", "dummydata_controlfinal.R"))
+  source(here("analysis", "dummy", "dummydata_controlfinal.R"))
   
   data_studydef_dummy <- read_feather(ghere("output", cohort, "extract", "input_controlfinal.feather")) %>%
     #because date types are not returned consistently by cohort extractor
     mutate(across(ends_with("_date"),  as.Date))
   
-  data_custom_dummy <- read_feather(fs::path("lib", "dummydata", glue("dummy_controlfinal.feather")))
+  data_custom_dummy <- read_feather(fs::path("lib", "dummydata", glue("dummy_controlfinal_{cohort}.feather")))
   
   
   not_in_studydef <- names(data_custom_dummy)[!( names(data_custom_dummy) %in% names(data_studydef_dummy) )]

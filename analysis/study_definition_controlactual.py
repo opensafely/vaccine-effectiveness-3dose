@@ -80,7 +80,7 @@ study = StudyDefinition(
       AND
       (NOT has_died)
       AND
-      (NOT wchild)
+      (NOT child_atrisk)
       AND
       prematched
     """,

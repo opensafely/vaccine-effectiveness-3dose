@@ -148,13 +148,15 @@ data_surv <-
      
     N = max(n.risk, na.rm=TRUE),
     
+    # rounded to `round_by - (round_by/2)`
+    cml.eventcensor = roundmid_any(cumsum(n.event+n.censor), round_by),
     cml.event = roundmid_any(cumsum(n.event), round_by),
-    cml.censor = roundmid_any(cumsum(n.censor), round_by),
-       
+    cml.censor = cml.eventcensor - cml.event,
+
     n.event = diff(c(0, cml.event)),
     n.censor = diff(c(0, cml.censor)),
-    n.risk = roundmid_any(N, round_by) - lag(cml.event + cml.censor, 1, 0), 
-    
+    n.risk = roundmid_any(N, round_by) - lag(cml.eventcensor, 1, 0),
+
     # KM estimate for event of interest, combining censored and competing events as censored
     summand = (1/(n.risk-n.event)) - (1/n.risk), # = n.event / ((n.risk - n.event) * n.risk) but re-written to prevent integer overflow
     surv = cumprod(1 - n.event / n.risk),
@@ -169,8 +171,8 @@ data_surv <-
     llsurv.se = sqrt((1 / log(surv)^2) * cumsum(summand)),
     
     ## standard errors on complementary log-log scale
-    surv.ll = exp(-exp(llsurv + qnorm(0.025)*llsurv.se)),
-    surv.ul = exp(-exp(llsurv + qnorm(0.975)*llsurv.se)),
+    surv.ll = exp(-exp(llsurv + qnorm(0.975)*llsurv.se)),
+    surv.ul = exp(-exp(llsurv + qnorm(0.025)*llsurv.se)),
     
     risk = 1 - surv,
     risk.se = surv.se,
@@ -179,11 +181,13 @@ data_surv <-
     risk.ul = 1 - surv.ll
   ) %>% select(
     !!subgroup_sym, treated, time, lagtime, leadtime, interval,
-    n.risk,n.event, n.censor,
+    cml.event, cml.censor,
+    n.risk, n.event, n.censor,
     surv, surv.se, surv.ll, surv.ul,
     risk, risk.se, risk.ll, risk.ul
   ) 
  }
+ 
  
 data_surv_unrounded <- km_process(data_surv, 1)
 data_surv_rounded <- km_process(data_surv, threshold)
@@ -249,6 +253,10 @@ ggsave(filename=fs::path(output_dir, "km_plot_rounded.png"), km_plot_rounded, wi
 
 kmcontrasts <- function(data, cuts=NULL){
 
+  # if cuts=NULL then fucntion provides daily estimates
+  # if eg c(0,14,28,42,...) then follow u[ is split on these days
+  # c(0, 140)
+  
   if(is.null(cuts)){cuts <- unique(c(0,data$time))}
 
   data %>%

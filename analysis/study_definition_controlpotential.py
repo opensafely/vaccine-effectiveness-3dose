@@ -77,7 +77,7 @@ study = StudyDefinition(
       AND
       (NOT has_died)
       AND
-      (NOT wchild)
+      (NOT child_atrisk)
     """,
     #NOT (covid_vax_any_1_date <= index_date) # doesn't work for some reason `unknown colunm : index_date`
     #previouslymatched = patients.which_exist_in_file(f_path="output/match/cumulative_matchedcontrols{matching_round}.csv.gz"),

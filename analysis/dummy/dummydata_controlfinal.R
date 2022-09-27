@@ -1,32 +1,24 @@
+# this script is sourced from within the process_controlfinal.R script.
 
-library('tidyr')#, lib.loc = "C:/Program Files/R/R-4.1.3/library")
-library('tidyverse')#, lib.loc = "C:/Program Files/R/R-4.1.3/library")
-#library('tidyverse')
+library('tidyverse')
 library('arrow')
 library('here')
 library('glue')
 
-#source(here("analysis", "lib", "utility_functions.R"))
 
-# remotes::install_github("https://github.com/wjchulme/dd4d")
-library('dd4d')
+# not needed as these are already available from process_controlfinal.R
 
-source(here("lib", "functions", "utility.R"))
+#source(here("lib", "functions", "utility.R"))
+#source(here("analysis", "design.R"))
 
-population_size <- 20000
+# dates <- map(study_dates[[cohort]], as.Date)
+# params <- study_params[[cohort]]
+
 
 # get nth largest value from list
 nthmax <- function(x, n=1){
   dplyr::nth(sort(x, decreasing=TRUE), n)
 }
-
-source(here("analysis", "design.R"))
-
-cohort <- "over12"
-n_matching_rounds <- 2
-
-dates <- map(study_dates[[cohort]], as.Date)
-params <- study_params[[cohort]]
 
 
 start_date <- as.Date(dates$start_date)
@@ -87,98 +79,31 @@ data_matchedcontrols <-
   )
   
 
-sim_list = lst(
-  
-  dereg_day = bn_node(
-    ~as.integer(runif(n=..n, trial_day, trial_day+120)),
-    missing_rate = ~0.99
-  ),
+missing <- function(x, rate){
+  missing_index <- seq_len(length(x))[rbinom(length(x), 1, rate)==1]
+  x[missing_index] <- NA
+  x
+}
 
-  primary_care_covid_case_day = bn_node(
-    ~as.integer(runif(n=..n, trial_day, trial_day+100)),
-    missing_rate = ~0.7
-  ),
-
-  covid_test_day = bn_node(
-    ~as.integer(runif(n=..n, trial_day, trial_day+100)),
-    missing_rate = ~0.7
-  ),
-
-  postest_day = bn_node(
-    ~as.integer(runif(n=..n, trial_day, trial_day+100)),
-    missing_rate = ~0.7
-  ),
-
-  emergency_day = bn_node(
-    ~as.integer(runif(n=..n, trial_day, trial_day+200)),
-    missing_rate = ~0.8
-  ),
-  emergencyhosp_day = bn_node(
-    ~as.integer(runif(n=..n, trial_day, trial_day+200)),
-    missing_rate = ~0.85
-  ),
-
-
-  covidemergency_day = bn_node(
-    ~as.integer(runif(n=..n, trial_day, trial_day+200)),
-    missing_rate = ~0.8
-  ),
-
-  covidemergencyhosp_day = bn_node(
-    ~as.integer(runif(n=..n, trial_day, trial_day+200)),
-    missing_rate = ~0.85
-  ),
-
-  # respemergency_day = bn_node(
-  #   ~as.integer(runif(n=..n, trial_day, trial_day+100)),
-  #   missing_rate = ~0.95
-  # ),
-  # 
-  # respemergencyhosp_day = bn_node(
-  #   ~as.integer(runif(n=..n, trial_day, trial_day+100)),
-  #   missing_rate = ~0.95
-  # ),
-
-  covidadmitted_day = bn_node(
-    ~as.integer(runif(n=..n, trial_day, trial_day+100)),
-    missing_rate = ~0.7
-  ),
-
-  # placeholder for single criticalcare variable ---
-  covidcritcare_day = bn_node(
-    ~as.integer(runif(n=..n, trial_day, trial_day+100)),
-    missing_rate = ~0.8
-  ),
-  
-  admitted_unplanned_day = bn_node(
-    ~as.integer(runif(n=..n, trial_day, trial_day+100)),
-    missing_rate = ~0.7
-  ),
-  # admitted_planned_day = bn_node(
-  #   ~as.integer(runif(n=..n, trial_day, trial_day+100)),
-  #   missing_rate = ~0.7
-  # ),
-
-  coviddeath_day = bn_node(
-    ~death_day,
-    missing_rate = ~0.7,
-    needs = "death_day"
-  ),
-
-  death_day = bn_node(
-    ~as.integer(runif(n=..n, trial_day, trial_day+100)),
-    missing_rate = ~0.90
-  ),
-
-)
-bn <- bn_create(sim_list, known_variables = c(known_variables, names(data_matchedcontrols)))
-
-bn_plot(bn)
-bn_plot(bn, connected_only=TRUE)
 
 set.seed(10)
 
-dummydata <-bn_simulate(bn, known_df = data_matchedcontrols, keep_all = FALSE, .id="patient_id")
+dummydata <- data_matchedcontrols %>%
+  mutate(
+    dereg_day = missing(as.integer(runif(n=n(), trial_day, trial_day+120)), 0.99),
+    primary_care_covid_case_day = missing(as.integer(runif(n=n(), trial_day, trial_day+100)), 0.7),
+    covid_test_day = missing(as.integer(runif(n=n(), trial_day, trial_day+90)), 0.7),
+    postest_day = missing(as.integer(runif(n=n(), trial_day, trial_day+100)), 0.7),
+    emergency_day = missing(as.integer(runif(n=n(), trial_day, trial_day+200)), 0.8),
+    emergencyhosp_day = missing(as.integer(runif(n=n(), trial_day, trial_day+200)), 0.85),
+    covidemergency_day = missing(as.integer(runif(n=n(), trial_day, trial_day+120)), 0.8),
+    covidemergencyhosp_day = missing(as.integer(runif(n=n(), trial_day, trial_day+200)), 0.85),
+    covidadmitted_day = missing(as.integer(runif(n=n(), trial_day, trial_day+100)), 0.7),
+    covidcritcare_day = missing(as.integer(runif(n=n(), trial_day, trial_day+100)), 0.8),
+    admitted_unplanned_day = missing(as.integer(runif(n=n(), trial_day, trial_day+100)), 0.7),
+    death_day = missing(as.integer(runif(n=n(), trial_day, trial_day+100)), 0.9),
+    coviddeath_day = missing(death_day, 0.7),
+  )
 
 
 dummydata_processed <- dummydata %>%
@@ -190,4 +115,4 @@ dummydata_processed <- dummydata %>%
 
 
 fs::dir_create(here("lib", "dummydata"))
-write_feather(dummydata_processed, sink = here("lib", "dummydata", "dummy_controlfinal.feather"))
+write_feather(dummydata_processed, sink = here("lib", "dummydata", glue("dummy_controlfinal_{cohort}.feather")))

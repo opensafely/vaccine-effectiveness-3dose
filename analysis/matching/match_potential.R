@@ -76,14 +76,16 @@ if(matching_round>1){
   data_alltreated <- 
     data_alltreated %>%
     anti_join(
-      data_matchstatusprevious, by=c("patient_id", "treated")
+      data_matchstatusprevious, 
+      by=c("patient_id", "treated")
     )
   
   # do not select untreated people who have already been matched
   data_control <- 
     data_control %>%
     anti_join(
-      data_matchstatusprevious, by=c("patient_id", "treated")
+      data_matchstatusprevious, 
+      by=c("patient_id", "treated")
     )
 }
 
@@ -93,7 +95,7 @@ if(matching_round>1){
 data_eligible <-
   bind_rows(data_alltreated, data_control) %>%
   mutate(
-    treatment_date = if_else(vax1_type %in% params$treatment, vax1_date, as.Date(NA)),
+    treatment_date = if_else((vax1_type %in% params$treatment) & treated==1L, vax1_date, as.Date(NA)),
   )
 
 
@@ -120,8 +122,6 @@ local({
   # initialise matching summary data
   data_treated <- NULL
   data_matched <- NULL
-
-  already_stopped <- FALSE
 
   #trial=1
   for(trial in trials){
@@ -171,7 +171,7 @@ local({
     
     n_treated_all <- nrow(data_treated_i)
     
-    if(n_treated_all<1 | already_stopped) {
+    if(n_treated_all<1) {
       message("Skipping trial ", trial, " - No treated people eligible for inclusion.")
       next
     }
@@ -210,9 +210,8 @@ local({
       )[[1]]
 
     
-    if(is.null(obj_matchit_i) | already_stopped) {
-      message("Terminating trial sequence at trial ", trial, " - No exact matches found.")
-      already_stopped <- TRUE
+    if(is.null(obj_matchit_i)) {
+      message("Skipping trial ", trial, " - No exact matches found.")
       next
     }
     

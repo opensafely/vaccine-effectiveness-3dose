@@ -72,9 +72,7 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
   
   data_studydef_dummy <- read_feather(ghere("output", cohort,  "matchround{matching_round}", "extract", "input_controlpotential.feather")) %>%
     # because date types are not returned consistently by cohort extractor
-    mutate(across(ends_with("_date"), as.Date)) %>%
-    # because of a bug in cohort extractor -- remove once pulled new version
-    mutate(patient_id = as.integer(patient_id)) 
+    mutate(across(ends_with("_date"), as.Date)) 
   
   # just reuse previous extraction for dummy run, dummy_control_potential1.feather
   # and change a few variables to simulate new index dates
@@ -181,12 +179,12 @@ data_criteria <- data_processed %>%
     #has_ethnicity = !is.na(ethnicity_combined),
     has_region = !is.na(region),
     
-    no_recentcovid90 = is.na(anycovid_0_date) |  ((trial_date - anycovid_0_date)>90),
+    no_recentcovid30 = is.na(anycovid_0_date) |  ((trial_date - anycovid_0_date)>30),
     
     include = (
       has_age & has_sex & has_imd & # has_ethnicity &
         has_region &
-        no_recentcovid90
+        no_recentcovid30
     ),
   )
 

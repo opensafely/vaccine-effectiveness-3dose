@@ -93,7 +93,7 @@ action_1matchround <- function(cohort, matching_round){
     action(
       name = glue("process_controlpotential_{cohort}_{matching_round}"),
       run = glue("r:latest analysis/process_data.R"),
-      arguments = c(cohort, matching_round),
+      arguments = c("control", cohort, matching_round),
       needs = namelesslst(
         glue("extract_controlpotential_{cohort}_{matching_round}"),
       ),

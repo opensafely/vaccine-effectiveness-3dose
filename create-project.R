@@ -82,6 +82,7 @@ action_1matchround <- function(cohort, matching_round){
         " --param index_date={control_extract_date}"
       ),
       needs = c(
+        "design",
         if(matching_round>1) {glue("process_controlactual_{cohort}_{matching_round-1}")} else {NULL}
       ) %>% as.list,
       highly_sensitive = lst(
@@ -91,7 +92,7 @@ action_1matchround <- function(cohort, matching_round){
     
     action(
       name = glue("process_controlpotential_{cohort}_{matching_round}"),
-      run = glue("r:latest analysis/matching/process_controlpotential.R"),
+      run = glue("r:latest analysis/process_data.R"),
       arguments = c(cohort, matching_round),
       needs = namelesslst(
         glue("extract_controlpotential_{cohort}_{matching_round}"),
@@ -318,7 +319,8 @@ actions_list <- splice(
   # all treated people
   action(
     name = "process_treated",
-    run = "r:latest analysis/treated/process_treated.R",
+    run = "r:latest analysis/process_data.R",
+    arguments = "treated",
     needs = namelesslst(
       "extract_treated"
     ),
@@ -330,16 +332,16 @@ actions_list <- splice(
   ),
 
   
-  # comment("# # # # # # # # # # # # # # # # # # #", 
-  #         "Pfizer cohort", 
-  #         "# # # # # # # # # # # # # # # # # # #"),
-  # 
-  # comment("# # # # # # # # # # # # # # # # # # #", 
-  #         "Extract and match"),
-  # 
-  # action_extract_and_match("pfizer", n_matching_rounds),
-  # 
-  # action_table1("pfizer"),
+  comment("# # # # # # # # # # # # # # # # # # #",
+          "Pfizer cohort",
+          "# # # # # # # # # # # # # # # # # # #"),
+
+  comment("# # # # # # # # # # # # # # # # # # #",
+          "Extract and match"),
+
+  action_extract_and_match("pfizer", n_matching_rounds),
+
+  action_table1("pfizer"),
   # 
   # comment("# # # # # # # # # # # # # # # # # # #", 
   #         "Model"),

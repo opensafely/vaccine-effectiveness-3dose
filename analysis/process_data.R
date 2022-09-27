@@ -150,11 +150,11 @@ source(here("analysis", "process_functions.R"))
 data_processed <- data_extract %>%
   process_jcvi() %>%
   process_demographic() %>%
-  process_prebaseline() 
+  process_pre() 
 
 if (group == "treated") {
   data_processed <- data_processed %>%
-    process_outcomes()
+    process_post()
 }
 
 ## reshape vaccination data ----

@@ -50,11 +50,7 @@ known_variables <- c(
   "index_day", "pfizerstart_day", "modernastart_day", "firstpfizer_day", "firstaz_day", "firstmoderna_day"
 )
 
-sim_list_pre = lst(
-  
-  treated = bn_node(
-    ~rbernoulli(n=..n, p = 0.3),
-  ),
+sim_list_vax <- lst(
   
   first_vax_type = bn_node(~rcat(n=..n, c("pfizer","az","moderna",""), c(0.49,0.4,0.1,0.01)), keep=FALSE),
   covid_vax_pfizer_1_day = bn_node(
@@ -123,53 +119,90 @@ sim_list_pre = lst(
   covid_vax_disease_4_day = bn_node(
     ~pmin(covid_vax_pfizer_4_day, covid_vax_az_4_day, covid_vax_moderna_4_day, na.rm=TRUE),
   ),
+)
+
+sim_list_jcvi <- lst(
+  age_aug2021 = bn_node(~age),
+  
+  bmi = bn_node(
+    ~rfactor(n=..n, levels = c("Not obese", "Obese I (30-34.9)", "Obese II (35-39.9)", "Obese III (40+)"), p = c(0.5, 0.2, 0.2, 0.1)),
+  ),
+  
+  care_home_type = bn_node(
+    ~rfactor(n=..n, levels=c("Carehome", "Nursinghome", "Mixed", ""), p = c(0.01, 0.01, 0.01, 0.97))
+  ),
+  
+  care_home_tpp = bn_node(
+    ~care_home_type!=""
+  ),
+  
+  care_home_code = bn_node(
+    ~rbernoulli(n=..n, p = 0.01)
+  ),
+  
+  asthma = bn_node( ~rbernoulli(n=..n, p = 0.02)),
+  chronic_neuro_disease = bn_node( ~rbernoulli(n=..n, p = 0.02)),
+  chronic_resp_disease = bn_node( ~rbernoulli(n=..n, p = 0.02)),
+  sev_obesity = bn_node( ~rbernoulli(n=..n, p = 0.02)),
+  diabetes = bn_node( ~rbernoulli(n=..n, p = 0.02)),
+  sev_mental = bn_node( ~rbernoulli(n=..n, p = 0.02)),
+  chronic_heart_disease = bn_node( ~rbernoulli(n=..n, p = 0.02)),
+  chronic_kidney_disease = bn_node( ~rbernoulli(n=..n, p = 0.02)),
+  chronic_liver_disease = bn_node( ~rbernoulli(n=..n, p = 0.02)),
+  immunosuppressed = bn_node( ~rbernoulli(n=..n, p = 0.02)),
+  asplenia = bn_node( ~rbernoulli(n=..n, p = 0.02)),
+  learndis = bn_node( ~rbernoulli(n=..n, p = 0.02)),
+  
+  cev_ever = bn_node( ~rbernoulli(n=..n, p = 0.02)),
+  cev = bn_node( ~rbernoulli(n=..n, p = 0.02)),
+  
+  endoflife = bn_node( ~rbernoulli(n=..n, p = 0.001)),
+  housebound = bn_node( ~rbernoulli(n=..n, p = 0.001)),
+  
+)
+
+sim_list_demographic <- lst(
   
   has_follow_up_previous_6weeks = bn_node(
     ~rbernoulli(n=..n, p=0.999)
   ),
-
+  
   hscworker = bn_node(
     ~rbernoulli(n=..n, p=0.01)
   ),
-
+  
   age = bn_node(
     ~as.integer(rnorm(n=..n, mean=60, sd=15))
-  ),
-
-  age_aug2021 = bn_node(~age),
-
+  ), 
+  
   sex = bn_node(
     ~rfactor(n=..n, levels = c("F", "M"), p = c(0.51, 0.49)),
     missing_rate = ~0.001 # this is shorthand for ~(rbernoulli(n=1, p = 0.2))
   ),
-
-  bmi = bn_node(
-    ~rfactor(n=..n, levels = c("Not obese", "Obese I (30-34.9)", "Obese II (35-39.9)", "Obese III (40+)"), p = c(0.5, 0.2, 0.2, 0.1)),
-  ),
-
+  
   ethnicity = bn_node(
     ~rfactor(n=..n, levels = c(1,2,3,4,5), p = c(0.8, 0.05, 0.05, 0.05, 0.05)),
     missing_rate = ~ 0.25
   ),
-
+  
   ethnicity_6_sus = bn_node(
     ~rfactor(n=..n, levels = c(0,1,2,3,4,5), p = c(0.1, 0.7, 0.05, 0.05, 0.05, 0.05)),
     missing_rate = ~ 0
   ),
-
+  
   practice_id = bn_node(
     ~as.integer(runif(n=..n, 1, 200))
   ),
-
+  
   msoa = bn_node(
     ~factor(as.integer(runif(n=..n, 1, 100)), levels=1:100),
     missing_rate = ~ 0.005
   ),
-
+  
   stp = bn_node(
     ~factor(as.integer(runif(n=..n, 1, 36)), levels=1:36)
   ),
-
+  
   region = bn_node(
     variable_formula = ~rfactor(n=..n, levels=c(
       "North East",
@@ -183,18 +216,18 @@ sim_list_pre = lst(
       "South West"
     ), p = c(0.2, 0.2, 0.3, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05))
   ),
-
+  
   imd = bn_node(
     ~factor(plyr::round_any(runif(n=..n, 1, 32000), 100), levels=seq(0,32000,100)),
     missing_rate = ~0.02,
     keep = FALSE
   ),
-
+  
   imd_integer = bn_node(
     ~as.integer(as.character(imd)),
     keep=FALSE
   ),
-
+  
   imd_Q5 = bn_node(
     ~factor(
       case_when(
@@ -209,33 +242,20 @@ sim_list_pre = lst(
     ),
     missing_rate = ~0
   ),
-
+  
   rural_urban = bn_node(
     ~rfactor(n=..n, levels = 1:9, p = rep(1/9, 9)),
     missing_rate = ~ 0.1
   ),
+  
+  
+)
 
-  care_home_type = bn_node(
-    ~rfactor(n=..n, levels=c("Carehome", "Nursinghome", "Mixed", ""), p = c(0.01, 0.01, 0.01, 0.97))
-  ),
-
-  care_home_tpp = bn_node(
-    ~care_home_type!=""
-  ),
-
-  care_home_code = bn_node(
-    ~rbernoulli(n=..n, p = 0.01)
-  ),
-
-
-
+sim_list_pre = lst(
+  
   covid_test_0_day = bn_node(
     ~as.integer(runif(n=..n, index_day-100, index_day-1)),
     missing_rate = ~0.7
-  ),
-  covid_test_1_day = bn_node(
-    ~as.integer(runif(n=..n, index_day, index_day+100)),
-    missing_rate = ~0.6
   ),
 
   primary_care_covid_case_0_day = bn_node(
@@ -248,41 +268,6 @@ sim_list_pre = lst(
     ~as.integer(rpois(n=..n, lambda=3)),
     missing_rate = ~0
   ),
-
-
-  coviddeath_day = bn_node(
-    ~death_day,
-    missing_rate = ~0.7,
-    needs = "death_day"
-  ),
-
-  death_day = bn_node(
-    ~as.integer(runif(n=..n, index_day, index_day+100)),
-    missing_rate = ~0.99
-  ),
-
-
-  asthma = bn_node( ~rbernoulli(n=..n, p = 0.02)),
-  chronic_neuro_disease = bn_node( ~rbernoulli(n=..n, p = 0.02)),
-  chronic_resp_disease = bn_node( ~rbernoulli(n=..n, p = 0.02)),
-  sev_obesity = bn_node( ~rbernoulli(n=..n, p = 0.02)),
-  diabetes = bn_node( ~rbernoulli(n=..n, p = 0.02)),
-  sev_mental = bn_node( ~rbernoulli(n=..n, p = 0.02)),
-  chronic_heart_disease = bn_node( ~rbernoulli(n=..n, p = 0.02)),
-  chronic_kidney_disease = bn_node( ~rbernoulli(n=..n, p = 0.02)),
-  chronic_liver_disease = bn_node( ~rbernoulli(n=..n, p = 0.02)),
-  immunosuppressed = bn_node( ~rbernoulli(n=..n, p = 0.02)),
-  asplenia = bn_node( ~rbernoulli(n=..n, p = 0.02)),
-  learndis = bn_node( ~rbernoulli(n=..n, p = 0.02)),
-
-  cev_ever = bn_node( ~rbernoulli(n=..n, p = 0.02)),
-  cev = bn_node( ~rbernoulli(n=..n, p = 0.02)),
-
-  endoflife = bn_node( ~rbernoulli(n=..n, p = 0.001)),
-  housebound = bn_node( ~rbernoulli(n=..n, p = 0.001)),
-
-
-  ## pre-baseline events
 
   positive_test_0_day = bn_node(
     ~as.integer(runif(n=..n, index_day-100, index_day-1)),
@@ -326,6 +311,11 @@ sim_list_post = lst(
   dereg_day = bn_node(
     ~as.integer(runif(n=..n, index_day, index_day+120)),
     missing_rate = ~0.99
+  ),
+  
+  covid_test_1_day = bn_node(
+    ~as.integer(runif(n=..n, index_day, index_day+100)),
+    missing_rate = ~0.6
   ),
   
   ###
@@ -624,9 +614,29 @@ sim_list_post = lst(
     needs = "admitted_covid_4_day"
   ),
   
+  coviddeath_day = bn_node(
+    ~death_day,
+    missing_rate = ~0.7,
+    needs = "death_day"
+  ),
+  
+  death_day = bn_node(
+    ~as.integer(runif(n=..n, index_day, index_day+100)),
+    missing_rate = ~0.99
+  ),
+  
 )
 
-sim_list <- splice(sim_list_pre, sim_list_post)
+sim_list <- splice(
+  treated = bn_node(
+    ~rbernoulli(n=..n, p = 0.3),
+  ),
+  sim_list_vax,
+  sim_list_jcvi,
+  sim_list_demographic,
+  sim_list_pre,
+  sim_list_post
+  )
 
 bn <- bn_create(sim_list, known_variables = known_variables)
 
@@ -652,5 +662,5 @@ dummydata_processed %>% filter(treated) %>% select(-treated) %>%
 dummydata_processed %>% 
   select(-treated) %>% 
   select(-all_of(str_replace(names(sim_list_post), "_day", "_date"))) %>%
-  select(-starts_with("covid_vax")) %>%
+  select(-matches("covid_vax_\\w+_4_date")) %>%
   write_feather(sink = here("lib", "dummydata", "dummy_control_potential1.feather"))

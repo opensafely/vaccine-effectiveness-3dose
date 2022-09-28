@@ -74,7 +74,7 @@ study = StudyDefinition(
     AND
     NOT has_died
     AND 
-    covid_vax_disease_2_date
+    covid_vax_disease_3_date
     """,
     
     **inclusion_variables,    

@@ -29,10 +29,10 @@ args <- commandArgs(trailingOnly = TRUE)
 
 if (length(args) == 0) {
   # use for interactive testing
-  # group <- "treated"
-  group <- "control"
-  cohort <- "pfizer"
-  matching_round <- as.integer("1")
+  group <- "treated"
+  # group <- "control"
+  # cohort <- "pfizer"
+  # matching_round <- as.integer("1")
 } else {
   group <- args[[1]]
   
@@ -227,13 +227,39 @@ data_vax_wide = data_vax %>%
     names_glue = "covid_vax_{vax_index}_{.value}"
   )
 
+# only add variables corresponding to 4th dose if group = treated
+if (group == "treated") {
+  vax4_vars <- rlang::quos(
+    
+    vax4_type = covid_vax_4_type,
+    
+    vax4_type_descr = fct_case_when(
+      vax4_type == "pfizer" ~ "BNT162b2",
+      vax4_type == "az" ~ "ChAdOx1",
+      vax4_type == "moderna" ~ "Moderna",
+      TRUE ~ NA_character_
+    ),
+    
+    vax4_date = covid_vax_4_date,
+    
+    vax4_day = as.integer(floor((vax4_date - study_dates$index_date))+1), # day 0 is the day before "start_date"
+    
+    vax4_week = as.integer(floor((vax4_date - study_dates$index_date)/7)+1), # week 1 is days 1-7.
+  
+  )
+} else if (group == "control") {
+  vax4_vars <- rlang::quos(
+    NULL
+  )
+}
+
 data_processed <- data_processed %>%
   left_join(data_vax_wide, by ="patient_id") %>%
   mutate(
     vax1_type = covid_vax_1_type,
     vax2_type = covid_vax_2_type,
     vax3_type = covid_vax_3_type,
-    vax4_type = covid_vax_4_type,
+    
     
     vax12_type = paste0(vax1_type, "-", vax2_type),
     
@@ -257,27 +283,24 @@ data_processed <- data_processed %>%
       vax3_type == "moderna" ~ "Moderna",
       TRUE ~ NA_character_
     ),
-    vax4_type_descr = fct_case_when(
-      vax4_type == "pfizer" ~ "BNT162b2",
-      vax4_type == "az" ~ "ChAdOx1",
-      vax4_type == "moderna" ~ "Moderna",
-      TRUE ~ NA_character_
-    ),
+    
     
     vax12_type_descr = paste0(vax1_type_descr, "-", vax2_type_descr),
     
     vax1_date = covid_vax_1_date,
     vax2_date = covid_vax_2_date,
     vax3_date = covid_vax_3_date,
-    vax4_date = covid_vax_4_date,
+    
     vax1_day = as.integer(floor((vax1_date - study_dates$index_date))+1), # day 0 is the day before "start_date"
     vax2_day = as.integer(floor((vax2_date - study_dates$index_date))+1), # day 0 is the day before "start_date"
     vax3_day = as.integer(floor((vax3_date - study_dates$index_date))+1), # day 0 is the day before "start_date"
-    vax4_day = as.integer(floor((vax4_date - study_dates$index_date))+1), # day 0 is the day before "start_date"
+    
     vax1_week = as.integer(floor((vax1_date - study_dates$index_date)/7)+1), # week 1 is days 1-7.
     vax2_week = as.integer(floor((vax2_date - study_dates$index_date)/7)+1), # week 1 is days 1-7.
     vax3_week = as.integer(floor((vax3_date - study_dates$index_date)/7)+1), # week 1 is days 1-7.
-    vax4_week = as.integer(floor((vax4_date - study_dates$index_date)/7)+1), # week 1 is days 1-7.
+    
+    !!! vax4_vars
+    
   ) %>%
   select(
     -starts_with("covid_vax_"),
@@ -306,11 +329,7 @@ if (group == "treated") {
     
     no_recentcovid30 = is.na(anycovid_0_date) | ((vax3_date - anycovid_0_date) > 30),
     
-    include = (
-      include_base & 
-        has_expectedvax3type & has_vaxgap23 & vax3_notbeforestartdate &
-        no_recentcovid30
-    )
+    c5 = c4 & vax3_notbeforestartdate & vax3_beforeenddate & has_expectedvax3type & has_vaxgap23,
     
   )
   
@@ -319,18 +338,13 @@ if (group == "treated") {
   selection_group <- rlang::quos(
     
     vax3_notbeforematchingrounddate = case_when(
-      is.na(vax3_date) ~ TRUE,
-      vax3_date > matching_round_date ~ TRUE,
+      is.na(vax3_date) | (vax3_date > matching_round_date) ~ TRUE,
       TRUE ~ FALSE
     ),
     
     no_recentcovid30 = is.na(anycovid_0_date) | ((matching_round_date - anycovid_0_date) > 30),
     
-    include = (
-      include_base & 
-        vax3_notbeforematchingrounddate & 
-        no_recentcovid30
-    )
+    c5 = c4 & vax3_notbeforematchingrounddate,
     
   )
   
@@ -366,15 +380,17 @@ data_criteria <- data_processed %>%
     vax12_homologous = vax1_type==vax2_type,
     has_vaxgap12 = vax2_date >= (vax1_date+17), # at least 17 days between first two vaccinations
     
-    include_base = (
-      has_age & has_sex & has_imd & has_ethnicity & has_region & 
-        isnot_hscworker & isnot_carehomeresident & isnot_endoflife & isnot_housebound & 
-        vax1_afterfirstvaxdate &
-        vax2_beforelastvaxdate &
-        has_knownvax1 & has_knownvax2 & vax12_homologous & has_vaxgap12
-    ),
+    c0 = vax1_afterfirstvaxdate & vax2_beforelastvaxdate,
+    c1 = c0 & (has_age & has_sex & has_imd & has_ethnicity & has_region),
+    c2 = c1 & (has_vaxgap12 & has_knownvax1 & has_knownvax2 & vax12_homologous),
+    c3 = c2 & (isnot_hscworker ),
+    c4 = c3 & (isnot_carehomeresident & isnot_endoflife & isnot_housebound),
     
-    !!! selection_group
+    !!! selection_group,
+    
+    c6 = c5 & no_recentcovid30,
+    
+    include = (c0 & c1 & c2 & c3 & c4 & c5 & c6),
     
   )
 
@@ -411,17 +427,8 @@ if (group == "control") {
 if (group == "treated") {
   
   data_flowchart <- data_criteria %>%
-    transmute(
-      c0 = vax1_afterfirstvaxdate & vax2_beforelastvaxdate & vax3_notbeforestartdate,
-      #c1_1yearfup = c0_all & (has_follow_up_previous_year),
-      c1 = c0 & (has_age & has_sex & has_imd & has_ethnicity & has_region),
-      c2 = c1 & (has_vaxgap12 & has_vaxgap23 & has_knownvax1 & has_knownvax2 & vax12_homologous),
-      c3 = c2 & (isnot_hscworker ),
-      c4 = c3 & (isnot_carehomeresident & isnot_endoflife & isnot_housebound),
-      c5 = c4 & vax3_beforeenddate & has_expectedvax3type
-    ) %>%
     summarise(
-      across(.fns=sum)
+      across(matches("^c\\d"), .fns=sum)
     ) %>%
     pivot_longer(
       cols=everything(),
@@ -437,10 +444,11 @@ if (group == "treated") {
       criteria = fct_case_when(
         crit == "c0" ~ "Aged 18+ with 2nd dose on or before 31 Aug 2021", 
         crit == "c1" ~ "  with no missing demographic information",
-        crit == "c2" ~ "  with homologous primary vaccination course of pfizer or AZ",
+        crit == "c2" ~ "  with homologous primary vaccination course of pfizer or AZ and at least 17 days between doses",
         crit == "c3" ~ "  and not a HSC worker",
         crit == "c4" ~ "  and not a care/nursing home resident, end-of-life or housebound",
-        crit == "c5" ~ "  and third dose of pfizer or moderna within the study period",
+        crit == "c5" ~ "  and third dose of pfizer or moderna within the study period and at least 17 days after second dose",
+        crit == "c6" ~ "  and no evidence of covid in 30 days before third dose",
         TRUE ~ NA_character_
       )
     )

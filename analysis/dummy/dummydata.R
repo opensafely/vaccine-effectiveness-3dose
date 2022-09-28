@@ -9,6 +9,7 @@ library('glue')
 
 # remotes::install_github("https://github.com/wjchulme/dd4d")
 library('dd4d')
+source('/Users/eh1415/Documents/dd4d/R/bn_simulate.R')
 
 population_size <- 20000
 
@@ -64,11 +65,13 @@ sim_list_vax <- lst(
   ),
   covid_vax_pfizer_3_day = bn_node(
     ~as.integer(runif(n=..n, max(covid_vax_pfizer_2_day+15,pfizerstart_day), max(covid_vax_pfizer_2_day, pfizerstart_day)+100)),
+    needs = c("covid_vax_pfizer_2_day"),
     missing_rate = ~0.5
   ),
   covid_vax_pfizer_4_day = bn_node(
     ~as.integer(runif(n=..n, covid_vax_pfizer_3_day+120, covid_vax_pfizer_3_day+200)),
-    missing_rate = ~1
+    needs = c("covid_vax_pfizer_3_day"),
+    missing_rate = ~0.99
   ),
   covid_vax_az_1_day = bn_node(
     ~as.integer(runif(n=..n, firstaz_day, firstaz_day+60)),
@@ -81,11 +84,13 @@ sim_list_vax <- lst(
   ),
   covid_vax_az_3_day = bn_node(
     ~as.integer(runif(n=..n, max(covid_vax_az_2_day+15,pfizerstart_day), max(covid_vax_az_2_day,pfizerstart_day)+100)),
-    missing_rate = ~0.5
+    needs = c("covid_vax_az_2_day"),
+    missing_rate = ~0.99
   ),
   covid_vax_az_4_day = bn_node(
     ~as.integer(runif(n=..n, covid_vax_az_3_day+120, covid_vax_az_3_day+200)),
-    missing_rate = ~1
+    needs = c("covid_vax_az_3_day"),
+    missing_rate = ~0.99
   ),
   covid_vax_moderna_1_day = bn_node(
     ~as.integer(runif(n=..n, firstmoderna_day, firstmoderna_day+60)),
@@ -98,27 +103,33 @@ sim_list_vax <- lst(
   ),
   covid_vax_moderna_3_day = bn_node(
     ~as.integer(runif(n=..n, max(covid_vax_moderna_2_day+15, modernastart_day), max(covid_vax_moderna_2_day,modernastart_day)+100)),
+    needs = c("covid_vax_moderna_2_day"),
     missing_rate = ~0.5
   ),
   covid_vax_moderna_4_day = bn_node(
     ~as.integer(runif(n=..n, covid_vax_moderna_3_day+120, covid_vax_moderna_3_day+200)),
-    missing_rate = ~1
+    needs = c("covid_vax_moderna_3_day"),
+    missing_rate = ~0.99
   ),
-  
-  
-  # assumes covid_vax_disease is the same as covid_vax_any though in reality there will be slight differences
-  covid_vax_disease_1_day = bn_node(
-    ~pmin(covid_vax_pfizer_1_day, covid_vax_az_1_day, covid_vax_moderna_1_day, na.rm=TRUE),
-  ),
-  covid_vax_disease_2_day = bn_node(
-    ~pmin(covid_vax_pfizer_2_day, covid_vax_az_2_day, covid_vax_moderna_2_day, na.rm=TRUE),
-  ),
-  covid_vax_disease_3_day = bn_node(
-    ~pmin(covid_vax_pfizer_3_day, covid_vax_az_3_day, covid_vax_moderna_3_day, na.rm=TRUE),
-  ),
-  covid_vax_disease_4_day = bn_node(
-    ~pmin(covid_vax_pfizer_4_day, covid_vax_az_4_day, covid_vax_moderna_4_day, na.rm=TRUE),
-  ),
+
+
+  # # assumes covid_vax_disease is the same as covid_vax_any though in reality there will be slight differences
+  # covid_vax_disease_1_day = bn_node(
+  #   ~pmin(covid_vax_pfizer_1_day, covid_vax_az_1_day, covid_vax_moderna_1_day, na.rm=TRUE),
+  #   needs = c("covid_vax_pfizer_1_day", "covid_vax_az_1_day", "covid_vax_moderna_1_day")
+  # ),
+  # covid_vax_disease_2_day = bn_node(
+  #   ~pmin(covid_vax_pfizer_2_day, covid_vax_az_2_day, covid_vax_moderna_2_day, na.rm=TRUE),
+  #   needs = c("covid_vax_pfizer_2_day", "covid_vax_az_2_day", "covid_vax_moderna_2_day")
+  # ),
+  # covid_vax_disease_3_day = bn_node(
+  #   ~pmin(covid_vax_pfizer_3_day, covid_vax_az_3_day, covid_vax_moderna_3_day, na.rm=TRUE),
+  #   needs = c("covid_vax_pfizer_3_day", "covid_vax_az_3_day", "covid_vax_moderna_3_day")
+  # ),
+  # covid_vax_disease_4_day = bn_node(
+  #   ~pmin(covid_vax_pfizer_4_day, covid_vax_az_4_day, covid_vax_moderna_4_day, na.rm=TRUE),
+  #   needs = c("covid_vax_pfizer_4_day", "covid_vax_az_4_day", "covid_vax_moderna_4_day")
+  # ),
 )
 
 sim_list_jcvi <- lst(
@@ -628,9 +639,6 @@ sim_list_post = lst(
 )
 
 sim_list <- splice(
-  treated = bn_node(
-    ~rbernoulli(n=..n, p = 0.3),
-  ),
   sim_list_vax,
   sim_list_jcvi,
   sim_list_demographic,
@@ -646,7 +654,28 @@ bn <- bn_create(sim_list, known_variables = known_variables)
 set.seed(10)
 dummydata <-bn_simulate(bn, pop_size = population_size, keep_all = FALSE, .id="patient_id")
 
+# create covid_vax_disease variables, as the dependencies are difficult to specify using bn_node
+dummydata_vax <- dummydata %>% 
+  select(patient_id, starts_with("covid_vax")) %>% 
+  # select(-starts_with("covid_vax_disease")) %>%
+  pivot_longer(
+    cols = -patient_id,
+    values_drop_na = TRUE
+  ) %>%
+  group_by(patient_id) %>%
+  mutate(sequence = rank(value, ties = "random")) %>%
+  ungroup() %>%
+  filter(sequence<=4) %>%
+  select(-name) %>%
+  pivot_wider(
+    names_from = sequence,
+    names_glue = "covid_vax_disease_{sequence}_day",
+    values_from = value
+  )
+
+
 dummydata_processed <- dummydata %>%
+  left_join(dummydata_vax, by = "patient_id") %>%
   #convert logical to integer as study defs output 0/1 not TRUE/FALSE
   #mutate(across(where(is.logical), ~ as.integer(.))) %>%
   #convert integer days to dates since index date and rename vars
@@ -656,11 +685,13 @@ dummydata_processed <- dummydata %>%
 ###################
 fs::dir_create(here("lib", "dummydata"))
 
-dummydata_processed %>% filter(treated) %>% select(-treated) %>%
+dummydata_processed %>% 
+  filter(!is.na(covid_vax_disease_3_date)) %>% 
   write_feather(sink = here("lib", "dummydata", "dummy_treated.feather"))
 
+
 dummydata_processed %>% 
-  select(-treated) %>% 
+  mutate(across(patient_id, ~as.integer(seq(population_size+1, 2*population_size, 1)))) %>%
   select(-all_of(str_replace(names(sim_list_post), "_day", "_date"))) %>%
   select(-matches("covid_vax_\\w+_4_date")) %>%
   write_feather(sink = here("lib", "dummydata", "dummy_control_potential1.feather"))

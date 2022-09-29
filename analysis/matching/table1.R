@@ -29,7 +29,7 @@ args <- commandArgs(trailingOnly=TRUE)
 if(length(args)==0){
   # use for interactive testing
   removeobjects <- FALSE
-  cohort <- "over12"
+  cohort <- "pfizer"
 } else {
   #FIXME replace with actual eventual action variables
   removeobjects <- TRUE
@@ -40,8 +40,6 @@ if(length(args)==0){
 ## get cohort-specific parameters study dates and parameters ----
 
 dates <- map(study_dates[[cohort]], as.Date)
-params <- study_params[[cohort]]
-
 
 
 ## create output directories ----
@@ -62,7 +60,7 @@ data_treatedeligible_matchstatus <- read_rds(here("output", cohort, "match", "da
 # matching coverage for boosted people
 data_coverage <-
   data_treatedeligible_matchstatus %>%
-  group_by(vax1_date) %>%
+  group_by(vax3_date) %>%
   summarise(
     n_eligible = n(),
     n_matched = sum(matched, na.rm=TRUE),
@@ -76,14 +74,14 @@ data_coverage <-
     names_prefix = "n_",
     values_to = "n"
   ) %>%
-  arrange(vax1_date, status) %>%
-  group_by(vax1_date, status) %>%
+  arrange(vax3_date, status) %>%
+  group_by(vax3_date, status) %>%
   summarise(
     n = sum(n),
   ) %>%
   group_by(status) %>%
   complete(
-    vax1_date = full_seq(c(dates$start_date, dates$end_date), 1), # go X days before to
+    vax3_date = full_seq(c(dates$start_date, dates$end_date), 1), # go X days before to
     fill = list(n=0)
   ) %>%
   mutate(
@@ -94,7 +92,7 @@ data_coverage <-
     status = factor(status, levels=c("unmatched", "matched")),
     status_descr = fct_recoderelevel(status, recoder$status)
   ) %>%
-  arrange(status_descr, vax1_date)
+  arrange(status_descr, vax3_date)
 
 
 
@@ -120,10 +118,16 @@ var_labels <- list(
   N  ~ "Total N",
   treated ~ "Status",
   age ~ "Age",
+  jcvi_ageband ~ "JCVI ageband",
   sex ~ "Sex",
   #ethnicity_combined ~ "Ethnicity",
   imd_Q5 ~ "Deprivation",
   region ~ "Region",
+  
+  cev_cv ~ "Clinically vulnerable",
+  
+  vax12_type ~ "Primary course vaccine type",
+  vax2_day ~ "Day of second dose",
   
   #prior_tests_cat ~ "Number of SARS-CoV-2 tests",
   prior_covid_infection ~ "Prior documented SARS-CoV-2 infection"

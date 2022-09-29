@@ -5,23 +5,25 @@ library('arrow')
 library('here')
 library('glue')
 
-#source(here("analysis", "lib", "utility_functions.R"))
+source(here("lib", "functions", "utility.R"))
 
 # remotes::install_github("https://github.com/wjchulme/dd4d")
 library('dd4d')
 source('/Users/eh1415/Documents/dd4d/R/bn_simulate.R')
 
+source(here("analysis", "design.R"))
+
 population_size <- 20000
 
-# get nth largest value from list, from https://stackoverflow.com/a/21005136/4269699
-nthmax <- function(x, n=1){
-  len <- length(x)
-  if(n>len){
-    warning('n greater than length(x).  Setting n=length(x)')
-    n <- length(x)
-  }
-  sort(x,partial=len-n+1)[len-n+1]
-}
+# # get nth largest value from list, from https://stackoverflow.com/a/21005136/4269699
+# nthmax <- function(x, n=1){
+#   len <- length(x)
+#   if(n>len){
+#     warning('n greater than length(x).  Setting n=length(x)')
+#     n <- length(x)
+#   }
+#   sort(x,partial=len-n+1)[len-n+1]
+# }
 
 # import globally defined repo variables from
 study_dates <- jsonlite::read_json(
@@ -35,7 +37,7 @@ firstpfizer_date <- as.Date(study_dates$firstpfizer_date)
 firstaz_date <- as.Date(study_dates$firstaz_date)
 firstmoderna_date <- as.Date(study_dates$firstmoderna_date)
 
-index_date <- firstpfizer_date
+index_date <- as.Date(study_dates$index_date)
 
 index_day <- 0L
 pfizerstart_day <- as.integer(pfizerstart_date - index_date)
@@ -112,24 +114,6 @@ sim_list_vax <- lst(
     missing_rate = ~0.99
   ),
 
-
-  # # assumes covid_vax_disease is the same as covid_vax_any though in reality there will be slight differences
-  # covid_vax_disease_1_day = bn_node(
-  #   ~pmin(covid_vax_pfizer_1_day, covid_vax_az_1_day, covid_vax_moderna_1_day, na.rm=TRUE),
-  #   needs = c("covid_vax_pfizer_1_day", "covid_vax_az_1_day", "covid_vax_moderna_1_day")
-  # ),
-  # covid_vax_disease_2_day = bn_node(
-  #   ~pmin(covid_vax_pfizer_2_day, covid_vax_az_2_day, covid_vax_moderna_2_day, na.rm=TRUE),
-  #   needs = c("covid_vax_pfizer_2_day", "covid_vax_az_2_day", "covid_vax_moderna_2_day")
-  # ),
-  # covid_vax_disease_3_day = bn_node(
-  #   ~pmin(covid_vax_pfizer_3_day, covid_vax_az_3_day, covid_vax_moderna_3_day, na.rm=TRUE),
-  #   needs = c("covid_vax_pfizer_3_day", "covid_vax_az_3_day", "covid_vax_moderna_3_day")
-  # ),
-  # covid_vax_disease_4_day = bn_node(
-  #   ~pmin(covid_vax_pfizer_4_day, covid_vax_az_4_day, covid_vax_moderna_4_day, na.rm=TRUE),
-  #   needs = c("covid_vax_pfizer_4_day", "covid_vax_az_4_day", "covid_vax_moderna_4_day")
-  # ),
 )
 
 sim_list_jcvi <- lst(
@@ -685,13 +669,47 @@ dummydata_processed <- dummydata %>%
 ###################
 fs::dir_create(here("lib", "dummydata"))
 
+# dummy_treated
 dummydata_processed %>% 
   filter(!is.na(covid_vax_disease_3_date)) %>% 
   write_feather(sink = here("lib", "dummydata", "dummy_treated.feather"))
 
-
+# dummy_control_potential1 (reused for actual)
 dummydata_processed %>% 
-  mutate(across(patient_id, ~as.integer(seq(population_size+1, 2*population_size, 1)))) %>%
   select(-all_of(str_replace(names(sim_list_post), "_day", "_date"))) %>%
   select(-matches("covid_vax_\\w+_4_date")) %>%
   write_feather(sink = here("lib", "dummydata", "dummy_control_potential1.feather"))
+
+# dummy_control_final_{cohort}
+for (cohort in c("pfizer", "moderna")) {
+  path_data_matchstatus_allrounds <- ghere("output", cohort, "matchround{n_matching_rounds}", "actual", "data_matchstatus_allrounds.rds")
+  check_exists <- file.exists(path_data_matchstatus_allrounds)
+  if (check_exists) {
+    
+    data_matchstatus <- read_rds(ghere("output", cohort, "matchround{n_matching_rounds}", "actual", "data_matchstatus_allrounds.rds")) %>% filter(treated==0L)
+    
+    # import all datasets of matched controls, including matching variables
+    data_matchedcontrols <- 
+      map_dfr(
+        seq_len(n_matching_rounds), 
+        ~{read_rds(ghere("output", cohort, glue("matchround", .x), "actual", glue("data_successful_matchedcontrols.rds")))},
+        .id="matching_round"
+      ) %>%
+      select(
+        # select variables with_value_from_file
+        patient_id, trial_date, match_id,
+      )
+    
+    data_matchedcontrols %>%
+      left_join(
+        dummydata_processed %>% 
+          select(patient_id, all_of(str_replace(names(sim_list_post), "_day", "_date"))) 
+      ) %>%
+      write_feather(sink = ghere("lib", "dummydata", "dummy_control_final_{cohort}.feather"))
+    
+  } else {
+   print(glue("Cannot generate dummy_controlfinal_{cohort}.feather as {path_data_matchstatus_allrounds} does not exist.")) 
+  }
+}
+
+

@@ -183,10 +183,10 @@ local({
           select(
             patient_id, 
             treated,
-            all_of(
-              exact_variables#, 
-              #names(caliper_variables)
-            ),
+            all_of(c(
+              exact_variables, 
+              names(caliper_variables)
+              )),
         ),
         by = c("patient_id", "treated")
       )
@@ -203,7 +203,7 @@ local({
         replace = FALSE,
         estimand = "ATT",
         exact = exact_variables,
-       # caliper = caliper_variables, std.caliper=FALSE,
+        caliper = caliper_variables, std.caliper=FALSE,
         m.order = "data", # data is sorted on (effectively random) patient ID
         #verbose = TRUE,
         ratio = 1L # 1:1 matching

@@ -23,29 +23,40 @@ source(here("analysis", "design.R"))
 
 source(here("lib", "functions", "utility.R"))
 
+source(here("analysis", "process_functions.R"))
+
 ## import command-line arguments ----
 
 args <- commandArgs(trailingOnly = TRUE)
 
 if (length(args) == 0) {
   # use for interactive testing
-  group <- "treated"
-  # group <- "control"
-  # cohort <- "pfizer"
+  # stage <- "treated"
+  # stage <- "potential"
+  # stage <- "actual"
+  stage <- "final"
+  cohort <- "pfizer"
   # matching_round <- as.integer("1")
 } else {
-  group <- args[[1]]
+  stage <- args[[1]]
   
-  if (group == "treated") {
+  if (stage == "treated") {
     if (length(args) > 1) 
-      stop("No additional args to be specified when `group=\"treated\"")
-  } else if (group == "control") {
+      stop("No additional args to be specified when `stage=\"treated\"")
+  } else if (stage %in% c("potential", "actual")) {
     if (length(args) == 1) {
-      stop("`cohort` and `matching_round` must be specified when `group=\"control\"`")
+      stop("`cohort` and `matching_round` must be specified when `stage=\"potential\"` or \"actual\"")
     }
     
     cohort <- args[[2]] # NULL if treated
     matching_round <- as.integer(args[[3]]) # NULL if treated    
+    
+  } else if (stage == "final") {
+    if (length(args) == 1) {
+      stop("`cohort` must be specified when `stage=\"final\"`")
+    }
+    
+    cohort <- args[[2]] # NULL if treated
     
   }
 } 
@@ -56,21 +67,32 @@ dates_general <- map(study_dates[lens==1], as.Date)
 dates_cohort <- map(study_dates[lens==3], ~map(.x, as.Date))
 study_dates <- splice(dates_general, dates_cohort)[names(study_dates)]
 
-if (group == "control") {
+if (stage == "potential") {
   matching_round_date <- study_dates[[cohort]]$control_extract_dates[matching_round]
 }
 
 ## create output directory ----
-if (group == "treated") {
+if (stage == "treated") {
   fs::dir_create(here("output", "pfizer", "treated"))
   fs::dir_create(here("output", "moderna", "treated"))
   fs::dir_create(here("output", "treated", "eligible"))
-} else if (group == "control") {
+} else if (stage == "potential") {
   fs::dir_create(ghere("output", cohort, "matchround{matching_round}", "process"))
-} 
+} else if (stage == "actual") {
+  fs::dir_create(ghere("output", cohort, "matchround{matching_round}", "actual"))
+} else if (stage == "final") {
+  fs::dir_create(ghere("output", cohort, "match"))
+}
 
 
 # import data ----
+
+if (stage == "actual") {
+  ## trial info for potential matches in round X
+  data_potential_matchstatus <- 
+    read_rds(ghere("output", cohort, "matchround{matching_round}", "potential", "data_potential_matchstatus.rds")) %>% 
+    filter(matched==1L)
+}
 
 # use externally created dummy data if not running in the server
 # check variables are as they should be
@@ -79,12 +101,15 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
   # ideally in future this will check column existence and types from metadata,
   # rather than from a cohort-extractor-generated dummy data
   
-  if (group == "treated") {
+  if (stage == "treated") {
     studydef_path <- here("output", "treated", "extract", "input_treated.feather")
     custom_path <- here("lib", "dummydata", "dummy_treated.feather")
-  } else if (group == "control") {
+  } else if (stage %in% c("potential", "actual")) {
     studydef_path <- ghere("output", cohort, "matchround{matching_round}", "extract", "input_controlpotential.feather")
     custom_path <- here("lib", "dummydata", "dummy_control_potential1.feather")
+  }  else if (stage == "final") {
+    studydef_path <- ghere("output", cohort, "extract", "input_controlfinal.feather")
+    custom_path <- ghere("lib", "dummydata", "dummy_control_final_{cohort}.feather")
   }
   
   data_studydef_dummy <- read_feather(studydef_path) %>%
@@ -93,11 +118,24 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
     # because of a bug in cohort extractor -- remove once pulled new version
     mutate(patient_id = as.integer(patient_id))
   
-  data_custom_dummy <- read_feather(custom_path) %>%
-    mutate(
-      msoa = sample(factor(c("1", "2")), size=n(), replace=TRUE) # override msoa so matching success more likely
-    )
+  data_custom_dummy <- read_feather(custom_path) 
   
+  if (stage != "final") {
+    data_custom_dummy <- data_custom_dummy %>%
+      mutate(
+        msoa = sample(factor(c("1", "2")), size=n(), replace=TRUE) # override msoa so matching success more likely
+      )
+  }
+  
+  if (stage == "actual") {
+    # reuse previous extraction for dummy run, dummy_control_potential1.feather
+    data_custom_dummy <- data_custom_dummy %>%
+      filter(patient_id %in% data_potential_matchstatus[(data_potential_matchstatus$treated==0L),]$patient_id) %>%
+      # change a few variables to simulate new index dates
+      mutate(
+        region = if_else(runif(n())<0.05, sample(x=unique(region), size=n(), replace=TRUE), region),
+      ) 
+  }
   
   not_in_studydef <- names(data_custom_dummy)[!( names(data_custom_dummy) %in% names(data_studydef_dummy) )]
   not_in_custom  <- names(data_studydef_dummy)[!( names(data_studydef_dummy) %in% names(data_custom_dummy) )]
@@ -134,183 +172,317 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
   )
   
   data_extract <- data_custom_dummy 
+  
+  if (stage == "actual") {
+    data_extract <- data_extract %>%
+      # these variables are not included in the dummy data so join them on here
+      # they're joined in the study def using `with_values_from_file`
+      left_join(data_potential_matchstatus %>% filter(treated==0L), by=c("patient_id")) %>%
+      # remove vax variables
+      select(-starts_with("covid_vax"))
+  }
+  
 } else {
-  data_extract <- read_feather(ghere("output", "treated", "extract", "input_treated.feather")) %>%
-    #because date types are not returned consistently by cohort extractor
-    mutate(across(ends_with("_date"),  as.Date))
+  
+  if (stage == "treated") {
+    
+    data_extract <- read_feather(ghere("output", "treated", "extract", "input_treated.feather")) %>%
+      #because date types are not returned consistently by cohort extractor
+      mutate(across(ends_with("_date"),  as.Date))
+    
+  } else if (stage == "potential") {
+    
+    data_extract <- read_feather(ghere("output", cohort, "matchround{matching_round}", "extract", "input_controlpotential.feather")) %>%
+      # because date types are not returned consistently by cohort extractor
+      mutate(across(ends_with("_date"), as.Date))
+    
+  } else if (stage == "actual") {
+    
+    data_extract <- read_feather(ghere("output", cohort, "matchround{matching_round}", "extract", glue("input_controlactual.feather"))) %>%
+      #because date types are not returned consistently by cohort extractor
+      mutate(across(ends_with("_date"),  as.Date)) %>% 
+      mutate(treated=0L) %>%
+      # these variables are not included in the dummy data so join them on here
+      # they're joined in the study def using `with_values_from_file`
+      left_join(data_potential_matchstatus %>% filter(treated==0L), by=c("patient_id", "treated", "trial_date", "match_id"))
+    
+  } else if (stage == "final") {
+    
+    data_extract <- read_feather(ghere("output", cohort, "extract", "input_controlfinal.feather")) %>%
+      #because date types are not returned consistently by cohort extractor
+      mutate(across(ends_with("_date"),  as.Date))
+    
+  }
+  
 }
+
+# process the final dataset ----
+if (stage == "final") {
+  
+  data_matchstatus <- read_rds(ghere("output", cohort, "matchround{n_matching_rounds}", "actual", "data_matchstatus_allrounds.rds"))
+  
+  # import data for treated group and select those who were successfully matched
+  data_treatedeligible <- read_rds(ghere("output", cohort, "treated", "data_treatedeligible.rds"))
+  
+  data_treated <- 
+    left_join(
+      data_matchstatus %>% filter(treated==1L),
+      data_treatedeligible,
+      by="patient_id"
+    ) 
+  
+  # import final dataset of matched controls, including matching variables
+  # alternative to this is re-extracting everything in the study definition
+  data_control <- 
+    data_matchstatus %>% filter(treated==0L) %>%
+    left_join(
+      map_dfr(
+        seq_len(n_matching_rounds), 
+        ~{read_rds(ghere("output", cohort, glue("matchround", .x), "actual", "data_successful_matchedcontrols.rds"))}
+      ) %>% select(-match_id, -trial_date, -treated, -controlistreated_date), # remove to avoid clash with already-stored variables
+      by=c("patient_id")
+    ) %>%
+    # merge with outcomes data
+    left_join(
+      data_extract,
+      by=c("patient_id", "match_id", "trial_date")
+    ) %>%
+    mutate(
+      treated=0L
+    )
+  
+  # check final data agrees with matching status
+  
+  all(data_control$patient_id %in% (data_matchstatus %>% filter(treated==0L) %>% pull(patient_id)))
+  all((data_matchstatus %>% filter(treated==0L) %>% pull(patient_id)) %in% data_control$patient_id)
+  
+  
+  # merge treated and control groups
+  data_matched <-
+    bind_rows(
+      data_treated,
+      data_control %>% process_post() # process the post-baseline variables (done previously for data_treated)
+    ) 
+  
+  write_rds(data_matched, here("output", cohort, "match", glue("data_matched.rds")), compress="gz")
+  
+  # matching status of all treated, eligible people ----
+  
+  data_treatedeligible_matchstatus <- 
+    left_join(
+      data_treatedeligible %>% select(patient_id, vax3_date),
+      data_matchstatus %>% filter(treated==1L),
+      by="patient_id"
+    ) %>%
+    mutate(
+      matched = if_else(is.na(match_id), 0L, 1L),
+      treated = if_else(is.na(match_id), 1L, treated),
+    )
+  
+  print(
+    glue(
+      "all trial dates match vaccination dates for matched, treated people: ",
+      data_treatedeligible_matchstatus %>% 
+        filter(matched==1L) %>%
+        mutate(
+          agree = trial_date==vax3_date
+        ) %>% pull(agree) %>% all()
+    )
+  )
+  
+  write_rds(data_treatedeligible_matchstatus, here("output", cohort, "match", "data_treatedeligible_matchstatus.rds"), compress="gz")
+  
+} 
+
+# script stops here when stage = "final"
 
 
 # process data -----
 
 ## patient-level info ----
 
-source(here("analysis", "process_functions.R"))
+if (stage %in% c("treated", "potential", "actual")) {
+  data_processed <- data_extract %>%
+    process_jcvi() %>%
+    process_demographic() %>%
+    process_pre() 
+}
 
-data_processed <- data_extract %>%
-  process_jcvi() %>%
-  process_demographic() %>%
-  process_pre() 
-
-if (group == "treated") {
+if (stage == "treated") {
   data_processed <- data_processed %>%
     process_post()
 }
 
 ## reshape vaccination data ----
 
-data_vax <- local({
+if (stage %in% c("treated", "potential")) {
   
-  data_vax_pfizer <- data_processed %>%
-    select(patient_id, matches("covid\\_vax\\_pfizer\\_\\d+\\_date")) %>%
-    pivot_longer(
-      cols = -patient_id,
-      names_to = c(NA, "vax_pfizer_index"),
-      names_pattern = "^(.*)_(\\d+)_date",
-      values_to = "date",
-      values_drop_na = TRUE
-    ) %>%
-    arrange(patient_id, date)
+  data_vax <- local({
+    
+    data_vax_pfizer <- data_processed %>%
+      select(patient_id, matches("covid\\_vax\\_pfizer\\_\\d+\\_date")) %>%
+      pivot_longer(
+        cols = -patient_id,
+        names_to = c(NA, "vax_pfizer_index"),
+        names_pattern = "^(.*)_(\\d+)_date",
+        values_to = "date",
+        values_drop_na = TRUE
+      ) %>%
+      arrange(patient_id, date)
+    
+    data_vax_az <- data_processed %>%
+      select(patient_id, matches("covid\\_vax\\_az\\_\\d+\\_date")) %>%
+      pivot_longer(
+        cols = -patient_id,
+        names_to = c(NA, "vax_az_index"),
+        names_pattern = "^(.*)_(\\d+)_date",
+        values_to = "date",
+        values_drop_na = TRUE
+      ) %>%
+      arrange(patient_id, date)
+    
+    data_vax_moderna <- data_processed %>%
+      select(patient_id, matches("covid\\_vax\\_moderna\\_\\d+\\_date")) %>%
+      pivot_longer(
+        cols = -patient_id,
+        names_to = c(NA, "vax_moderna_index"),
+        names_pattern = "^(.*)_(\\d+)_date",
+        values_to = "date",
+        values_drop_na = TRUE
+      ) %>%
+      arrange(patient_id, date)
+    
+    
+    data_vax <-
+      data_vax_pfizer %>%
+      full_join(data_vax_az, by=c("patient_id", "date")) %>%
+      full_join(data_vax_moderna, by=c("patient_id", "date")) %>%
+      mutate(
+        type = fct_case_when(
+          (!is.na(vax_az_index)) & is.na(vax_pfizer_index) & is.na(vax_moderna_index) ~ "az",
+          is.na(vax_az_index) & (!is.na(vax_pfizer_index)) & is.na(vax_moderna_index) ~ "pfizer",
+          is.na(vax_az_index) & is.na(vax_pfizer_index) & (!is.na(vax_moderna_index)) ~ "moderna",
+          (!is.na(vax_az_index)) + (!is.na(vax_pfizer_index)) + (!is.na(vax_moderna_index)) > 1 ~ "duplicate",
+          TRUE ~ NA_character_
+        )
+      ) %>%
+      arrange(patient_id, date) %>%
+      group_by(patient_id) %>%
+      mutate(
+        vax_index=row_number()
+      ) %>%
+      ungroup()
+    
+    data_vax
+    
+  })
   
-  data_vax_az <- data_processed %>%
-    select(patient_id, matches("covid\\_vax\\_az\\_\\d+\\_date")) %>%
-    pivot_longer(
-      cols = -patient_id,
-      names_to = c(NA, "vax_az_index"),
-      names_pattern = "^(.*)_(\\d+)_date",
-      values_to = "date",
-      values_drop_na = TRUE
-    ) %>%
-    arrange(patient_id, date)
+  data_vax_wide = data_vax %>%
+    pivot_wider(
+      id_cols= patient_id,
+      names_from = c("vax_index"),
+      values_from = c("date", "type"),
+      names_glue = "covid_vax_{vax_index}_{.value}"
+    )
   
-  data_vax_moderna <- data_processed %>%
-    select(patient_id, matches("covid\\_vax\\_moderna\\_\\d+\\_date")) %>%
-    pivot_longer(
-      cols = -patient_id,
-      names_to = c(NA, "vax_moderna_index"),
-      names_pattern = "^(.*)_(\\d+)_date",
-      values_to = "date",
-      values_drop_na = TRUE
-    ) %>%
-    arrange(patient_id, date)
-  
-  
-  data_vax <-
-    data_vax_pfizer %>%
-    full_join(data_vax_az, by=c("patient_id", "date")) %>%
-    full_join(data_vax_moderna, by=c("patient_id", "date")) %>%
-    mutate(
-      type = fct_case_when(
-        (!is.na(vax_az_index)) & is.na(vax_pfizer_index) & is.na(vax_moderna_index) ~ "az",
-        is.na(vax_az_index) & (!is.na(vax_pfizer_index)) & is.na(vax_moderna_index) ~ "pfizer",
-        is.na(vax_az_index) & is.na(vax_pfizer_index) & (!is.na(vax_moderna_index)) ~ "moderna",
-        (!is.na(vax_az_index)) + (!is.na(vax_pfizer_index)) + (!is.na(vax_moderna_index)) > 1 ~ "duplicate",
+  # only add variables corresponding to 4th dose if stage = treated
+  if (stage == "treated") {
+    vax4_vars <- rlang::quos(
+      
+      vax4_type = covid_vax_4_type,
+      
+      vax4_type_descr = fct_case_when(
+        vax4_type == "pfizer" ~ "BNT162b2",
+        vax4_type == "az" ~ "ChAdOx1",
+        vax4_type == "moderna" ~ "Moderna",
         TRUE ~ NA_character_
-      )
-    ) %>%
-    arrange(patient_id, date) %>%
-    group_by(patient_id) %>%
+      ),
+      
+      vax4_date = covid_vax_4_date,
+      
+      vax4_day = as.integer(floor((vax4_date - study_dates$index_date))+1), # day 0 is the day before "start_date"
+      
+      vax4_week = as.integer(floor((vax4_date - study_dates$index_date)/7)+1), # week 1 is days 1-7.
+      
+    )
+  } else if (stage == "potential") {
+    vax4_vars <- rlang::quos(
+      NULL
+    )
+  }
+  
+  data_processed <- data_processed %>%
+    left_join(data_vax_wide, by ="patient_id") %>%
     mutate(
-      vax_index=row_number()
+      vax1_type = covid_vax_1_type,
+      vax2_type = covid_vax_2_type,
+      vax3_type = covid_vax_3_type,
+      
+      
+      vax12_type = paste0(vax1_type, "-", vax2_type),
+      
+      
+      
+      vax1_type_descr = fct_case_when(
+        vax1_type == "pfizer" ~ "BNT162b2",
+        vax1_type == "az" ~ "ChAdOx1",
+        vax1_type == "moderna" ~ "Moderna",
+        TRUE ~ NA_character_
+      ),
+      vax2_type_descr = fct_case_when(
+        vax2_type == "pfizer" ~ "BNT162b2",
+        vax2_type == "az" ~ "ChAdOx1",
+        vax2_type == "moderna" ~ "Moderna",
+        TRUE ~ NA_character_
+      ),
+      vax3_type_descr = fct_case_when(
+        vax3_type == "pfizer" ~ "BNT162b2",
+        vax3_type == "az" ~ "ChAdOx1",
+        vax3_type == "moderna" ~ "Moderna",
+        TRUE ~ NA_character_
+      ),
+      
+      
+      vax12_type_descr = paste0(vax1_type_descr, "-", vax2_type_descr),
+      
+      vax1_date = covid_vax_1_date,
+      vax2_date = covid_vax_2_date,
+      vax3_date = covid_vax_3_date,
+      
+      vax1_day = as.integer(floor((vax1_date - study_dates$index_date))+1), # day 0 is the day before "start_date"
+      vax2_day = as.integer(floor((vax2_date - study_dates$index_date))+1), # day 0 is the day before "start_date"
+      vax3_day = as.integer(floor((vax3_date - study_dates$index_date))+1), # day 0 is the day before "start_date"
+      
+      vax1_week = as.integer(floor((vax1_date - study_dates$index_date)/7)+1), # week 1 is days 1-7.
+      vax2_week = as.integer(floor((vax2_date - study_dates$index_date)/7)+1), # week 1 is days 1-7.
+      vax3_week = as.integer(floor((vax3_date - study_dates$index_date)/7)+1), # week 1 is days 1-7.
+      
+      !!! vax4_vars
+      
     ) %>%
-    ungroup()
+    select(
+      -starts_with("covid_vax_"),
+    ) 
   
-  data_vax
+} else if (stage == "actual") {
   
-})
-
-data_vax_wide = data_vax %>%
-  pivot_wider(
-    id_cols= patient_id,
-    names_from = c("vax_index"),
-    values_from = c("date", "type"),
-    names_glue = "covid_vax_{vax_index}_{.value}"
-  )
-
-# only add variables corresponding to 4th dose if group = treated
-if (group == "treated") {
-  vax4_vars <- rlang::quos(
-    
-    vax4_type = covid_vax_4_type,
-    
-    vax4_type_descr = fct_case_when(
-      vax4_type == "pfizer" ~ "BNT162b2",
-      vax4_type == "az" ~ "ChAdOx1",
-      vax4_type == "moderna" ~ "Moderna",
-      TRUE ~ NA_character_
-    ),
-    
-    vax4_date = covid_vax_4_date,
-    
-    vax4_day = as.integer(floor((vax4_date - study_dates$index_date))+1), # day 0 is the day before "start_date"
-    
-    vax4_week = as.integer(floor((vax4_date - study_dates$index_date)/7)+1), # week 1 is days 1-7.
+  ### join to vax data
+  data_vax_wide <- 
+    read_rds(ghere("output", cohort, "matchround{matching_round}", "process", "data_controlpotential.rds")) %>%
+    select(patient_id, matches("^vax\\d"))
   
-  )
-} else if (group == "control") {
-  vax4_vars <- rlang::quos(
-    NULL
-  )
+  data_processed <- data_processed %>%
+    left_join(data_vax_wide, by = "patient_id")
+  
 }
 
-data_processed <- data_processed %>%
-  left_join(data_vax_wide, by ="patient_id") %>%
-  mutate(
-    vax1_type = covid_vax_1_type,
-    vax2_type = covid_vax_2_type,
-    vax3_type = covid_vax_3_type,
-    
-    
-    vax12_type = paste0(vax1_type, "-", vax2_type),
-    
-    
-    
-    vax1_type_descr = fct_case_when(
-      vax1_type == "pfizer" ~ "BNT162b2",
-      vax1_type == "az" ~ "ChAdOx1",
-      vax1_type == "moderna" ~ "Moderna",
-      TRUE ~ NA_character_
-    ),
-    vax2_type_descr = fct_case_when(
-      vax2_type == "pfizer" ~ "BNT162b2",
-      vax2_type == "az" ~ "ChAdOx1",
-      vax2_type == "moderna" ~ "Moderna",
-      TRUE ~ NA_character_
-    ),
-    vax3_type_descr = fct_case_when(
-      vax3_type == "pfizer" ~ "BNT162b2",
-      vax3_type == "az" ~ "ChAdOx1",
-      vax3_type == "moderna" ~ "Moderna",
-      TRUE ~ NA_character_
-    ),
-    
-    
-    vax12_type_descr = paste0(vax1_type_descr, "-", vax2_type_descr),
-    
-    vax1_date = covid_vax_1_date,
-    vax2_date = covid_vax_2_date,
-    vax3_date = covid_vax_3_date,
-    
-    vax1_day = as.integer(floor((vax1_date - study_dates$index_date))+1), # day 0 is the day before "start_date"
-    vax2_day = as.integer(floor((vax2_date - study_dates$index_date))+1), # day 0 is the day before "start_date"
-    vax3_day = as.integer(floor((vax3_date - study_dates$index_date))+1), # day 0 is the day before "start_date"
-    
-    vax1_week = as.integer(floor((vax1_date - study_dates$index_date)/7)+1), # week 1 is days 1-7.
-    vax2_week = as.integer(floor((vax2_date - study_dates$index_date)/7)+1), # week 1 is days 1-7.
-    vax3_week = as.integer(floor((vax3_date - study_dates$index_date)/7)+1), # week 1 is days 1-7.
-    
-    !!! vax4_vars
-    
-  ) %>%
-  select(
-    -starts_with("covid_vax_"),
-  ) 
+
 
 
 ####################################################################################
 
-if (group == "treated") {
-  selection_group <- rlang::quos(
+if (stage == "treated") {
+  selection_stage <- rlang::quos(
     
     has_expectedvax3type = vax3_type %in% c("pfizer", "moderna"),
     
@@ -333,9 +505,9 @@ if (group == "treated") {
     
   )
   
-} else if (group == "control") {
+} else if (stage == "potential") {
   
-  selection_group <- rlang::quos(
+  selection_stage <- rlang::quos(
     
     vax3_notbeforematchingrounddate = case_when(
       is.na(vax3_date) | (vax3_date > matching_round_date) ~ TRUE,
@@ -348,9 +520,26 @@ if (group == "treated") {
     
   )
   
+} else if (stage == "actual") {
+  
+  selection_stage <- rlang::quos(
+    
+    vax3_notbeforetrial_date = case_when(
+      is.na(vax3_date) | (vax3_date > trial_date) ~ TRUE,
+      TRUE ~ FALSE
+    ),
+    
+    no_recentcovid30 = is.na(anycovid_0_date) | ((trial_date - anycovid_0_date) > 30),
+    
+    c5 = c4 & vax3_notbeforetrial_date,
+    
+  )
+  
 }
 
 # Define selection criteria ----
+if (stage %in% c("treated", "potential", "actual")) {
+  
 data_criteria <- data_processed %>%
   transmute(
     
@@ -386,7 +575,7 @@ data_criteria <- data_processed %>%
     c3 = c2 & isnot_hscworker,
     c4 = c3 & isnot_carehomeresident & isnot_endoflife & isnot_housebound,
     
-    !!! selection_group,
+    !!! selection_stage,
     
     c6 = c5 & no_recentcovid30,
     
@@ -400,8 +589,10 @@ data_eligible <- data_criteria %>%
   left_join(data_processed, by="patient_id") %>%
   droplevels()
 
+}
+
 # save cohort-specific datasets ----
-if (group == "treated") {
+if (stage == "treated") {
   
   write_rds(data_eligible %>% filter(vax3_type == "pfizer"), 
             here("output", "pfizer", "treated", "data_treatedeligible.rds"),
@@ -411,9 +602,7 @@ if (group == "treated") {
             here("output", "moderna", "treated", "data_treatedeligible.rds"), 
             compress="gz")
   
-}
-
-if (group == "control") {
+} else if (stage == "potential") {
   
   write_rds(data_eligible, 
             ghere("output", cohort, "matchround{matching_round}", "process", "data_controlpotential.rds"),
@@ -422,9 +611,8 @@ if (group == "control") {
 }
 
 
-# create flowchart (only for treated) ----
-
-if (group == "treated") {
+# create flowchart (only when stage="treated") ----
+if (stage == "treated") {
   
   data_flowchart <- data_criteria %>%
     summarise(
@@ -454,5 +642,135 @@ if (group == "treated") {
     )
   
   write_rds(data_flowchart, here("output", "treated", "eligible", "flowchart_treatedeligible.rds"))
+  
+}
+
+# check matching (only when stage="actual") ----
+if (stage == "actual") { # fix indent after Will checked diff
+  
+data_control <- data_eligible
+
+data_treated <- 
+  left_join(
+    data_potential_matchstatus %>% filter(treated==1L),
+    read_rds(ghere("output", cohort, "treated", "data_treatedeligible.rds")) %>% select(-any_of(events_lookup$event_var)),
+    by="patient_id"
+  )
+
+matching_candidates <- 
+  #FIXME variables in these datasets don't all agree (for example treated includes outcomes)
+  bind_rows(data_treated, data_control) %>%
+  arrange(treated, match_id, trial_date)
+
+#print missing values
+matching_candidates_missing <- map(matching_candidates, ~any(is.na(.x)))
+sort(names(matching_candidates_missing[unlist(matching_candidates_missing)]))
+
+# run matching algorithm ----
+obj_matchit <-
+  MatchIt::matchit(
+    formula = treated ~ 1,
+    data = matching_candidates,
+    method = "nearest", distance = "glm", # these two options don't really do anything because we only want exact + caliper matching
+    replace = FALSE,
+    estimand = "ATT",
+    exact = c("match_id", "trial_date", exact_variables),
+    caliper = caliper_variables, std.caliper=FALSE,
+    m.order = "data", # data is sorted on (effectively random) patient ID
+    #verbose = TRUE,
+    ratio = 1L # irritatingly you can't set this for "exact" method, so have to filter later
+  )
+
+
+data_matchstatus <-
+  tibble(
+    patient_id = matching_candidates$patient_id,
+    matched = !is.na(obj_matchit$subclass)*1L,
+    #thread_id = data_thread$thread_id,
+    match_id = as.integer(as.character(obj_matchit$subclass)),
+    treated = obj_matchit$treat,
+    #weight = obj_matchit$weights,
+    trial_time = matching_candidates$trial_time,
+    trial_date = matching_candidates$trial_date,
+    matching_round = matching_round,
+    # controlistreated_date = matching_candidates$controlistreated_date
+  ) %>%
+  arrange(matched, match_id, treated) 
+  
+
+###
+
+
+data_successful_matchstatus <- 
+  data_matchstatus %>% 
+  filter(matched) %>%
+  left_join(
+    matching_candidates %>% select(patient_id, treated, vax3_date),
+    by = c("patient_id", "treated")
+  ) %>%
+  group_by(match_id) %>%
+  mutate(
+    controlistreated_date = vax3_date[treated==0], # this only works because of the group_by statement above! do not remove group_by statement!
+  ) %>%
+  ungroup() %>%
+  select(patient_id, match_id, trial_date, matching_round, treated, controlistreated_date)
+
+## size of dataset
+print("data_successful_match treated/untreated numbers")
+table(treated = data_successful_matchstatus$treated, useNA="ifany")
+
+
+## how many matches are lost?
+
+print(glue("{sum(data_successful_matchstatus$treated)} matched-pairs kept out of {sum(data_potential_matchstatus$treated)} 
+           ({round(100*(sum(data_successful_matchstatus$treated) / sum(data_potential_matchstatus$treated)),2)}%)
+           "))
+
+
+## pick up all previous successful matches ----
+
+if(matching_round>1){
+  
+  data_matchstatusprevious <- 
+    read_rds(ghere("output", cohort, "matchround{matching_round-1}", "actual", "data_matchstatus_allrounds.rds"))
+  
+  data_matchstatus_allrounds <- 
+    data_successful_matchstatus %>% 
+    bind_rows(data_matchstatusprevious) 
+  
+} else{
+  data_matchstatus_allrounds <- 
+    data_successful_matchstatus
+}
+
+write_rds(data_matchstatus_allrounds, ghere("output", cohort, "matchround{matching_round}", "actual", "data_matchstatus_allrounds.rds"), compress="gz")
+
+
+# output all control patient ids for finalmatched study definition
+data_matchstatus_allrounds %>%
+  mutate(
+    trial_date=as.character(trial_date)
+  ) %>%
+  filter(treated==0L) %>% #only interested in controls as all
+  write_csv(ghere("output", cohort, "matchround{matching_round}", "actual", "cumulative_matchedcontrols.csv.gz"))
+
+## size of dataset
+print("data_matchstatus_allrounds treated/untreated numbers")
+table(treated = data_matchstatus_allrounds$treated, useNA="ifany")
+
+
+
+## duplicate IDs
+data_matchstatus_allrounds %>% group_by(treated, patient_id) %>%
+  summarise(n=n()) %>% group_by(treated) %>% summarise(ndups = sum(n>1)) %>%
+  print()
+
+
+write_rds(data_successful_matchstatus %>% filter(treated==0L), ghere("output", cohort, "matchround{matching_round}", "actual", "data_successful_matchedcontrols.rds"), compress="gz")
+
+## size of dataset
+print("data_successful_match treated/untreated numbers")
+table(treated = data_successful_matchstatus$treated, useNA="ifany")
+
   
 }

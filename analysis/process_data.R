@@ -381,10 +381,10 @@ data_criteria <- data_processed %>%
     has_vaxgap12 = vax2_date >= (vax1_date+17), # at least 17 days between first two vaccinations
     
     c0 = vax1_afterfirstvaxdate & vax2_beforelastvaxdate,
-    c1 = c0 & (has_age & has_sex & has_imd & has_ethnicity & has_region),
-    c2 = c1 & (has_vaxgap12 & has_knownvax1 & has_knownvax2 & vax12_homologous),
-    c3 = c2 & (isnot_hscworker ),
-    c4 = c3 & (isnot_carehomeresident & isnot_endoflife & isnot_housebound),
+    c1 = c0 & has_age & has_sex & has_imd & has_ethnicity & has_region,
+    c2 = c1 & has_vaxgap12 & has_knownvax1 & has_knownvax2 & vax12_homologous,
+    c3 = c2 & isnot_hscworker,
+    c4 = c3 & isnot_carehomeresident & isnot_endoflife & isnot_housebound,
     
     !!! selection_group,
     

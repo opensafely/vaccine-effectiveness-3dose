@@ -1,4 +1,3 @@
-from ast import And
 # Import codelists from codelists.py
 import codelists
 
@@ -15,22 +14,11 @@ from cohortextractor import (
   params
 )
 
+# define params
 cohort = params["cohort"]
 matching_round = params["matching_round"]
 previousmatching_round = int(matching_round)-1
 index_date = params["index_date"]
-
-# import study dates defined in "./analysis/design.R" script
-with open("./lib/design/study-dates.json") as f:
-  study_dates = json.load(f)
-
-# change these in design.R if necessary
-firstdose3_date = study_dates["pfizer"]["start_date"]
-firstpossiblevax_date = study_dates["firstpossiblevax_date"]
-studyend_date = study_dates["studyend_date"]
-firstpfizer_date = study_dates["firstpfizer_date"]
-firstaz_date = study_dates["firstaz_date"]
-firstmoderna_date = study_dates["firstmoderna_date"]
 
 
 ############################################################
@@ -61,7 +49,7 @@ study = StudyDefinition(
   
   # Configure the expectations framework
   default_expectations={
-    "date": {"earliest": "2020-01-01", "latest": studyend_date},
+    "date": {"earliest": "2020-01-01", "latest": "today"},
     "rate": "uniform",
     "incidence": 0.2,
     "int": {"distribution": "normal", "mean": 1000, "stddev": 100},
@@ -90,6 +78,7 @@ study = StudyDefinition(
   ## Covid vaccine dates
   #################################################################
   **vax_variables,
+  # all vaccination variables for first three doses to apply selection criteria
     
   ###############################################################################
   # jcvi variables

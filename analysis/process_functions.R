@@ -128,7 +128,8 @@ process_demographic <- function(.data) {
         rural_urban %in% c(5,6,7,8) ~ "Rural town or village",
         TRUE ~ NA_character_
       ),
-    )
+    ) %>%
+    select(-ethnicity, -ethnicity_6_sus)
 }
 
 ################################################################################

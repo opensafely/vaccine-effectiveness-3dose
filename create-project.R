@@ -93,7 +93,7 @@ action_1matchround <- function(cohort, matching_round){
     action(
       name = glue("process_controlpotential_{cohort}_{matching_round}"),
       run = glue("r:latest analysis/process_data.R"),
-      arguments = c("control", cohort, matching_round),
+      arguments = c("potential", cohort, matching_round),
       needs = namelesslst(
         glue("extract_controlpotential_{cohort}_{matching_round}"),
       ),
@@ -127,6 +127,7 @@ action_1matchround <- function(cohort, matching_round){
         " --param matching_round={matching_round}",
       ),
       needs = namelesslst(
+        "design",
         glue("match_potential_{cohort}_{matching_round}"), 
       ),
       highly_sensitive = lst(
@@ -137,12 +138,13 @@ action_1matchround <- function(cohort, matching_round){
     
     action(
       name = glue("process_controlactual_{cohort}_{matching_round}"),
-      run = glue("r:latest analysis/matching/process_controlactual.R"),
-      arguments = c(cohort, matching_round),
+      run = glue("r:latest analysis/process_data.R"),
+      arguments = c("actual", cohort, matching_round),
       needs = c(
         glue("process_treated"),
         glue("match_potential_{cohort}_{matching_round}"), 
         glue("extract_controlpotential_{cohort}_{matching_round}"),  # this is only necessary for the dummy data
+        glue("process_controlpotential_{cohort}_{matching_round}"), # this is necessary for the vaccine data
         glue("extract_controlactual_{cohort}_{matching_round}"),
         if(matching_round>1){glue("process_controlactual_{cohort}_{matching_round-1}")} else {NULL}
       ) %>% as.list,
@@ -178,6 +180,7 @@ action_extract_and_match <- function(cohort, n_matching_rounds){
         " --param n_matching_rounds={n_matching_rounds}",
       ),
       needs = namelesslst(
+        "design",
         glue("process_controlactual_{cohort}_{n_matching_rounds}")
       ),
       highly_sensitive = lst(
@@ -187,8 +190,8 @@ action_extract_and_match <- function(cohort, n_matching_rounds){
     
     action(
       name = glue("process_controlfinal_{cohort}"),
-      run = glue("r:latest analysis/matching/process_controlfinal.R"),
-      arguments = c(cohort),
+      run = glue("r:latest analysis/process_data.R"),
+      arguments = c("final", cohort),
       needs = c(
         map(
           seq_len(n_matching_rounds),

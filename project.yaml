@@ -62,7 +62,7 @@ actions:
         cohort: output/pfizer/matchround1/extract/input_controlpotential.feather
 
   process_controlpotential_pfizer_1:
-    run: r:latest analysis/process_data.R control pfizer 1
+    run: r:latest analysis/process_data.R potential pfizer 1
     needs:
     - extract_controlpotential_pfizer_1
     outputs:
@@ -84,17 +84,19 @@ actions:
       --output-file output/pfizer/matchround1/extract/input_controlactual.feather
       --param cohort=pfizer --param matching_round=1
     needs:
+    - design
     - match_potential_pfizer_1
     outputs:
       highly_sensitive:
         cohort: output/pfizer/matchround1/extract/input_controlactual.feather
 
   process_controlactual_pfizer_1:
-    run: r:latest analysis/matching/process_controlactual.R pfizer 1
+    run: r:latest analysis/process_data.R actual pfizer 1
     needs:
     - process_treated
     - match_potential_pfizer_1
     - extract_controlpotential_pfizer_1
+    - process_controlpotential_pfizer_1
     - extract_controlactual_pfizer_1
     outputs:
       highly_sensitive:
@@ -113,7 +115,7 @@ actions:
         cohort: output/pfizer/matchround2/extract/input_controlpotential.feather
 
   process_controlpotential_pfizer_2:
-    run: r:latest analysis/process_data.R control pfizer 2
+    run: r:latest analysis/process_data.R potential pfizer 2
     needs:
     - extract_controlpotential_pfizer_2
     outputs:
@@ -136,17 +138,19 @@ actions:
       --output-file output/pfizer/matchround2/extract/input_controlactual.feather
       --param cohort=pfizer --param matching_round=2
     needs:
+    - design
     - match_potential_pfizer_2
     outputs:
       highly_sensitive:
         cohort: output/pfizer/matchround2/extract/input_controlactual.feather
 
   process_controlactual_pfizer_2:
-    run: r:latest analysis/matching/process_controlactual.R pfizer 2
+    run: r:latest analysis/process_data.R actual pfizer 2
     needs:
     - process_treated
     - match_potential_pfizer_2
     - extract_controlpotential_pfizer_2
+    - process_controlpotential_pfizer_2
     - extract_controlactual_pfizer_2
     - process_controlactual_pfizer_1
     outputs:
@@ -159,13 +163,14 @@ actions:
       --output-file output/pfizer/extract/input_controlfinal.feather --param cohort=pfizer
       --param n_matching_rounds=2
     needs:
+    - design
     - process_controlactual_pfizer_2
     outputs:
       highly_sensitive:
         extract: output/pfizer/extract/input_controlfinal.feather
 
   process_controlfinal_pfizer:
-    run: r:latest analysis/matching/process_controlfinal.R pfizer
+    run: r:latest analysis/process_data.R final pfizer
     needs:
     - process_controlactual_pfizer_1
     - process_controlactual_pfizer_2

@@ -55,6 +55,12 @@ study_dates$moderna$control_extract_dates = as.Date(study_dates$moderna$start_da
 
 jsonlite::write_json(study_dates, path = here("lib", "design", "study-dates.json"), auto_unbox=TRUE, pretty =TRUE)
 
+# all as dates
+lens <- sapply(study_dates, length)
+dates_general <- map(study_dates[lens==1], as.Date)
+dates_cohort <- map(study_dates[lens==3], ~map(.x, as.Date))
+study_dates <- splice(dates_general, dates_cohort)[names(study_dates)]
+
 # define outcomes ----
 
 events_lookup <- tribble(

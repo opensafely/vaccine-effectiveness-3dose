@@ -109,7 +109,7 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
     custom_path <- here("lib", "dummydata", "dummy_control_potential1.feather")
   }  else if (stage == "final") {
     studydef_path <- ghere("output", cohort, "extract", "input_controlfinal.feather")
-    custom_path <- ghere("lib", "dummydata", "dummy_control_final_{cohort}.feather")
+    custom_path <- ghere("output", "dummydata", "dummy_control_final_{cohort}.feather")
   }
   
   data_studydef_dummy <- read_feather(studydef_path) %>%
@@ -230,6 +230,9 @@ if (stage == "final") {
       data_treatedeligible,
       by="patient_id"
     ) 
+  
+  # import extracted data from controls
+  
   
   # import final dataset of matched controls, including matching variables
   # alternative to this is re-extracting everything in the study definition
@@ -515,7 +518,7 @@ if (stage == "treated") {
     
     index_date = vax3_date,
     
-    c0 = vax3_date <= study_dates$studyend_date,
+    c0 = is_adult & vax3_date <= study_dates$studyend_date,
     c1 = c0 & vax3_notbeforestartdate & vax3_beforeenddate & has_expectedvax3type & has_vaxgap23,
     
   )
@@ -534,7 +537,8 @@ if (stage == "treated") {
       TRUE ~ FALSE
     ),
     
-    c1 = vax3_notbeforeindexdate,
+    c0 = is_adult,
+    c1 = c0 & vax3_notbeforeindexdate,
     
   )
   
@@ -547,6 +551,7 @@ data_criteria <- data_processed %>%
   transmute(
     
     patient_id,
+    is_adult = age >= 18,
     has_age = !is.na(age),
     has_sex = !is.na(sex),
     has_imd = imd_Q5 != "Unknown",
@@ -663,12 +668,13 @@ data_control <- data_eligible
 data_treated <- 
   left_join(
     data_potential_matchstatus %>% filter(treated==1L),
-    read_rds(ghere("output", cohort, "treated", "data_treatedeligible.rds")) %>% select(-any_of(events_lookup$event_var)),
+    read_rds(ghere("output", cohort, "treated", "data_treatedeligible.rds")) %>% 
+      # only keep variables that are in data_control (this gets rid of outcomes and vax4 dates)
+      select(any_of(names(data_control))),
     by="patient_id"
   )
 
 matching_candidates <- 
-  #FIXME variables in these datasets don't all agree (for example treated includes outcomes)
   bind_rows(data_treated, data_control) %>%
   arrange(treated, match_id, trial_date)
 
@@ -709,13 +715,14 @@ data_matchstatus <-
   
 
 ###
-
+matchstatus_vars <- c("patient_id", "match_id", "trial_date", "matching_round", "treated", "controlistreated_date")
 
 data_successful_matchstatus <- 
   data_matchstatus %>% 
   filter(matched) %>%
   left_join(
-    matching_candidates %>% select(patient_id, treated, vax3_date),
+    # now joining all variables from the processed data as they are required for adjustments in the cox model
+    matching_candidates %>% select(-all_of(c("trial_time", "trial_date", "match_id", "matched", "control", "controlistreated_date"))),
     by = c("patient_id", "treated")
   ) %>%
   group_by(match_id) %>%
@@ -723,7 +730,7 @@ data_successful_matchstatus <-
     controlistreated_date = vax3_date[treated==0], # this only works because of the group_by statement above! do not remove group_by statement!
   ) %>%
   ungroup() %>%
-  select(patient_id, match_id, trial_date, matching_round, treated, controlistreated_date)
+  select(all_of(matchstatus_vars), everything())
 
 ## size of dataset
 print("data_successful_match treated/untreated numbers")
@@ -746,11 +753,13 @@ if(matching_round>1){
   
   data_matchstatus_allrounds <- 
     data_successful_matchstatus %>% 
+    select(all_of(matchstatus_vars)) %>%
     bind_rows(data_matchstatusprevious) 
   
 } else{
   data_matchstatus_allrounds <- 
-    data_successful_matchstatus
+    data_successful_matchstatus %>%
+    select(all_of(matchstatus_vars))
 }
 
 write_rds(data_matchstatus_allrounds, ghere("output", cohort, "matchround{matching_round}", "actual", "data_matchstatus_allrounds.rds"), compress="gz")
@@ -781,7 +790,6 @@ write_rds(data_successful_matchstatus %>% filter(treated==0L), ghere("output", c
 ## size of dataset
 print("data_successful_match treated/untreated numbers")
 table(treated = data_successful_matchstatus$treated, useNA="ifany")
-
   
 }
 

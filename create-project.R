@@ -189,6 +189,16 @@ action_extract_and_match <- function(cohort, n_matching_rounds){
     ),
     
     action(
+      name = glue("dummydata_controlfinal_{cohort}"),
+      run = glue("r:latest analysis/dummy/dummydata_controlfinal.R"),
+      arguments = c(cohort),
+      needs = namelesslst(glue("extract_controlfinal_{cohort}")),
+      highly_sensitive = lst(
+        dummydata_controlfinal = glue("output/dummydata/dummydata_control_final_{cohort}.feather")
+      ),
+    ),
+    
+    action(
       name = glue("process_controlfinal_{cohort}"),
       run = glue("r:latest analysis/process_data.R"),
       arguments = c("final", cohort),
@@ -198,7 +208,8 @@ action_extract_and_match <- function(cohort, n_matching_rounds){
           ~glue("process_controlactual_{cohort}_",.x)
         ),
         glue("extract_controlfinal_{cohort}"),
-        glue("process_treated")
+        glue("process_treated"),
+        glue("dummydata_controlfinal_{cohort}")
       ),
       highly_sensitive = lst(
         extract = glue("output/{cohort}/match/*.rds")

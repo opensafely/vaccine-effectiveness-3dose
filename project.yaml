@@ -169,6 +169,14 @@ actions:
       highly_sensitive:
         extract: output/pfizer/extract/input_controlfinal.feather
 
+  dummydata_controlfinal_pfizer:
+    run: r:latest analysis/dummy/dummydata_controlfinal.R pfizer
+    needs:
+    - extract_controlfinal_pfizer
+    outputs:
+      highly_sensitive:
+        dummydata_controlfinal: output/dummydata/dummydata_control_final_pfizer.feather
+
   process_controlfinal_pfizer:
     run: r:latest analysis/process_data.R final pfizer
     needs:
@@ -176,6 +184,7 @@ actions:
     - process_controlactual_pfizer_2
     - extract_controlfinal_pfizer
     - process_treated
+    - dummydata_controlfinal_pfizer
     outputs:
       highly_sensitive:
         extract: output/pfizer/match/*.rds

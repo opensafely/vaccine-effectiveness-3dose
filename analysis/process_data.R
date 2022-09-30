@@ -256,15 +256,29 @@ if (stage == "final") {
   all(data_control$patient_id %in% (data_matchstatus %>% filter(treated==0L) %>% pull(patient_id)))
   all((data_matchstatus %>% filter(treated==0L) %>% pull(patient_id)) %in% data_control$patient_id)
   
-  
   # merge treated and control groups
   data_matched <-
     bind_rows(
       data_treated,
       data_control %>% process_post() # process the post-baseline variables (done previously for data_treated)
-    ) 
+    ) %>%
+    mutate(
+      # derive outcomes
+      postest_date = positive_test_1_date,
+      emergency_date = emergency_1_date, # any emergency, including covid
+      covidemergency_date = covidemergency_1_date,
+      covidemergencyhosp_date = covidemergency_1_date,
+      covidadmitted_date = admitted_covid_1_date,
+      covidcritcare = covidcc_1_date,
+      # noncovidadmitted 
+      # discuss noncovidadmitted with Will - what if someone is admitted for covid, then later in follow-up has a non-covid unplanned admission?
+      # do we want to pick up the later non-covid admission, or just the first unplanned admission?
+      # what does the "with_patient_classification=None" parameter mean for "admitted_to_hospital()"
+      
+      )
   
-  write_rds(data_matched, here("output", cohort, "match", glue("data_matched.rds")), compress="gz")
+  
+  write_rds(data_matched, here("output", cohort, "match", "data_matched.rds"), compress="gz")
   
   # matching status of all treated, eligible people ----
   

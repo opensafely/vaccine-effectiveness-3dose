@@ -265,7 +265,7 @@ action_table1 <- function(cohort){
     ),
     moderately_sensitive= lst(
       csv= glue("output/{cohort}/table1/*.csv"),
-      png= glue("output/{cohort}/table1/*.png"),
+      # png= glue("output/{cohort}/table1/*.png"),
     )
   )
 }
@@ -345,17 +345,17 @@ actions_list <- splice(
   action_extract_and_match("pfizer", n_matching_rounds),
 
   action_table1("pfizer"),
-  # 
-  # comment("# # # # # # # # # # # # # # # # # # #", 
-  #         "Model"),
-  # 
-  # action_km("pfizer", "all", "postest"),
-  # action_km("pfizer", "all", "emergency"),
-  # action_km("pfizer", "all", "covidemergency"),
-  # action_km("pfizer", "all", "covidadmitted"),
-  # action_km("pfizer", "all", "covidcritcare"),
-  # action_km("pfizer", "all", "coviddeath"),
-  # action_km("pfizer", "all", "noncoviddeath"),
+
+  comment("# # # # # # # # # # # # # # # # # # #",
+          "Model"),
+
+  action_km("pfizer", "all", "postest"),
+  action_km("pfizer", "all", "emergency"),
+  action_km("pfizer", "all", "covidemergency"),
+  action_km("pfizer", "all", "covidadmitted"),
+  action_km("pfizer", "all", "covidcritcare"),
+  action_km("pfizer", "all", "coviddeath"),
+  action_km("pfizer", "all", "noncoviddeath"),
   # 
   # action_km("pfizer", "prior_covid_infection", "postest"),
   # action_km("pfizer", "prior_covid_infection", "emergency"),

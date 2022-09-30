@@ -4,8 +4,9 @@
 #  - import matched data
 #  - adds outcome variable and restricts follow-up
 #  - gets KM estimates, with covid and non covid death as competing risks
-#  - The script must be accompanied by two arguments:
-#    `cohort` - over12s or under12s
+#  - The script must be accompanied by three arguments:
+#    `cohort` - pfizer or moderna
+#    `subgroup` - prior_covid_infection
 #    `outcome` - the dependent variable
 
 # # # # # # # # # # # # # # # # # # # # #
@@ -35,8 +36,8 @@ args <- commandArgs(trailingOnly=TRUE)
 if(length(args)==0){
   # use for interactive testing
   removeobjects <- FALSE
-  cohort <- "over12"
-  subgroup <- "prior_covid_infection"
+  cohort <- "pfizer"
+  subgroup <- "all"
   outcome <- "postest"
   
 } else {
@@ -45,12 +46,6 @@ if(length(args)==0){
   subgroup <- args[[2]]
   outcome <- args[[3]]
 }
-
-
-## get cohort-specific parameters study dates and parameters ----
-
-dates <- map(study_dates[[cohort]], as.Date)
-params <- study_params[[cohort]]
 
 # derive symbolic arguments for programming with
 
@@ -65,6 +60,7 @@ fs::dir_create(output_dir)
 
 data_matched <- read_rds(ghere("output", cohort, "match", "data_matched.rds"))
 
+
 ## import baseline data, restrict to matched individuals and derive time-to-event variables
 data_matched <- 
   data_matched %>%
@@ -73,8 +69,8 @@ data_matched <-
     # select only variables needed for models to save space
     patient_id, treated, trial_date, match_id, 
     controlistreated_date,
-    vax1_date,
-    death_date, dereg_date, coviddeath_date, noncoviddeath_date, vax2_date,
+    vax3_date,
+    death_date, dereg_date, coviddeath_date, noncoviddeath_date, vax4_date,
     all_of(c(glue("{outcome}_date"), subgroup))
   ) %>%
   
@@ -86,9 +82,9 @@ data_matched <-
     # follow-up time is up to and including censor date
     censor_date = pmin(
       dereg_date,
-      vax2_date-1, # -1 because we assume vax occurs at the start of the day
+      vax4_date-1, # -1 because we assume vax occurs at the start of the day
       death_date,
-      dates$followupend_date,
+      study_dates$studyend_date,
       trial_date + maxfup,
       na.rm=TRUE
     ),

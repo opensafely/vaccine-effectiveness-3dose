@@ -74,7 +74,9 @@ process_jcvi <- function(.data) {
         "40-49 years"="10a",
         "16-39 years"="10b"
       ),
-    )
+      
+    ) %>%
+    select(-care_home_type, -care_home_tpp, -care_home_code)
 }
 
 
@@ -128,12 +130,14 @@ process_demographic <- function(.data) {
         rural_urban %in% c(5,6,7,8) ~ "Rural town or village",
         TRUE ~ NA_character_
       ),
+      
     ) %>%
     select(-ethnicity, -ethnicity_6_sus)
 }
 
 ################################################################################
 process_pre <- function(.data) {
+  
   .data %>%
     mutate(
       prior_tests_cat = cut(prior_covid_test_frequency, breaks=c(0, 1, 2, 3, Inf), labels=c("0", "1", "2", "3+"), right=FALSE),
@@ -143,13 +147,14 @@ process_pre <- function(.data) {
       anycovid_0_date = pmax(positive_test_0_date, covidemergency_0_date, admitted_covid_0_date, na.rm=TRUE),
       # any reason for the discrepancy between events used to define prior_covid_infection and anycovid_0_date?
     )
+  
 }
 
 ################################################################################
 process_post <- function(.data) {
+  
   .data %>%
     mutate(
-      #covidemergency_1_date = pmin(covidemergency_1_date, covidadmitted_1_date, na.rm=TRUE),
       
       # because this value is returned as a factor by the study definition
       admitted_covid_ccdays_1 = as.numeric(as.character(admitted_covid_ccdays_1)),
@@ -194,5 +199,6 @@ process_post <- function(.data) {
         !is.na(death_date) ~ "not covid-related",
         TRUE ~ NA_character_
       ),
+      
     )
 }

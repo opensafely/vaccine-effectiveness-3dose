@@ -240,7 +240,7 @@ if (stage == "final") {
         seq_len(n_matching_rounds), 
         ~{read_rds(ghere("output", cohort, glue("matchround", .x), "actual", "data_successful_matchedcontrols.rds"))}
       ) %>% select(-match_id, -trial_date, -treated, -controlistreated_date), # remove to avoid clash with already-stored variables
-      by=c("patient_id")
+      by=c("patient_id", "matching_round")
     ) %>%
     # merge with outcomes data
     left_join(
@@ -513,43 +513,32 @@ if (stage == "treated") {
       TRUE ~ FALSE
     ),
     
-    no_recentcovid30 = is.na(anycovid_0_date) | ((vax3_date - anycovid_0_date) > 30),
+    index_date = vax3_date,
     
-    c5 = c4 & vax3_notbeforestartdate & vax3_beforeenddate & has_expectedvax3type & has_vaxgap23,
+    c0 = vax3_date <= study_dates$studyend_date,
+    c1 = c0 & vax3_notbeforestartdate & vax3_beforeenddate & has_expectedvax3type & has_vaxgap23,
     
   )
   
-} else if (stage == "potential") {
+} else if (stage %in% c("potential",  "actual")) {
+  
+  # define index_date
+  if (stage == "potential") index_date <- "matching_round_date" else if (stage == "actual") index_date <- "trial_date"
   
   selection_stage <- rlang::quos(
     
-    vax3_notbeforematchingrounddate = case_when(
-      is.na(vax3_date) | (vax3_date > matching_round_date) ~ TRUE,
+    index_date = !! sym(index_date),
+    
+    vax3_notbeforeindexdate = case_when(
+      is.na(vax3_date) | (vax3_date > index_date) ~ TRUE,
       TRUE ~ FALSE
     ),
     
-    no_recentcovid30 = is.na(anycovid_0_date) | ((matching_round_date - anycovid_0_date) > 30),
-    
-    c5 = c4 & vax3_notbeforematchingrounddate,
+    c1 = vax3_notbeforeindexdate,
     
   )
   
-} else if (stage == "actual") {
-  
-  selection_stage <- rlang::quos(
-    
-    vax3_notbeforetrial_date = case_when(
-      is.na(vax3_date) | (vax3_date > trial_date) ~ TRUE,
-      TRUE ~ FALSE
-    ),
-    
-    no_recentcovid30 = is.na(anycovid_0_date) | ((trial_date - anycovid_0_date) > 30),
-    
-    c5 = c4 & vax3_notbeforetrial_date,
-    
-  )
-  
-}
+} 
 
 # Define selection criteria ----
 if (stage %in% c("treated", "potential", "actual")) {
@@ -583,17 +572,21 @@ data_criteria <- data_processed %>%
     vax12_homologous = vax1_type==vax2_type,
     has_vaxgap12 = vax2_date >= (vax1_date+17), # at least 17 days between first two vaccinations
     
-    c0 = vax1_afterfirstvaxdate & vax2_beforelastvaxdate,
-    c1 = c0 & has_age & has_sex & has_imd & has_ethnicity & has_region,
-    c2 = c1 & has_vaxgap12 & has_knownvax1 & has_knownvax2 & vax12_homologous,
-    c3 = c2 & isnot_hscworker,
-    c4 = c3 & isnot_carehomeresident & isnot_endoflife & isnot_housebound,
-    
     !!! selection_stage,
     
-    c6 = c5 & no_recentcovid30,
+    no_recentcovid30 = is.na(anycovid_0_date) | ((index_date - anycovid_0_date) > 30),
     
-    include = (c0 & c1 & c2 & c3 & c4 & c5 & c6),
+    isnot_inhospital = is.na(admitted_unplanned_0_date) | (!is.na(discharged_unplanned_0_date) & discharged_unplanned_0_date < index_date),
+    
+    c2 = c1 & vax1_afterfirstvaxdate & vax2_beforelastvaxdate & has_vaxgap12 & has_knownvax1 & has_knownvax2 & vax12_homologous,
+    c3 = c2 & isnot_hscworker,
+    c4 = c3 & isnot_carehomeresident & isnot_endoflife & isnot_housebound,
+    c5 = c4 & has_age & has_sex & has_imd & has_ethnicity & has_region,
+    c6 = c5 & no_recentcovid30,
+    c7 = c6 & isnot_inhospital,
+    c8 = c7 & TRUE, # TODO define c8
+    
+    include = c8,
     
   )
 
@@ -644,16 +637,19 @@ if (stage == "treated") {
       pct_step = n / lag(n),
       crit = str_extract(criteria, "^c\\d+"),
       criteria = fct_case_when(
-        crit == "c0" ~ "Aged 18+ with 2nd dose on or before 31 Aug 2021", 
-        crit == "c1" ~ "  with no missing demographic information",
-        crit == "c2" ~ "  with homologous primary vaccination course of pfizer or AZ and at least 17 days between doses",
-        crit == "c3" ~ "  and not a HSC worker",
-        crit == "c4" ~ "  and not a care/nursing home resident, end-of-life or housebound",
-        crit == "c5" ~ "  and third dose of pfizer or moderna within the study period and at least 17 days after second dose",
-        crit == "c6" ~ "  and no evidence of covid in 30 days before third dose",
+        crit == "c0" ~ "Aged 18+ with 3rd dose on or before {study_dates$studyend_date}", 
+        crit == "c1" ~ "  at least 17 days between 2nd and 3rd dose and 3rd dose of pfizer received between {study_dates$pfizer$start_date} and {study_dates$pfizer$end_date} or 3rd dose of moderna received between {study_dates$moderna$start_date} and {study_dates$moderna$end_date}",
+        crit == "c2" ~ "  homologous primary vaccination course of pfizer or AZ and at least 17 days between doses",
+        crit == "c3" ~ "  not a HSC worker",
+        crit == "c4" ~ "  not a care/nursing home resident, end-of-life or housebound",
+        crit == "c5" ~ "  no missing demographic information",
+        crit == "c6" ~ "  no evidence of covid in 30 days before third dose",
+        crit == "c7" ~ "  not in hospital (unplanned) during booster vaccination",
+        crit == "c8" ~ "  did not received 3rd dose at unusual time given region, priority group, and 2nd dose date.",
         TRUE ~ NA_character_
       )
-    )
+    ) %>%
+    mutate(across(criteria, factor, labels = sapply(levels(.$criteria), glue)))
   
   write_rds(data_flowchart, here("output", "treated", "eligible", "flowchart_treatedeligible.rds"))
   
@@ -788,3 +784,4 @@ table(treated = data_successful_matchstatus$treated, useNA="ifany")
 
   
 }
+

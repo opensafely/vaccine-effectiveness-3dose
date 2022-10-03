@@ -62,11 +62,6 @@ if (length(args) == 0) {
 } 
 
 ## get cohort-specific parameters study dates and parameters ---- 
-lens <- sapply(study_dates, length)
-dates_general <- map(study_dates[lens==1], as.Date)
-dates_cohort <- map(study_dates[lens==3], ~map(.x, as.Date))
-study_dates <- splice(dates_general, dates_cohort)[names(study_dates)]
-
 if (stage == "potential") {
   matching_round_date <- study_dates[[cohort]]$control_extract_dates[matching_round]
 }
@@ -263,23 +258,8 @@ if (stage == "final") {
   data_matched <-
     bind_rows(
       data_treated,
-      data_control %>% process_post() # process the post-baseline variables (done previously for data_treated)
-    ) %>%
-    mutate(
-      # derive outcomes
-      postest_date = positive_test_1_date,
-      emergency_date = emergency_1_date, # any emergency, including covid
-      covidemergency_date = covidemergency_1_date,
-      covidemergencyhosp_date = covidemergency_1_date,
-      covidadmitted_date = admitted_covid_1_date,
-      covidcritcare = covidcc_1_date,
-      # noncovidadmitted 
-      # discuss noncovidadmitted with Will - what if someone is admitted for covid, then later in follow-up has a non-covid unplanned admission?
-      # do we want to pick up the later non-covid admission, or just the first unplanned admission?
-      # what does the "with_patient_classification=None" parameter mean for "admitted_to_hospital()"
-      
-      )
-  
+      data_control %>% process_outcome() # process the post-baseline variables (done previously for data_treated)
+    ) 
   
   write_rds(data_matched, here("output", cohort, "match", "data_matched.rds"), compress="gz")
   
@@ -327,7 +307,7 @@ if (stage %in% c("treated", "potential", "actual")) {
 
 if (stage == "treated") {
   data_processed <- data_processed %>%
-    process_post()
+    process_outcome()
 }
 
 ## reshape vaccination data ----
@@ -661,135 +641,135 @@ if (stage == "treated") {
 }
 
 # check matching (only when stage="actual") ----
-if (stage == "actual") { # fix indent after Will checked diff
+if (stage == "actual") { 
   
-data_control <- data_eligible
-
-data_treated <- 
-  left_join(
-    data_potential_matchstatus %>% filter(treated==1L),
-    read_rds(ghere("output", cohort, "treated", "data_treatedeligible.rds")) %>% 
-      # only keep variables that are in data_control (this gets rid of outcomes and vax4 dates)
-      select(any_of(names(data_control))),
-    by="patient_id"
-  )
-
-matching_candidates <- 
-  bind_rows(data_treated, data_control) %>%
-  arrange(treated, match_id, trial_date)
-
-#print missing values
-matching_candidates_missing <- map(matching_candidates, ~any(is.na(.x)))
-sort(names(matching_candidates_missing[unlist(matching_candidates_missing)]))
-
-# run matching algorithm ----
-obj_matchit <-
-  MatchIt::matchit(
-    formula = treated ~ 1,
-    data = matching_candidates,
-    method = "nearest", distance = "glm", # these two options don't really do anything because we only want exact + caliper matching
-    replace = FALSE,
-    estimand = "ATT",
-    exact = c("match_id", "trial_date", exact_variables),
-    caliper = caliper_variables, std.caliper=FALSE,
-    m.order = "data", # data is sorted on (effectively random) patient ID
-    #verbose = TRUE,
-    ratio = 1L # irritatingly you can't set this for "exact" method, so have to filter later
-  )
-
-
-data_matchstatus <-
-  tibble(
-    patient_id = matching_candidates$patient_id,
-    matched = !is.na(obj_matchit$subclass)*1L,
-    #thread_id = data_thread$thread_id,
-    match_id = as.integer(as.character(obj_matchit$subclass)),
-    treated = obj_matchit$treat,
-    #weight = obj_matchit$weights,
-    trial_time = matching_candidates$trial_time,
-    trial_date = matching_candidates$trial_date,
-    matching_round = matching_round,
-    # controlistreated_date = matching_candidates$controlistreated_date
-  ) %>%
-  arrange(matched, match_id, treated) 
+  data_control <- data_eligible
   
-
-###
-matchstatus_vars <- c("patient_id", "match_id", "trial_date", "matching_round", "treated", "controlistreated_date")
-
-data_successful_matchstatus <- 
-  data_matchstatus %>% 
-  filter(matched) %>%
-  left_join(
-    # now joining all variables from the processed data as they are required for adjustments in the cox model
-    matching_candidates %>% select(-all_of(c("trial_time", "trial_date", "match_id", "matched", "control", "controlistreated_date"))),
-    by = c("patient_id", "treated")
-  ) %>%
-  group_by(match_id) %>%
-  mutate(
-    controlistreated_date = vax3_date[treated==0], # this only works because of the group_by statement above! do not remove group_by statement!
-  ) %>%
-  ungroup() %>%
-  select(all_of(matchstatus_vars), everything())
-
-## size of dataset
-print("data_successful_match treated/untreated numbers")
-table(treated = data_successful_matchstatus$treated, useNA="ifany")
-
-
-## how many matches are lost?
-
-print(glue("{sum(data_successful_matchstatus$treated)} matched-pairs kept out of {sum(data_potential_matchstatus$treated)} 
+  data_treated <- 
+    left_join(
+      data_potential_matchstatus %>% filter(treated==1L),
+      read_rds(ghere("output", cohort, "treated", "data_treatedeligible.rds")) %>% 
+        # only keep variables that are in data_control (this gets rid of outcomes and vax4 dates)
+        select(any_of(names(data_control))),
+      by="patient_id"
+    )
+  
+  matching_candidates <- 
+    bind_rows(data_treated, data_control) %>%
+    arrange(treated, match_id, trial_date)
+  
+  #print missing values
+  matching_candidates_missing <- map(matching_candidates, ~any(is.na(.x)))
+  sort(names(matching_candidates_missing[unlist(matching_candidates_missing)]))
+  
+  # run matching algorithm ----
+  obj_matchit <-
+    MatchIt::matchit(
+      formula = treated ~ 1,
+      data = matching_candidates,
+      method = "nearest", distance = "glm", # these two options don't really do anything because we only want exact + caliper matching
+      replace = FALSE,
+      estimand = "ATT",
+      exact = c("match_id", "trial_date", exact_variables),
+      caliper = caliper_variables, std.caliper=FALSE,
+      m.order = "data", # data is sorted on (effectively random) patient ID
+      #verbose = TRUE,
+      ratio = 1L # irritatingly you can't set this for "exact" method, so have to filter later
+    )
+  
+  
+  data_matchstatus <-
+    tibble(
+      patient_id = matching_candidates$patient_id,
+      matched = !is.na(obj_matchit$subclass)*1L,
+      #thread_id = data_thread$thread_id,
+      match_id = as.integer(as.character(obj_matchit$subclass)),
+      treated = obj_matchit$treat,
+      #weight = obj_matchit$weights,
+      trial_time = matching_candidates$trial_time,
+      trial_date = matching_candidates$trial_date,
+      matching_round = matching_round,
+      # controlistreated_date = matching_candidates$controlistreated_date
+    ) %>%
+    arrange(matched, match_id, treated) 
+  
+  
+  ###
+  matchstatus_vars <- c("patient_id", "match_id", "trial_date", "matching_round", "treated", "controlistreated_date")
+  
+  data_successful_matchstatus <- 
+    data_matchstatus %>% 
+    filter(matched) %>%
+    left_join(
+      # now joining all variables from the processed data as they are required for adjustments in the cox model
+      matching_candidates %>% select(-all_of(c("trial_time", "trial_date", "match_id", "matched", "control", "controlistreated_date"))),
+      by = c("patient_id", "treated")
+    ) %>%
+    group_by(match_id) %>%
+    mutate(
+      controlistreated_date = vax3_date[treated==0], # this only works because of the group_by statement above! do not remove group_by statement!
+    ) %>%
+    ungroup() %>%
+    select(all_of(matchstatus_vars), everything())
+  
+  ## size of dataset
+  print("data_successful_match treated/untreated numbers")
+  table(treated = data_successful_matchstatus$treated, useNA="ifany")
+  
+  
+  ## how many matches are lost?
+  
+  print(glue("{sum(data_successful_matchstatus$treated)} matched-pairs kept out of {sum(data_potential_matchstatus$treated)} 
            ({round(100*(sum(data_successful_matchstatus$treated) / sum(data_potential_matchstatus$treated)),2)}%)
            "))
-
-
-## pick up all previous successful matches ----
-
-if(matching_round>1){
   
-  data_matchstatusprevious <- 
-    read_rds(ghere("output", cohort, "matchround{matching_round-1}", "actual", "data_matchstatus_allrounds.rds"))
   
-  data_matchstatus_allrounds <- 
-    data_successful_matchstatus %>% 
-    select(all_of(matchstatus_vars)) %>%
-    bind_rows(data_matchstatusprevious) 
+  ## pick up all previous successful matches ----
   
-} else{
-  data_matchstatus_allrounds <- 
-    data_successful_matchstatus %>%
-    select(all_of(matchstatus_vars))
-}
-
-write_rds(data_matchstatus_allrounds, ghere("output", cohort, "matchround{matching_round}", "actual", "data_matchstatus_allrounds.rds"), compress="gz")
-
-
-# output all control patient ids for finalmatched study definition
-data_matchstatus_allrounds %>%
-  mutate(
-    trial_date=as.character(trial_date)
-  ) %>%
-  filter(treated==0L) %>% #only interested in controls as all
-  write_csv(ghere("output", cohort, "matchround{matching_round}", "actual", "cumulative_matchedcontrols.csv.gz"))
-
-## size of dataset
-print("data_matchstatus_allrounds treated/untreated numbers")
-table(treated = data_matchstatus_allrounds$treated, useNA="ifany")
-
-
-
-## duplicate IDs
-data_matchstatus_allrounds %>% group_by(treated, patient_id) %>%
-  summarise(n=n()) %>% group_by(treated) %>% summarise(ndups = sum(n>1)) %>%
-  print()
-
-
-write_rds(data_successful_matchstatus %>% filter(treated==0L), ghere("output", cohort, "matchround{matching_round}", "actual", "data_successful_matchedcontrols.rds"), compress="gz")
-
-## size of dataset
-print("data_successful_match treated/untreated numbers")
-table(treated = data_successful_matchstatus$treated, useNA="ifany")
+  if(matching_round>1){
+    
+    data_matchstatusprevious <- 
+      read_rds(ghere("output", cohort, "matchround{matching_round-1}", "actual", "data_matchstatus_allrounds.rds"))
+    
+    data_matchstatus_allrounds <- 
+      data_successful_matchstatus %>% 
+      select(all_of(matchstatus_vars)) %>%
+      bind_rows(data_matchstatusprevious) 
+    
+  } else{
+    data_matchstatus_allrounds <- 
+      data_successful_matchstatus %>%
+      select(all_of(matchstatus_vars))
+  }
+  
+  write_rds(data_matchstatus_allrounds, ghere("output", cohort, "matchround{matching_round}", "actual", "data_matchstatus_allrounds.rds"), compress="gz")
+  
+  
+  # output all control patient ids for finalmatched study definition
+  data_matchstatus_allrounds %>%
+    mutate(
+      trial_date=as.character(trial_date)
+    ) %>%
+    filter(treated==0L) %>% #only interested in controls as all
+    write_csv(ghere("output", cohort, "matchround{matching_round}", "actual", "cumulative_matchedcontrols.csv.gz"))
+  
+  ## size of dataset
+  print("data_matchstatus_allrounds treated/untreated numbers")
+  table(treated = data_matchstatus_allrounds$treated, useNA="ifany")
+  
+  
+  
+  ## duplicate IDs
+  data_matchstatus_allrounds %>% group_by(treated, patient_id) %>%
+    summarise(n=n()) %>% group_by(treated) %>% summarise(ndups = sum(n>1)) %>%
+    print()
+  
+  
+  write_rds(data_successful_matchstatus %>% filter(treated==0L), ghere("output", cohort, "matchround{matching_round}", "actual", "data_successful_matchedcontrols.rds"), compress="gz")
+  
+  ## size of dataset
+  print("data_successful_match treated/untreated numbers")
+  table(treated = data_successful_matchstatus$treated, useNA="ifany")
   
 }
 

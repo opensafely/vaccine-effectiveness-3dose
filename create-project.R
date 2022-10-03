@@ -82,6 +82,7 @@ action_1matchround <- function(cohort, matching_round){
         " --param index_date={control_extract_date}"
       ),
       needs = c(
+        "design",
         if(matching_round>1) {glue("process_controlactual_{cohort}_{matching_round-1}")} else {NULL}
       ) %>% as.list,
       highly_sensitive = lst(
@@ -91,8 +92,8 @@ action_1matchround <- function(cohort, matching_round){
     
     action(
       name = glue("process_controlpotential_{cohort}_{matching_round}"),
-      run = glue("r:latest analysis/matching/process_controlpotential.R"),
-      arguments = c(cohort, matching_round),
+      run = glue("r:latest analysis/process_data.R"),
+      arguments = c("potential", cohort, matching_round),
       needs = namelesslst(
         glue("extract_controlpotential_{cohort}_{matching_round}"),
       ),
@@ -106,7 +107,7 @@ action_1matchround <- function(cohort, matching_round){
       run = glue("r:latest analysis/matching/match_potential.R"),
       arguments = c(cohort, matching_round),
       needs = c(
-        glue("process_treated_{cohort}"), 
+        glue("process_treated"), 
         glue("process_controlpotential_{cohort}_{matching_round}"),
         if(matching_round>1) {glue("process_controlactual_{cohort}_{matching_round-1}")} else {NULL}
       ) %>% as.list,
@@ -126,6 +127,7 @@ action_1matchround <- function(cohort, matching_round){
         " --param matching_round={matching_round}",
       ),
       needs = namelesslst(
+        "design",
         glue("match_potential_{cohort}_{matching_round}"), 
       ),
       highly_sensitive = lst(
@@ -136,12 +138,13 @@ action_1matchround <- function(cohort, matching_round){
     
     action(
       name = glue("process_controlactual_{cohort}_{matching_round}"),
-      run = glue("r:latest analysis/matching/process_controlactual.R"),
-      arguments = c(cohort, matching_round),
+      run = glue("r:latest analysis/process_data.R"),
+      arguments = c("actual", cohort, matching_round),
       needs = c(
-        glue("process_treated_{cohort}"),
+        glue("process_treated"),
         glue("match_potential_{cohort}_{matching_round}"), 
         glue("extract_controlpotential_{cohort}_{matching_round}"),  # this is only necessary for the dummy data
+        glue("process_controlpotential_{cohort}_{matching_round}"), # this is necessary for the vaccine data
         glue("extract_controlactual_{cohort}_{matching_round}"),
         if(matching_round>1){glue("process_controlactual_{cohort}_{matching_round-1}")} else {NULL}
       ) %>% as.list,
@@ -177,6 +180,7 @@ action_extract_and_match <- function(cohort, n_matching_rounds){
         " --param n_matching_rounds={n_matching_rounds}",
       ),
       needs = namelesslst(
+        "design",
         glue("process_controlactual_{cohort}_{n_matching_rounds}")
       ),
       highly_sensitive = lst(
@@ -185,16 +189,30 @@ action_extract_and_match <- function(cohort, n_matching_rounds){
     ),
     
     action(
-      name = glue("process_controlfinal_{cohort}"),
-      run = glue("r:latest analysis/matching/process_controlfinal.R"),
+      name = glue("dummydata_controlfinal_{cohort}"),
+      run = glue("r:latest analysis/dummy/dummydata_controlfinal.R"),
       arguments = c(cohort),
+      needs =map(
+        seq_len(n_matching_rounds),
+        ~glue("process_controlactual_{cohort}_",.x)
+      ),
+      highly_sensitive = lst(
+        dummydata_controlfinal = glue("output/{cohort}/dummydata/dummy_control_final.feather")
+      ),
+    ),
+    
+    action(
+      name = glue("process_controlfinal_{cohort}"),
+      run = glue("r:latest analysis/process_data.R"),
+      arguments = c("final", cohort),
       needs = c(
         map(
           seq_len(n_matching_rounds),
           ~glue("process_controlactual_{cohort}_",.x)
         ),
         glue("extract_controlfinal_{cohort}"),
-        glue("process_treated_{cohort}")
+        glue("process_treated"),
+        glue("dummydata_controlfinal_{cohort}")
       ),
       highly_sensitive = lst(
         extract = glue("output/{cohort}/match/*.rds")
@@ -261,7 +279,7 @@ action_table1 <- function(cohort){
     ),
     moderately_sensitive= lst(
       csv= glue("output/{cohort}/table1/*.csv"),
-      png= glue("output/{cohort}/table1/*.png"),
+      # png= glue("output/{cohort}/table1/*.png"),
     )
   )
 }
@@ -318,7 +336,8 @@ actions_list <- splice(
   # all treated people
   action(
     name = "process_treated",
-    run = "r:latest analysis/treated/process_treated.R",
+    run = "r:latest analysis/process_data.R",
+    arguments = "treated",
     needs = namelesslst(
       "extract_treated"
     ),
@@ -330,27 +349,27 @@ actions_list <- splice(
   ),
 
   
-  # comment("# # # # # # # # # # # # # # # # # # #", 
-  #         "Pfizer cohort", 
-  #         "# # # # # # # # # # # # # # # # # # #"),
-  # 
-  # comment("# # # # # # # # # # # # # # # # # # #", 
-  #         "Extract and match"),
-  # 
-  # action_extract_and_match("pfizer", n_matching_rounds),
-  # 
-  # action_table1("pfizer"),
-  # 
-  # comment("# # # # # # # # # # # # # # # # # # #", 
-  #         "Model"),
-  # 
-  # action_km("pfizer", "all", "postest"),
-  # action_km("pfizer", "all", "emergency"),
-  # action_km("pfizer", "all", "covidemergency"),
-  # action_km("pfizer", "all", "covidadmitted"),
-  # action_km("pfizer", "all", "covidcritcare"),
-  # action_km("pfizer", "all", "coviddeath"),
-  # action_km("pfizer", "all", "noncoviddeath"),
+  comment("# # # # # # # # # # # # # # # # # # #",
+          "Pfizer cohort",
+          "# # # # # # # # # # # # # # # # # # #"),
+
+  comment("# # # # # # # # # # # # # # # # # # #",
+          "Extract and match"),
+
+  action_extract_and_match("pfizer", n_matching_rounds),
+
+  action_table1("pfizer"),
+
+  comment("# # # # # # # # # # # # # # # # # # #",
+          "Model"),
+
+  action_km("pfizer", "all", "postest"),
+  action_km("pfizer", "all", "emergency"),
+  action_km("pfizer", "all", "covidemergency"),
+  action_km("pfizer", "all", "covidadmitted"),
+  action_km("pfizer", "all", "covidcritcare"),
+  action_km("pfizer", "all", "coviddeath"),
+  action_km("pfizer", "all", "noncoviddeath"),
   # 
   # action_km("pfizer", "prior_covid_infection", "postest"),
   # action_km("pfizer", "prior_covid_infection", "emergency"),

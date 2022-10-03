@@ -36,8 +36,8 @@ args <- commandArgs(trailingOnly=TRUE)
 if(length(args)==0){
   # use for interactive testing
   removeobjects <- FALSE
-  cohort <- "over12"
-  matching_round <- as.integer("2")
+  cohort <- "pfizer"
+  matching_round <- as.integer("1")
 } else {
   #FIXME replace with actual eventual action variables
   removeobjects <- TRUE
@@ -49,7 +49,7 @@ if(length(args)==0){
 ## get cohort-specific parameters study dates and parameters ----
 
 dates <- map(study_dates[[cohort]], as.Date)
-params <- study_params[[cohort]]
+
 
 matching_round_date <- dates$control_extract_dates[matching_round]
 
@@ -76,14 +76,16 @@ if(matching_round>1){
   data_alltreated <- 
     data_alltreated %>%
     anti_join(
-      data_matchstatusprevious, by=c("patient_id", "treated")
+      data_matchstatusprevious, 
+      by=c("patient_id", "treated")
     )
   
   # do not select untreated people who have already been matched
   data_control <- 
     data_control %>%
     anti_join(
-      data_matchstatusprevious, by=c("patient_id", "treated")
+      data_matchstatusprevious, 
+      by=c("patient_id", "treated")
     )
 }
 
@@ -93,7 +95,7 @@ if(matching_round>1){
 data_eligible <-
   bind_rows(data_alltreated, data_control) %>%
   mutate(
-    treatment_date = if_else(vax1_type %in% params$treatment, vax1_date, as.Date(NA)),
+    treatment_date = if_else(treated==1L, vax3_date, as.Date(NA)),
   )
 
 
@@ -120,8 +122,6 @@ local({
   # initialise matching summary data
   data_treated <- NULL
   data_matched <- NULL
-
-  already_stopped <- FALSE
 
   #trial=1
   for(trial in trials){
@@ -157,7 +157,7 @@ local({
         # select controls
         treated==0L,
         # remove anyone already vaccinated
-        (vax1_date > trial_date) | is.na(vax1_date),
+        (vax3_date > trial_date) | is.na(vax3_date),
         # select only people not already selected as a control
         patient_id %in% candidate_ids
       ) %>%
@@ -171,7 +171,7 @@ local({
     
     n_treated_all <- nrow(data_treated_i)
     
-    if(n_treated_all<1 | already_stopped) {
+    if(n_treated_all<1) {
       message("Skipping trial ", trial, " - No treated people eligible for inclusion.")
       next
     }
@@ -183,10 +183,10 @@ local({
           select(
             patient_id, 
             treated,
-            all_of(
-              exact_variables#, 
-              #names(caliper_variables)
-            ),
+            all_of(c(
+              exact_variables, 
+              names(caliper_variables)
+              )),
         ),
         by = c("patient_id", "treated")
       )
@@ -203,16 +203,15 @@ local({
         replace = FALSE,
         estimand = "ATT",
         exact = exact_variables,
-       # caliper = caliper_variables, std.caliper=FALSE,
+        caliper = caliper_variables, std.caliper=FALSE,
         m.order = "data", # data is sorted on (effectively random) patient ID
         #verbose = TRUE,
         ratio = 1L # 1:1 matching
       )[[1]]
 
     
-    if(is.null(obj_matchit_i) | already_stopped) {
-      message("Terminating trial sequence at trial ", trial, " - No exact matches found.")
-      already_stopped <- TRUE
+    if(is.null(obj_matchit_i)) {
+      message("Skipping trial ", trial, " - No exact matches found.")
       next
     }
     
@@ -254,12 +253,12 @@ local({
       filter(!is.na(match_id)) %>% # remove unmatched people. equivalent to weight != 0
       arrange(match_id, desc(treated)) %>%
       left_join(
-        data_eligible %>% select(patient_id, treated, vax1_date),
+        data_eligible %>% select(patient_id, treated, vax3_date),
         by = c("patient_id", "treated")
       ) %>%
       group_by(match_id) %>%
       mutate(
-        controlistreated_date = vax1_date[treated==0], # this only works because of the group_by statement above! do not remove group_by statement!
+        controlistreated_date = vax3_date[treated==0], # this only works because of the group_by statement above! do not remove group_by statement!
       ) %>%
       ungroup()
 

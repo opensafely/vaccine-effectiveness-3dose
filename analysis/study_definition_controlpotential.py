@@ -1,4 +1,3 @@
-from ast import And
 # Import codelists from codelists.py
 import codelists
 
@@ -15,41 +14,34 @@ from cohortextractor import (
   params
 )
 
-from variables_outcome import vaccination_date_X 
-
+# define params
 cohort = params["cohort"]
 matching_round = params["matching_round"]
 previousmatching_round = int(matching_round)-1
 index_date = params["index_date"]
 
-# import study dates defined in "./analysis/design.R" script
-with open("./lib/design/study-dates.json") as f:
-  study_dates = json.load(f)
-
-# change these in design.R if necessary
-start_date = study_dates[cohort]["start_date"]
-end_date = study_dates[cohort]["end_date"]
-
-
-# import study parameters defined in "./analysis/design.R" script  
-with open("./lib/design/study-params.json") as f:
-  study_params = json.load(f)
-
-minage = study_params[cohort]["minage"]
-maxage = study_params[cohort]["maxage"]
-treatment = study_params[cohort]["treatment"]
-
-
 
 ############################################################
 ## inclusion variables
+from variables_vax import generate_vax_variables 
+vax_variables = generate_vax_variables(index_date="1900-01-01", n=3)
+############################################################
+# vax variables
 from variables_inclusion import generate_inclusion_variables 
 inclusion_variables = generate_inclusion_variables(index_date="index_date")
 ############################################################
-## matching variables
-from variables_matching import generate_matching_variables 
-matching_variables = generate_matching_variables(index_date="index_date")
+## jcvi variables
+from variables_jcvi import generate_jcvi_variables 
+jcvi_variables = generate_jcvi_variables(index_date="index_date")
 ############################################################
+## demographic variables
+from variables_demo import generate_demo_variables 
+demo_variables = generate_demo_variables(index_date="index_date")
+############################################################
+## pre variables
+from variables_pre import generate_pre_variables 
+pre_variables = generate_pre_variables(index_date="index_date")
+
 
 
 # Specify study defeinition
@@ -57,7 +49,7 @@ study = StudyDefinition(
   
   # Configure the expectations framework
   default_expectations={
-    "date": {"earliest": "2020-01-01", "latest": end_date},
+    "date": {"earliest": "2020-01-01", "latest": "today"},
     "rate": "uniform",
     "incidence": 0.2,
     "int": {"distribution": "normal", "mean": 1000, "stddev": 100},
@@ -68,27 +60,39 @@ study = StudyDefinition(
   
   # This line defines the study population
   population=patients.satisfying(
-    f"""
-      registered
-      AND
-      age_aug21 >= {minage}
-      AND
-      age_aug21 <= {maxage}
-      AND
-      (NOT has_died)
-      AND
-      (NOT wchild)
+    """
+    registered
+    AND
+    age >= 18
+    AND
+    NOT has_died
+    AND 
+    covid_vax_disease_2_date
     """,
-    #NOT (covid_vax_any_1_date <= index_date) # doesn't work for some reason `unknown colunm : index_date`
-    #previouslymatched = patients.which_exist_in_file(f_path="output/match/cumulative_matchedcontrols{matching_round}.csv.gz"),
+    
+    **inclusion_variables,    
+
   ),
   
-  **vaccination_date_X(
-    name = "covid_vax_any",
-    index_date = "1900-01-01",
-    n = 1,
-    target_disease_matches="SARS-2 CORONAVIRUS"
-  ),
-  **inclusion_variables,    
-  **matching_variables,      
+  #################################################################
+  ## Covid vaccine dates
+  #################################################################
+  **vax_variables,
+  # all vaccination variables for first three doses to apply selection criteria
+    
+  ###############################################################################
+  # jcvi variables
+  ##############################################################################
+  **jcvi_variables, 
+  
+  ###############################################################################
+  # demographic variables
+  ##############################################################################
+  **demo_variables,   
+
+  ###############################################################################
+  # pre variables
+  ##############################################################################
+  **pre_variables,    
+
 )

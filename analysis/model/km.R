@@ -4,8 +4,9 @@
 #  - import matched data
 #  - adds outcome variable and restricts follow-up
 #  - gets KM estimates, with covid and non covid death as competing risks
-#  - The script must be accompanied by two arguments:
-#    `cohort` - over12s or under12s
+#  - The script must be accompanied by three arguments:
+#    `cohort` - pfizer or moderna
+#    `subgroup` - prior_covid_infection
 #    `outcome` - the dependent variable
 
 # # # # # # # # # # # # # # # # # # # # #
@@ -35,8 +36,8 @@ args <- commandArgs(trailingOnly=TRUE)
 if(length(args)==0){
   # use for interactive testing
   removeobjects <- FALSE
-  cohort <- "over12"
-  subgroup <- "prior_covid_infection"
+  cohort <- "pfizer"
+  subgroup <- "all"
   outcome <- "postest"
   
 } else {
@@ -45,12 +46,6 @@ if(length(args)==0){
   subgroup <- args[[2]]
   outcome <- args[[3]]
 }
-
-
-## get cohort-specific parameters study dates and parameters ----
-
-dates <- map(study_dates[[cohort]], as.Date)
-params <- study_params[[cohort]]
 
 # derive symbolic arguments for programming with
 
@@ -65,6 +60,7 @@ fs::dir_create(output_dir)
 
 data_matched <- read_rds(ghere("output", cohort, "match", "data_matched.rds"))
 
+
 ## import baseline data, restrict to matched individuals and derive time-to-event variables
 data_matched <- 
   data_matched %>%
@@ -73,8 +69,8 @@ data_matched <-
     # select only variables needed for models to save space
     patient_id, treated, trial_date, match_id, 
     controlistreated_date,
-    vax1_date,
-    death_date, dereg_date, coviddeath_date, noncoviddeath_date, vax2_date,
+    vax3_date,
+    death_date, dereg_date, coviddeath_date, noncoviddeath_date, vax4_date,
     all_of(c(glue("{outcome}_date"), subgroup))
   ) %>%
   
@@ -86,9 +82,9 @@ data_matched <-
     # follow-up time is up to and including censor date
     censor_date = pmin(
       dereg_date,
-      vax2_date-1, # -1 because we assume vax occurs at the start of the day
+      vax4_date-1, # -1 because we assume vax occurs at the start of the day
       death_date,
-      dates$followupend_date,
+      study_dates$studyend_date,
       trial_date + maxfup,
       na.rm=TRUE
     ),
@@ -148,13 +144,15 @@ data_surv <-
      
     N = max(n.risk, na.rm=TRUE),
     
+    # rounded to `round_by - (round_by/2)`
+    cml.eventcensor = roundmid_any(cumsum(n.event+n.censor), round_by),
     cml.event = roundmid_any(cumsum(n.event), round_by),
-    cml.censor = roundmid_any(cumsum(n.censor), round_by),
-       
+    cml.censor = cml.eventcensor - cml.event,
+
     n.event = diff(c(0, cml.event)),
     n.censor = diff(c(0, cml.censor)),
-    n.risk = roundmid_any(N, round_by) - lag(cml.event + cml.censor, 1, 0), 
-    
+    n.risk = roundmid_any(N, round_by) - lag(cml.eventcensor, 1, 0),
+
     # KM estimate for event of interest, combining censored and competing events as censored
     summand = (1/(n.risk-n.event)) - (1/n.risk), # = n.event / ((n.risk - n.event) * n.risk) but re-written to prevent integer overflow
     surv = cumprod(1 - n.event / n.risk),
@@ -169,8 +167,8 @@ data_surv <-
     llsurv.se = sqrt((1 / log(surv)^2) * cumsum(summand)),
     
     ## standard errors on complementary log-log scale
-    surv.ll = exp(-exp(llsurv + qnorm(0.025)*llsurv.se)),
-    surv.ul = exp(-exp(llsurv + qnorm(0.975)*llsurv.se)),
+    surv.ll = exp(-exp(llsurv + qnorm(0.975)*llsurv.se)),
+    surv.ul = exp(-exp(llsurv + qnorm(0.025)*llsurv.se)),
     
     risk = 1 - surv,
     risk.se = surv.se,
@@ -179,11 +177,13 @@ data_surv <-
     risk.ul = 1 - surv.ll
   ) %>% select(
     !!subgroup_sym, treated, time, lagtime, leadtime, interval,
-    n.risk,n.event, n.censor,
+    cml.event, cml.censor,
+    n.risk, n.event, n.censor,
     surv, surv.se, surv.ll, surv.ul,
     risk, risk.se, risk.ll, risk.ul
   ) 
  }
+ 
  
 data_surv_unrounded <- km_process(data_surv, 1)
 data_surv_rounded <- km_process(data_surv, threshold)
@@ -249,6 +249,10 @@ ggsave(filename=fs::path(output_dir, "km_plot_rounded.png"), km_plot_rounded, wi
 
 kmcontrasts <- function(data, cuts=NULL){
 
+  # if cuts=NULL then fucntion provides daily estimates
+  # if eg c(0,14,28,42,...) then follow u[ is split on these days
+  # c(0, 140)
+  
   if(is.null(cuts)){cuts <- unique(c(0,data$time))}
 
   data %>%

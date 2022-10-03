@@ -55,14 +55,20 @@ study_dates$moderna$control_extract_dates = as.Date(study_dates$moderna$start_da
 
 jsonlite::write_json(study_dates, path = here("lib", "design", "study-dates.json"), auto_unbox=TRUE, pretty =TRUE)
 
+# all as dates
+lens <- sapply(study_dates, length)
+dates_general <- map(study_dates[lens==1], as.Date)
+dates_cohort <- map(study_dates[lens==3], ~map(.x, as.Date))
+study_dates <- splice(dates_general, dates_cohort)[names(study_dates)]
+
 # define outcomes ----
 
 events_lookup <- tribble(
   ~event, ~event_var, ~event_descr,
-  
+
   # other
   "test", "covid_test_date", "SARS-CoV-2 test",
-  
+
   # effectiveness
   "postest", "positive_test_date", "Positive SARS-CoV-2 test",
   "covidemergency", "covidemergency_date", "COVID-19 A&E attendance",
@@ -74,7 +80,7 @@ events_lookup <- tribble(
   "coviddeath", "coviddeath_date", "COVID-19 death",
   "noncoviddeath", "noncoviddeath_date", "Non-COVID-19 death",
   "death", "death_date", "Any death",
-  
+
   # safety
   "admitted", "admitted_unplanned_1_date", "Unplanned hospitalisation",
   "emergency", "emergency_date", "A&E attendance",
@@ -106,8 +112,8 @@ recoder <-
       `Matched` = "matched"
     ),
     treated = c(
-      `Unvaccinated` = "0",
-      `Vaccinated` = "1"
+      `Two doses` = "0",
+      `Three doses` = "1"
     ),
     outcome = set_names(events_lookup$event, events_lookup$event_descr),
     all = c(` ` = "all"),

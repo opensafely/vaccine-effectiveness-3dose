@@ -29,7 +29,7 @@ args <- commandArgs(trailingOnly=TRUE)
 if(length(args)==0){
   # use for interactive testing
   removeobjects <- FALSE
-  cohort <- "over12"
+  cohort <- "pfizer"
 } else {
   #FIXME replace with actual eventual action variables
   removeobjects <- TRUE
@@ -38,10 +38,7 @@ if(length(args)==0){
 
 
 ## get cohort-specific parameters study dates and parameters ----
-
-dates <- map(study_dates[[cohort]], as.Date)
-params <- study_params[[cohort]]
-
+dates <- study_dates[[cohort]]
 
 
 ## create output directories ----
@@ -62,7 +59,7 @@ data_treatedeligible_matchstatus <- read_rds(here("output", cohort, "match", "da
 # matching coverage for boosted people
 data_coverage <-
   data_treatedeligible_matchstatus %>%
-  group_by(vax1_date) %>%
+  group_by(vax3_date) %>%
   summarise(
     n_eligible = n(),
     n_matched = sum(matched, na.rm=TRUE),
@@ -76,14 +73,14 @@ data_coverage <-
     names_prefix = "n_",
     values_to = "n"
   ) %>%
-  arrange(vax1_date, status) %>%
-  group_by(vax1_date, status) %>%
+  arrange(vax3_date, status) %>%
+  group_by(vax3_date, status) %>%
   summarise(
     n = sum(n),
   ) %>%
   group_by(status) %>%
   complete(
-    vax1_date = full_seq(c(dates$start_date, dates$end_date), 1), # go X days before to
+    vax3_date = full_seq(c(dates$start_date, dates$end_date), 1), # go X days before to
     fill = list(n=0)
   ) %>%
   mutate(
@@ -94,7 +91,7 @@ data_coverage <-
     status = factor(status, levels=c("unmatched", "matched")),
     status_descr = fct_recoderelevel(status, recoder$status)
   ) %>%
-  arrange(status_descr, vax1_date)
+  arrange(status_descr, vax3_date)
 
 
 
@@ -111,111 +108,6 @@ data_coverage_rounded <-
 
 write_csv(data_coverage_rounded, fs::path(output_dir, "coverage.csv"))
 
-
-
-## plot matching coverage ----
-
-plot_coverage_n <-
-  data_coverage %>%
-  ggplot()+
-  geom_col(
-    aes(
-      x=vax1_date+0.5,
-      y=n,
-      group=status,
-      fill=status_descr,
-      colour=NULL
-    ),
-    position=position_stack(reverse=TRUE),
-    #alpha=0.8,
-    width=1
-  )+
-  #geom_rect(xmin=dates$start_date, xmax= dates$end_date+1, ymin=-6, ymax=6, fill="grey", colour="transparent")+
-  geom_hline(yintercept = 0, colour="black")+
-  scale_x_date(
-    breaks = unique(lubridate::ceiling_date(data_coverage$vax1_date, "1 month")),
-    limits = c(dates$start_date-1, NA),
-    labels = scales::label_date("%d/%m"),
-    expand = expansion(add=1),
-  )+
-  scale_y_continuous(
-    #labels = ~scales::label_number(accuracy = 1, big.mark=",")(abs(.x)),
-    expand = expansion(c(0, NA))
-  )+
-  scale_fill_brewer(type="qual", palette="Set2")+
-  scale_colour_brewer(type="qual", palette="Set2")+
-  labs(
-    x="Date",
-    y="Booster vaccines per day",
-    colour=NULL,
-    fill=NULL,
-    alpha=NULL
-  ) +
-  theme_minimal()+
-  theme(
-    axis.line.x.bottom = element_line(),
-    axis.text.x.top=element_text(hjust=0),
-    strip.text.y.right = element_text(angle = 0),
-    axis.ticks.x=element_line(),
-    legend.position = "bottom"
-  )+
-  NULL
-
-plot_coverage_n
-
-ggsave(plot_coverage_n, filename="coverage_count.png", path=output_dir)
-
-plot_coverage_cumuln <-
-  data_coverage %>%
-  ggplot()+
-  geom_col(
-    aes(
-      x=vax1_date+0.5,
-      y=cumuln,
-      group=status,
-      fill=status_descr,
-      colour=NULL
-    ),
-    position=position_stack(reverse=TRUE),
-    width=1
-  )+
-  geom_rect(xmin=dates$start_date, xmax= dates$end_date+1, ymin=-6, ymax=6, fill="grey", colour="transparent")+
-  scale_x_date(
-    breaks = unique(lubridate::ceiling_date(data_coverage$vax1_date, "1 month")),
-    limits = c(dates$start_date-1, NA),
-    labels = scales::label_date("%d/%m"),
-    expand = expansion(add=1),
-  )+
-  scale_y_continuous(
-    #labels = ~scales::label_number(accuracy = 1, big.mark=",")(abs(.)),
-    expand = expansion(c(0, NA))
-  )+
-  scale_fill_brewer(type="qual", palette="Set2")+
-  scale_colour_brewer(type="qual", palette="Set2")+
-  scale_alpha_discrete(range= c(0.8,0.4))+
-  labs(
-    x="Date",
-    y="Cumulative booster vaccines",
-    colour=NULL,
-    fill=NULL,
-    alpha=NULL
-  ) +
-  theme_minimal()+
-  theme(
-    axis.line.x.bottom = element_line(),
-    axis.text.x.top=element_text(hjust=0),
-    strip.text.y.right = element_text(angle = 0),
-    axis.ticks.x=element_line(),
-    legend.position = "bottom"
-  )+
-  NULL
-
-plot_coverage_cumuln
-
-ggsave(plot_coverage_cumuln, filename="coverage_stack.png", path=output_dir)
-
-
-
 # table 1 style baseline characteristics ----
 
 library('gt')
@@ -225,10 +117,16 @@ var_labels <- list(
   N  ~ "Total N",
   treated ~ "Status",
   age ~ "Age",
+  jcvi_ageband ~ "JCVI ageband",
   sex ~ "Sex",
   #ethnicity_combined ~ "Ethnicity",
   imd_Q5 ~ "Deprivation",
   region ~ "Region",
+  
+  cev_cv ~ "Clinically vulnerable",
+  
+  vax12_type ~ "Primary course vaccine type",
+  vax2_day ~ "Day of second dose",
   
   #prior_tests_cat ~ "Number of SARS-CoV-2 tests",
   prior_covid_infection ~ "Prior documented SARS-CoV-2 infection"
@@ -266,107 +164,16 @@ raw_stats_redacted <- raw_stats %>%
     n=roundmid_any(n, 6),
     N=roundmid_any(N, 6),
     p=n/N,
+    N_miss = roundmid_any(N_miss, 6),
+    N_obs = roundmid_any(N_obs, 6),
+    p_miss = N_miss/N_obs,
+    N_nonmiss = roundmid_any(N_nonmiss, 6),
+    p_nonmiss = N_nonmiss/N_obs,
     var_label = factor(var_label, levels=map_chr(var_labels[-c(1,2)], ~last(as.character(.)))),
     variable_levels = replace_na(as.character(variable_levels), "")
   ) 
 
 write_csv(raw_stats_redacted, fs::path(output_dir, "table1.csv"))
-
-
-
-
-
-## COPY THIS SECTION TO REPORTING REPO WHEN READY
-
-# love / smd plot ----
-
-data_smd <- 
-  raw_stats_redacted %>%
-  filter(
-    variable != "N"
-  ) %>%
-  group_by(var_label, variable, variable_levels) %>%
-  summarise(
-    diff = diff(p),
-    sd = sqrt(sum(p*(1-p))),
-    smd = diff/sd
-  ) %>%
-  ungroup() %>%
-  mutate(
-    var_label = factor(var_label, levels=map_chr(var_labels[-c(1,2)], ~last(as.character(.)))),
-    variable_card = as.numeric(var_label)%%2,
-    variable_levels = replace_na(as.character(variable_levels), ""),
-  ) %>%
-  arrange(var_label) %>%
-  mutate(
-    level = fct_rev(fct_inorder(str_replace(paste(var_label, variable_levels, sep=": "),  "\\:\\s$", ""))),
-    cardn = row_number()
-  )
-
-plot_smd <-
-  ggplot(data_smd)+
-  geom_point(aes(x=smd, y=level))+
-  geom_rect(aes(alpha = variable_card, ymin = rev(cardn)-0.5, ymax =rev(cardn+0.5)), xmin = -Inf, xmax = Inf, fill='grey', colour="transparent") +
-  scale_alpha_continuous(range=c(0,0.3), guide="none")+
-  labs(
-    x="Standardised mean difference",
-    y=NULL,
-    alpha=NULL
-  )+
-  theme_minimal() +
-  theme(
-    strip.placement = "outside",
-    strip.background = element_rect(fill="transparent", colour="transparent"),
-    strip.text.y.left = element_text(angle = 0, hjust=1),
-    panel.grid.major.y = element_blank(),
-    panel.grid.minor.y = element_blank(),
-    panel.spacing = unit(0, "lines")
-  )
-
-
-
-raw_stats_redacted %>%
-  filter(
-    variable !="N"
-  ) %>%
-  # one column per treatment group
-  pivot_wider(
-    id_cols = c(var_label, variable, variable_levels),
-    names_from = by,
-    values_from = c(N, n, p, stat_display)
-  ) %>%
-  # add SMD stat
-  left_join(
-    data_smd,
-    by=c("var_label", "variable", "variable_levels")
-  ) %>%
-  # format columns
-  mutate(
-    stat_0 = glue("{n_0} ({scales::label_number(0.1, 100)(p_0)})"),
-    stat_1 = glue("{n_1} ({scales::label_number(0.1, 100)(p_1)})"),
-    smd = scales::label_number(0.01)(smd),
-    
-  ) %>%
-  select(var_label, variable_levels, stat_0, stat_1, smd) %>%
-  gt(
-    groupname_col = "var_label"
-  ) %>%
-  cols_label(
-    var_label = "Variable",
-    variable_levels = "",
-    `stat_0` = glue("Unvaccinated (N={filter(raw_stats_redacted, variable=='N', by==0) %>% pull(n)})"),
-    `stat_1` = glue("Vaccinated (N={filter(raw_stats_redacted, variable=='N', by==1) %>% pull(n)})"),
-    `smd` = "Standardised mean difference"
-  ) %>%
-  cols_align(
-    align = c("right"),
-    columns =  c("stat_0", "stat_1")
-  ) %>%
-  cols_align(
-    align = c("left"),
-    columns =  c("var_label", "variable_levels")
-  )# %>%
-  #tab_options(row_group.as_column = TRUE)
 
 
 

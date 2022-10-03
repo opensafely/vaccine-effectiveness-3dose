@@ -35,9 +35,9 @@ demographic_variables = generate_demographic_variables(index_date="covid_vax_dis
 from variables_pre import generate_pre_variables 
 pre_variables = generate_pre_variables(index_date="covid_vax_disease_3_date")
 ############################################################
-## post variables
-from variables_post import generate_post_variables 
-post_variables = generate_post_variables(index_date="covid_vax_disease_3_date")
+## outcome variables
+from variables_outcome import generate_outcome_variables 
+outcome_variables = generate_outcome_variables(index_date="covid_vax_disease_3_date")
 ############################################################
 
 # Specify study definition
@@ -91,6 +91,6 @@ study = StudyDefinition(
   ###############################################################################
   # posts
   ##############################################################################
-  **post_variables,      
+  **outcome_variables,      
   
 )

@@ -56,7 +56,7 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
       write_feather(sink = ghere("output", "dummydata", "dummy_control_final_{cohort}.feather"))
     
   } else {
-    stop(glue("Cannot generate dummy_controlfinal_{cohort}.feather as {path_data_matchstatus_allrounds} does not exist.")) 
+    print(glue("Cannot generate dummy_controlfinal_{cohort}.feather as {path_data_matchstatus_allrounds} does not exist.")) 
   }  
   
 } else {

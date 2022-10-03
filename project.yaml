@@ -172,10 +172,11 @@ actions:
   dummydata_controlfinal_pfizer:
     run: r:latest analysis/dummy/dummydata_controlfinal.R pfizer
     needs:
-    - extract_controlfinal_pfizer
+    - process_controlactual_pfizer_1
+    - process_controlactual_pfizer_2
     outputs:
       highly_sensitive:
-        dummydata_controlfinal: output/dummydata/dummy_control_final_pfizer.feather
+        dummydata_controlfinal: output/pfizer/dummydata/dummy_control_final.feather
 
   process_controlfinal_pfizer:
     run: r:latest analysis/process_data.R final pfizer
@@ -199,7 +200,7 @@ actions:
 
   # ## # # # # # # # # # # # # # # # # # # # 
   # ## Model 
-  # 
+
   # km_pfizer_all_postest:
   #   run: r:latest analysis/model/km.R pfizer all postest
   #   needs:
@@ -208,7 +209,7 @@ actions:
   #     moderately_sensitive:
   #       rds: output/pfizer/models/km/all/postest/*.rds
   #       png: output/pfizer/models/km/all/postest/*.png
-  # 
+
   # km_pfizer_all_emergency:
   #   run: r:latest analysis/model/km.R pfizer all emergency
   #   needs:
@@ -217,7 +218,7 @@ actions:
   #     moderately_sensitive:
   #       rds: output/pfizer/models/km/all/emergency/*.rds
   #       png: output/pfizer/models/km/all/emergency/*.png
-  # 
+
   # km_pfizer_all_covidemergency:
   #   run: r:latest analysis/model/km.R pfizer all covidemergency
   #   needs:
@@ -226,7 +227,7 @@ actions:
   #     moderately_sensitive:
   #       rds: output/pfizer/models/km/all/covidemergency/*.rds
   #       png: output/pfizer/models/km/all/covidemergency/*.png
-  # 
+
   # km_pfizer_all_covidadmitted:
   #   run: r:latest analysis/model/km.R pfizer all covidadmitted
   #   needs:
@@ -235,7 +236,7 @@ actions:
   #     moderately_sensitive:
   #       rds: output/pfizer/models/km/all/covidadmitted/*.rds
   #       png: output/pfizer/models/km/all/covidadmitted/*.png
-  # 
+
   # km_pfizer_all_covidcritcare:
   #   run: r:latest analysis/model/km.R pfizer all covidcritcare
   #   needs:
@@ -244,7 +245,7 @@ actions:
   #     moderately_sensitive:
   #       rds: output/pfizer/models/km/all/covidcritcare/*.rds
   #       png: output/pfizer/models/km/all/covidcritcare/*.png
-  # 
+
   # km_pfizer_all_coviddeath:
   #   run: r:latest analysis/model/km.R pfizer all coviddeath
   #   needs:
@@ -253,7 +254,7 @@ actions:
   #     moderately_sensitive:
   #       rds: output/pfizer/models/km/all/coviddeath/*.rds
   #       png: output/pfizer/models/km/all/coviddeath/*.png
-  # 
+
   # km_pfizer_all_noncoviddeath:
   #   run: r:latest analysis/model/km.R pfizer all noncoviddeath
   #   needs:

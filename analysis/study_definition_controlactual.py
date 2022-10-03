@@ -21,10 +21,6 @@ matching_round = params["matching_round"]
 
 ############################################################
 ## inclusion variables
-# from variables_vax import generate_vax_variables 
-# vax_variables = generate_vax_variables(index_date="1900-01-01", n=3)
-############################################################
-# vax variables
 from variables_inclusion import generate_inclusion_variables 
 inclusion_variables = generate_inclusion_variables(index_date="trial_date")
 ############################################################

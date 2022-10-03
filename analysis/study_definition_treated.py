@@ -28,8 +28,8 @@ from variables_jcvi import generate_jcvi_variables
 jcvi_variables = generate_jcvi_variables(index_date="covid_vax_disease_3_date")
 ############################################################
 ## demographic variables
-from variables_demographic import generate_demographic_variables 
-demographic_variables = generate_demographic_variables(index_date="covid_vax_disease_3_date")
+from variables_demo import generate_demo_variables 
+demo_variables = generate_demo_variables(index_date="covid_vax_disease_3_date")
 ############################################################
 ## pre variables
 from variables_pre import generate_pre_variables 
@@ -81,7 +81,7 @@ study = StudyDefinition(
   ###############################################################################
   # demographic variables
   ##############################################################################
-  **demographic_variables,   
+  **demo_variables,   
 
   ###############################################################################
   # pre variables

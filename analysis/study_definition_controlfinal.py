@@ -26,9 +26,9 @@ index_date = study_dates["index_date"]
 
 
 ############################################################
-## post variables
-from variables_post import generate_post_variables 
-post_variables = generate_post_variables(index_date="trial_date")
+## outcome variables
+from variables_outcome import generate_outcome_variables 
+outcome_variables = generate_outcome_variables(index_date="trial_date")
 ############################################################
 
 
@@ -55,7 +55,7 @@ study = StudyDefinition(
   ###############################################################################
   # post variables
   ##############################################################################
-  **post_variables,
+  **outcome_variables,
   
   
 )

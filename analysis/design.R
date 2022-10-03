@@ -63,28 +63,28 @@ study_dates <- splice(dates_general, dates_cohort)[names(study_dates)]
 
 # define outcomes ----
 
-# events_lookup <- tribble(
-#   ~event, ~event_var, ~event_descr,
-#   
-#   # other
-#   "test", "covid_test_date", "SARS-CoV-2 test",
-#   
-#   # effectiveness
-#   "postest", "positive_test_date", "Positive SARS-CoV-2 test",
-#   "covidemergency", "covidemergency_date", "COVID-19 A&E attendance",
-#   "covidadmitted", "covidadmitted_date", "COVID-19 hospitalisation",
-#   "noncovidadmitted", "noncovidadmitted_date", "Non-COVID-19 hospitalisation",
-#   "covidadmittedproxy1", "covidadmittedproxy1_date", "COVID-19 hospitalisation (A&E proxy)",
-#   "covidadmittedproxy2", "covidadmittedproxy2_date", "COVID-19 hospitalisation (A&E proxy v2)",
-#   "covidcc", "covidcc_date", "COVID-19 critical care",
-#   "coviddeath", "coviddeath_date", "COVID-19 death",
-#   "noncoviddeath", "noncoviddeath_date", "Non-COVID-19 death",
-#   "death", "death_date", "Any death",
-#   
-#   # safety
-#   "admitted", "admitted_unplanned_1_date", "Unplanned hospitalisation",
-#   "emergency", "emergency_date", "A&E attendance",
-# )
+events_lookup <- tribble(
+  ~event, ~event_var, ~event_descr,
+
+  # other
+  "test", "covid_test_date", "SARS-CoV-2 test",
+
+  # effectiveness
+  "postest", "positive_test_date", "Positive SARS-CoV-2 test",
+  "covidemergency", "covidemergency_date", "COVID-19 A&E attendance",
+  "covidadmitted", "covidadmitted_date", "COVID-19 hospitalisation",
+  "noncovidadmitted", "noncovidadmitted_date", "Non-COVID-19 hospitalisation",
+  "covidadmittedproxy1", "covidadmittedproxy1_date", "COVID-19 hospitalisation (A&E proxy)",
+  "covidadmittedproxy2", "covidadmittedproxy2_date", "COVID-19 hospitalisation (A&E proxy v2)",
+  "covidcc", "covidcc_date", "COVID-19 critical care",
+  "coviddeath", "coviddeath_date", "COVID-19 death",
+  "noncoviddeath", "noncoviddeath_date", "Non-COVID-19 death",
+  "death", "death_date", "Any death",
+
+  # safety
+  "admitted", "admitted_unplanned_1_date", "Unplanned hospitalisation",
+  "emergency", "emergency_date", "A&E attendance",
+)
 
 # define treatments ----
 
@@ -112,10 +112,10 @@ recoder <-
       `Matched` = "matched"
     ),
     treated = c(
-      `Unvaccinated` = "0",
-      `Vaccinated` = "1"
+      `Two doses` = "0",
+      `Three doses` = "1"
     ),
-    # outcome = set_names(events_lookup$event, events_lookup$event_descr),
+    outcome = set_names(events_lookup$event, events_lookup$event_descr),
     all = c(` ` = "all"),
     prior_covid_infection = c(
       `No prior SARS-CoV-2 infection` = "FALSE",

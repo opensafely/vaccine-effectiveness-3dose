@@ -151,52 +151,19 @@ process_pre <- function(.data) {
 }
 
 ################################################################################
-process_post <- function(.data) {
+process_outcome <- function(.data) {
   
   .data %>%
     mutate(
       
-      # because this value is returned as a factor by the study definition
-      admitted_covid_ccdays_1 = as.numeric(as.character(admitted_covid_ccdays_1)),
-      admitted_covid_ccdays_2 = as.numeric(as.character(admitted_covid_ccdays_2)),
-      admitted_covid_ccdays_3 = as.numeric(as.character(admitted_covid_ccdays_3)),
-      admitted_covid_ccdays_4 = as.numeric(as.character(admitted_covid_ccdays_4)),
-      
-      
-      covidcc_1_date = case_when(
-        admitted_covid_ccdays_1 > 0 ~ admitted_covid_1_date,
-        admitted_covid_ccdays_2 > 0 ~ admitted_covid_2_date,
-        admitted_covid_ccdays_3 > 0 ~ admitted_covid_3_date,
-        admitted_covid_ccdays_4 > 0 ~ admitted_covid_4_date,
-        TRUE ~ as.Date(NA_character_)
-      ),
-      
-      covidcc_2_date = case_when(
-        (admitted_covid_ccdays_2 > 0) & (admitted_covid_2_date > covidcc_1_date) ~ admitted_covid_2_date,
-        (admitted_covid_ccdays_3 > 0) & (admitted_covid_3_date > covidcc_1_date) ~ admitted_covid_3_date,
-        (admitted_covid_ccdays_4 > 0) & (admitted_covid_4_date > covidcc_1_date) ~ admitted_covid_4_date,
-        TRUE ~ as.Date(NA_character_)
-      ),
-      
-      covidcc_3_date = case_when(
-        (admitted_covid_ccdays_3 > 0) & (admitted_covid_3_date > covidcc_2_date) ~ admitted_covid_3_date,
-        (admitted_covid_ccdays_4 > 0) & (admitted_covid_4_date > covidcc_2_date) ~ admitted_covid_4_date,
-        TRUE ~ as.Date(NA_character_)
-      ),
-      
-      covidcc_4_date = case_when(
-        (admitted_covid_ccdays_4 > 0) & (admitted_covid_4_date > covidcc_3_date) ~ admitted_covid_4_date,
-        TRUE ~ as.Date(NA_character_)
-      ),
-      
       # earliest covid event after study start
-      anycovid_1_date = pmin(positive_test_1_date, covidemergency_1_date, admitted_covid_1_date, covidcc_1_date, coviddeath_date, na.rm=TRUE),
+      anycovid_date = pmin(postest_date, covidemergency_date, covidadmitted_date, covidcritcare_date, coviddeath_date, na.rm=TRUE),
       
       noncoviddeath_date = if_else(!is.na(death_date) & is.na(coviddeath_date), death_date, as.Date(NA_character_)),
       
       cause_of_death = fct_case_when(
         !is.na(coviddeath_date) ~ "covid-related",
-        !is.na(death_date) ~ "not covid-related",
+        is.na(death_date) ~ "not covid-related",
         TRUE ~ NA_character_
       ),
       

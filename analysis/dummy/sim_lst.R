@@ -341,323 +341,79 @@ sim_list_pre = lst(
 )
 
 # sim list post ----
-sim_list_post = lst(
+sim_list_outcome = lst(
   
+  # ## post-baseline events (outcomes)
   dereg_day = bn_node(
-    ~as.integer(runif(n=..n, covid_vax_disease_3_day, covid_vax_disease_3_day+120)),
+    ~ as.integer(runif(n = ..n, index_day, index_day + 120)),
     missing_rate = ~0.99
   ),
-  
-  covid_test_1_day = bn_node(
-    ~as.integer(runif(n=..n, covid_vax_disease_3_day, covid_vax_disease_3_day+100)),
-    missing_rate = ~0.6
-  ),
-  
-  ###
-  positive_test_1_day = bn_node(
-    ~as.integer(runif(n=..n, covid_vax_disease_3_day, covid_vax_disease_3_day+100)),
+  primary_care_covid_case_day = bn_node(
+    ~ as.integer(runif(n = ..n, index_day, index_day + 100)),
     missing_rate = ~0.7
   ),
-  positive_test_2_day = bn_node(
-    ~as.integer(runif(n=..n, positive_test_1_day+1, positive_test_1_day+30)),
-    missing_rate = ~0.9,
-    needs = "positive_test_1_day"
-  ),
-  positive_test_3_day = bn_node(
-    ~as.integer(runif(n=..n, positive_test_2_day+1, positive_test_2_day+30)),
-    missing_rate = ~0.9,
-    needs = "positive_test_2_day"
-  ),
-  positive_test_4_day = bn_node(
-    ~as.integer(runif(n=..n, positive_test_3_day+1, positive_test_3_day+30)),
-    missing_rate = ~0.9,
-    needs = "positive_test_3_day"
-  ),
-  positive_test_5_day = bn_node(
-    ~as.integer(runif(n=..n, positive_test_4_day+1, positive_test_4_day+30)),
-    missing_rate = ~0.9,
-    needs = "positive_test_4_day"
-  ),
-  positive_test_6_day = bn_node(
-    ~as.integer(runif(n=..n, positive_test_5_day+1, positive_test_5_day+30)),
-    missing_rate = ~0.9,
-    needs = "positive_test_5_day"
-  ),
-  
-  ###
-  emergency_1_day = bn_node(
-    ~as.integer(runif(n=..n, covid_vax_disease_3_day, covid_vax_disease_3_day+100)),
-    missing_rate = ~0.9
-  ),
-  emergency_2_day = bn_node(
-    ~as.integer(runif(n=..n, emergency_1_day, emergency_1_day+100)),
-    missing_rate = ~0.9,
-    needs = "emergency_1_day"
-  ),
-  emergency_3_day = bn_node(
-    ~as.integer(runif(n=..n, emergency_2_day, emergency_2_day+100)),
-    missing_rate = ~0.9,
-    needs = "emergency_2_day"
-  ),
-  emergency_4_day = bn_node(
-    ~as.integer(runif(n=..n, emergency_3_day, emergency_3_day+100)),
-    missing_rate = ~0.9,
-    needs = "emergency_3_day"
-  ),
-  emergency_5_day = bn_node(
-    ~as.integer(runif(n=..n, emergency_4_day, emergency_4_day+100)),
-    missing_rate = ~0.9,
-    needs = "emergency_4_day"
-  ),
-  emergency_6_day = bn_node(
-    ~as.integer(runif(n=..n, emergency_5_day, emergency_5_day+100)),
-    missing_rate = ~0.9,
-    needs = "emergency_5_day"
-  ),
-  
-  ###
-  admitted_unplanned_1_day = bn_node(
-    ~as.integer(runif(n=..n, covid_vax_disease_3_day, covid_vax_disease_3_day+100)),
+  covid_test_day = bn_node(
+    ~ as.integer(runif(n = ..n, index_day, index_day + 100)),
     missing_rate = ~0.7
   ),
-  admitted_unplanned_2_day = bn_node(
-    ~as.integer(runif(n=..n, discharged_unplanned_1_day+1, discharged_unplanned_1_day+30)),
-    missing_rate = ~0.9,
-    needs = "discharged_unplanned_1_day"
-  ),
-  admitted_unplanned_3_day = bn_node(
-    ~as.integer(runif(n=..n, discharged_unplanned_2_day+1, discharged_unplanned_2_day+30)),
-    missing_rate = ~0.9,
-    needs = "discharged_unplanned_2_day"
-  ),
-  admitted_unplanned_4_day = bn_node(
-    ~as.integer(runif(n=..n, discharged_unplanned_3_day+1, discharged_unplanned_3_day+30)),
-    missing_rate = ~0.9,
-    needs = "discharged_unplanned_3_day"
-  ),
-  admitted_unplanned_5_day = bn_node(
-    ~as.integer(runif(n=..n, discharged_unplanned_4_day+1, discharged_unplanned_4_day+30)),
-    missing_rate = ~0.9,
-    needs = "discharged_unplanned_4_day"
-  ),
-  admitted_unplanned_6_day = bn_node(
-    ~as.integer(runif(n=..n, discharged_unplanned_5_day+1, discharged_unplanned_5_day+30)),
-    missing_rate = ~0.9,
-    needs = "discharged_unplanned_5_day"
-  ),
-  
-  ###
-  discharged_unplanned_1_day = bn_node(
-    ~as.integer(runif(n=..n, admitted_unplanned_1_day+1, admitted_unplanned_1_day+20)),
-    needs="admitted_unplanned_1_day"
-  ),
-  discharged_unplanned_2_day = bn_node(
-    ~as.integer(runif(n=..n, admitted_unplanned_2_day+1, admitted_unplanned_2_day+20)),
-    needs="admitted_unplanned_2_day"
-  ),
-  discharged_unplanned_3_day = bn_node(
-    ~as.integer(runif(n=..n, admitted_unplanned_3_day+1, admitted_unplanned_3_day+20)),
-    needs="admitted_unplanned_3_day"
-  ),
-  discharged_unplanned_4_day = bn_node(
-    ~as.integer(runif(n=..n, admitted_unplanned_4_day+1, admitted_unplanned_4_day+20)),
-    needs="admitted_unplanned_4_day"
-  ),
-  discharged_unplanned_5_day = bn_node(
-    ~as.integer(runif(n=..n, admitted_unplanned_5_day+1, admitted_unplanned_5_day+20)),
-    needs="admitted_unplanned_5_day"
-  ),
-  discharged_unplanned_6_day = bn_node(
-    ~as.integer(runif(n=..n, admitted_unplanned_6_day+1, admitted_unplanned_6_day+20)),
-    needs="admitted_unplanned_6_day"
-  ),
-  
-  ###
-  admitted_planned_1_day = bn_node(
-    ~as.integer(runif(n=..n, covid_vax_disease_3_day, covid_vax_disease_3_day+100)),
+  postest_day = bn_node(
+    ~ as.integer(runif(n = ..n, index_day, index_day + 100)),
     missing_rate = ~0.7
   ),
-  admitted_planned_2_day = bn_node(
-    ~as.integer(runif(n=..n, discharged_planned_1_day+1, discharged_planned_1_day+30)),
-    missing_rate = ~0.9,
-    needs = "discharged_planned_1_day"
+  emergency_day = bn_node(
+    ~ as.integer(runif(n = ..n, index_day, index_day + 200)),
+    missing_rate = ~0.8
   ),
-  admitted_planned_3_day = bn_node(
-    ~as.integer(runif(n=..n, discharged_planned_2_day+1, discharged_planned_2_day+30)),
-    missing_rate = ~0.9,
-    needs = "discharged_planned_2_day",
+  emergencyhosp_day = bn_node(
+    ~ as.integer(runif(n = ..n, index_day, index_day + 200)),
+    missing_rate = ~0.85
   ),
-  admitted_planned_4_day = bn_node(
-    ~as.integer(runif(n=..n, discharged_planned_3_day+1, discharged_planned_3_day+30)),
-    missing_rate = ~0.9,
-    needs = "discharged_planned_3_day"
+  covidemergency_day = bn_node(
+    ~ as.integer(runif(n = ..n, index_day, index_day + 200)),
+    missing_rate = ~0.8
   ),
-  admitted_planned_5_day = bn_node(
-    ~as.integer(runif(n=..n, discharged_planned_4_day+1, discharged_planned_4_day+30)),
-    missing_rate = ~0.9,
-    needs = "discharged_planned_4_day"
-  ),
-  admitted_planned_6_day = bn_node(
-    ~as.integer(runif(n=..n, discharged_planned_5_day+1, discharged_planned_5_day+30)),
-    missing_rate = ~0.9,
-    needs = "discharged_planned_5_day"
+  covidemergencyhosp_day = bn_node(
+    ~ as.integer(runif(n = ..n, index_day, index_day + 200)),
+    missing_rate = ~0.85
   ),
   
-  ###
-  discharged_planned_1_day = bn_node(
-    ~as.integer(runif(n=..n, admitted_planned_1_day+1, admitted_planned_1_day+20)),
-    needs="admitted_planned_1_day"
-  ),
-  discharged_planned_2_day = bn_node(
-    ~as.integer(runif(n=..n, admitted_planned_2_day+1, admitted_planned_2_day+20)),
-    needs="admitted_planned_2_day"
-  ),
-  discharged_planned_3_day = bn_node(
-    ~as.integer(runif(n=..n, admitted_planned_3_day+1, admitted_planned_3_day+20)),
-    needs="admitted_planned_3_day"
-  ),
-  discharged_planned_4_day = bn_node(
-    ~as.integer(runif(n=..n, admitted_planned_4_day+1, admitted_planned_4_day+20)),
-    needs="admitted_planned_4_day"
-  ),
-  discharged_planned_5_day = bn_node(
-    ~as.integer(runif(n=..n, admitted_planned_5_day+1, admitted_planned_5_day+20)),
-    needs="admitted_planned_5_day"
-  ),
-  discharged_planned_6_day = bn_node(
-    ~as.integer(runif(n=..n, admitted_planned_6_day+1, admitted_planned_6_day+20)),
-    needs="admitted_planned_6_day"
-  ),
+  # respemergency_day = bn_node(
+  #   ~as.integer(runif(n=..n, index_day, index_day+100)),
+  #   missing_rate = ~0.95
+  # ),
+  #
+  # respemergencyhosp_day = bn_node(
+  #   ~as.integer(runif(n=..n, index_day, index_day+100)),
+  #   missing_rate = ~0.95
+  # ),
   
-  ###
-  covidemergency_1_day = bn_node(
-    ~as.integer(runif(n=..n, covid_vax_disease_3_day, covid_vax_disease_3_day+100)),
-    missing_rate = ~0.95
-  ),
-  covidemergency_2_day = bn_node(
-    ~as.integer(runif(n=..n, covidemergency_1_day+1, covidemergency_1_day+30)),
-    missing_rate = ~0.9,
-    needs = "covidemergency_1_day"
-  ),
-  covidemergency_3_day = bn_node(
-    ~as.integer(runif(n=..n, covidemergency_2_day+1, covidemergency_2_day+30)),
-    missing_rate = ~0.9,
-    needs = "covidemergency_2_day"
-  ),
-  covidemergency_4_day = bn_node(
-    ~as.integer(runif(n=..n, covidemergency_3_day+1, covidemergency_3_day+30)),
-    missing_rate = ~0.9,
-    needs = "covidemergency_3_day"
-  ),
-  
-  ###
-  emergencyhosp_1_day = bn_node(
-    ~as.integer(runif(n=..n, covid_vax_disease_3_day, covid_vax_disease_3_day+100)),
-    missing_rate = ~0.95
-  ),
-  emergencyhosp_2_day = bn_node(
-    ~as.integer(runif(n=..n, emergencyhosp_1_day+1, emergencyhosp_1_day+30)),
-    missing_rate = ~0.9,
-    needs = "emergencyhosp_1_day"
-  ),
-  emergencyhosp_3_day = bn_node(
-    ~as.integer(runif(n=..n, emergencyhosp_2_day+1, emergencyhosp_2_day+30)),
-    missing_rate = ~0.9,
-    needs = "emergencyhosp_2_day"
-  ),
-  emergencyhosp_4_day = bn_node(
-    ~as.integer(runif(n=..n, emergencyhosp_3_day+1, emergencyhosp_3_day+30)),
-    missing_rate = ~0.9,
-    needs = "emergencyhosp_3_day"
-  ),
-  
-  ###
-  covidemergencyhosp_1_day = bn_node(
-    ~as.integer(runif(n=..n, covid_vax_disease_3_day, covid_vax_disease_3_day+100)),
-    missing_rate = ~0.95
-  ),
-  covidemergencyhosp_2_day = bn_node(
-    ~as.integer(runif(n=..n, covidemergencyhosp_1_day+1, covidemergencyhosp_1_day+30)),
-    missing_rate = ~0.9,
-    needs = "covidemergencyhosp_1_day"
-  ),
-  covidemergencyhosp_3_day = bn_node(
-    ~as.integer(runif(n=..n, covidemergencyhosp_2_day+1, covidemergencyhosp_2_day+30)),
-    missing_rate = ~0.9,
-    needs = "covidemergencyhosp_2_day"
-  ),
-  covidemergencyhosp_4_day = bn_node(
-    ~as.integer(runif(n=..n, covidemergencyhosp_3_day+1, covidemergencyhosp_3_day+30)),
-    missing_rate = ~0.9,
-    needs = "covidemergencyhosp_3_day"
-  ),
-  
-  ###
-  admitted_covid_1_day = bn_node(
-    ~as.integer(runif(n=..n, covid_vax_disease_3_day, covid_vax_disease_3_day+100)),
+  covidadmitted_day = bn_node(
+    ~ as.integer(runif(n = ..n, index_day, index_day + 100)),
     missing_rate = ~0.7
   ),
-  admitted_covid_2_day = bn_node(
-    ~as.integer(runif(n=..n, admitted_covid_1_day+1, admitted_covid_1_day+30)),
-    missing_rate = ~0.9,
-    needs = "admitted_covid_1_day"
-  ),
-  admitted_covid_3_day = bn_node(
-    ~as.integer(runif(n=..n, admitted_covid_2_day+1, admitted_covid_2_day+30)),
-    missing_rate = ~0.9,
-    needs = "admitted_covid_2_day"
-  ),
-  admitted_covid_4_day = bn_node(
-    ~as.integer(runif(n=..n, admitted_covid_3_day+1, admitted_covid_3_day+30)),
-    missing_rate = ~0.9,
-    needs = "admitted_covid_3_day"
-  ),
   
-  ###
-  discharged_covid_1_day = bn_node(
-    ~as.integer(runif(n=..n, admitted_covid_1_day+1, admitted_covid_1_day+20)),
-    needs="admitted_covid_1_day"
+  # placeholder for single criticalcare variable ---
+  covidcritcare_day = bn_node(
+    ~ as.integer(runif(n = ..n, index_day, index_day + 100)),
+    missing_rate = ~0.8
   ),
-  discharged_covid_2_day = bn_node(
-    ~as.integer(runif(n=..n, admitted_covid_2_day+1, admitted_covid_2_day+20)),
-    needs="admitted_covid_2_day"
+  admitted_unplanned_day = bn_node(
+    ~ as.integer(runif(n = ..n, index_day, index_day + 100)),
+    missing_rate = ~0.7
   ),
-  discharged_covid_3_day = bn_node(
-    ~as.integer(runif(n=..n, admitted_covid_3_day+1, admitted_covid_3_day+20)),
-    needs="admitted_covid_3_day"
-  ),
-  discharged_covid_4_day = bn_node(
-    ~as.integer(runif(n=..n, admitted_covid_4_day+1, admitted_covid_4_day+20)),
-    needs="admitted_covid_4_day"
-  ),
-  
-  ###
-  admitted_covid_ccdays_1 = bn_node(
-    ~rfactor(n=..n, levels = 0:3, p = c(0.7, 0.1, 0.1, 0.1)),
-    needs = "admitted_covid_1_day"
-  ),
-  admitted_covid_ccdays_2 = bn_node(
-    ~rfactor(n=..n, levels = 0:3, p = c(0.7, 0.1, 0.1, 0.1)),
-    needs = "admitted_covid_2_day"
-  ),
-  admitted_covid_ccdays_3 = bn_node(
-    ~rfactor(n=..n, levels = 0:3, p = c(0.7, 0.1, 0.1, 0.1)),
-    needs = "admitted_covid_3_day"
-  ),
-  admitted_covid_ccdays_4 = bn_node(
-    ~rfactor(n=..n, levels = 0:3, p = c(0.7, 0.1, 0.1, 0.1)),
-    needs = "admitted_covid_4_day"
-  ),
+  # admitted_planned_day = bn_node(
+  #   ~as.integer(runif(n=..n, index_day, index_day+100)),
+  #   missing_rate = ~0.7
+  # ),
   
   coviddeath_day = bn_node(
     ~death_day,
     missing_rate = ~0.7,
     needs = "death_day"
   ),
-  
   death_day = bn_node(
-    ~as.integer(runif(n=..n, covid_vax_disease_3_day, covid_vax_disease_3_day+100)),
-    missing_rate = ~0.99
+    ~ as.integer(runif(n = ..n, index_day, index_day + 100)),
+    missing_rate = ~0.90
   ),
   
 )

@@ -109,7 +109,7 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
     custom_path <- here("lib", "dummydata", "dummy_control_potential1.feather")
   }  else if (stage == "final") {
     studydef_path <- ghere("output", cohort, "extract", "input_controlfinal.feather")
-    custom_path <- ghere("output", "dummydata", "dummy_control_final_{cohort}.feather")
+    custom_path <- ghere("output", cohort, "dummydata", "dummy_control_final.feather")
   }
   
   data_studydef_dummy <- read_feather(studydef_path) %>%

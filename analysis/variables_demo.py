@@ -4,7 +4,7 @@ import json
 import codelists
 
 
-def generate_demographic_variables(index_date):
+def generate_demo_variables(index_date):
 
   demographic_variables = dict(
 
@@ -154,5 +154,5 @@ def generate_demographic_variables(index_date):
   ),
   
   )
-  return demographic_variables
+  return demo_variables
 

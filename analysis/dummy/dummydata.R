@@ -41,26 +41,30 @@ firstaz_day <- as.integer(firstaz_date - index_date)
 firstmoderna_day <- as.integer(firstmoderna_date - index_date)
 
 
-known_variables_0 <- c(
+known_variables <- c(
   "index_date", "pfizerstart_date", "modernastart_date", "firstpfizer_date", "firstaz_date", "firstmoderna_date",
   "index_day", "pfizerstart_day", "modernastart_day", "firstpfizer_day", "firstaz_day", "firstmoderna_day"
 )
 
-bn_0 <- bn_create(
-  splice(
-    sim_list_vax,
-    sim_list_jcvi,
-    sim_list_demographic,
-    sim_list_pre
-  ), 
-  known_variables = known_variables_0
-  )
+sim_list <- splice(
+  sim_list_vax,
+  sim_list_jcvi,
+  sim_list_demographic,
+  sim_list_pre,
+  sim_list_outcome
+)
+
+bn <- bn_create(sim_list, known_variables = known_variables)
+
+# bn_plot(bn)
+# bn_plot(bn, connected_only = TRUE)
 
 set.seed(10)
-dummydata_0 <-bn_simulate(bn_0, pop_size = population_size, keep_all = FALSE, .id="patient_id")
+
+dummydata <- bn_simulate(bn, pop_size = population_size, keep_all = FALSE, .id = "patient_id")
 
 # create covid_vax_disease variables, as the dependencies are difficult to specify using bn_node
-dummydata_vax <- dummydata_0 %>% 
+dummydata_vax <- dummydata %>% 
   select(patient_id, starts_with("covid_vax")) %>% 
   pivot_longer(
     cols = -patient_id,
@@ -77,50 +81,30 @@ dummydata_vax <- dummydata_0 %>%
     values_from = value
   )
 
-dummydata_0 <- dummydata_0 %>%
-  left_join(dummydata_vax, by = "patient_id") 
 
-
-# create dummy data for variables defined on or after baseline ----
-covid_vax_disease_3_day <- dummydata_0$covid_vax_disease_3_day
-
-known_variables_1 <- c("covid_vax_disease_3_day")
-
-bn_1 <- bn_create(
-  sim_list_post, 
-  known_variables = known_variables_1
-)
-
-dummydata_1 <-bn_simulate(bn_1, pop_size = population_size, keep_all = FALSE, .id="patient_id")
-
-
-dummydata_processed_days <- dummydata_0 %>%
-  left_join(dummydata_1, by = "patient_id") 
-
-dummydata_processed_dates <- dummydata_processed_days %>%
-  #convert logical to integer as study defs output 0/1 not TRUE/FALSE
-  #mutate(across(where(is.logical), ~ as.integer(.))) %>%
-  #convert integer days to dates since index date and rename vars
+dummydata_processed <- dummydata  %>%
+  left_join(dummydata_vax, by = "patient_id") %>%
+  # convert logical to integer as study defs output 0/1 not TRUE/FALSE
+  # mutate(across(where(is.logical), ~ as.integer(.))) %>%
+  # re-index outcomes on cavid_vax_disease_3_day
+  mutate(across(all_of(names(sim_list_outcome)), ~ covid_vax_disease_3_day + .)) %>%
+  # convert integer days to dates since index date and rename vars
   mutate(across(ends_with("_day"), ~ as.Date(as.character(index_date + .)))) %>%
-  rename_with(~str_replace(., "_day", "_date"), ends_with("_day"))
+  rename_with(~ str_replace(., "_day", "_date"), ends_with("_day"))
+
 
 # save dummy data files ----
 
 fs::dir_create(here("lib", "dummydata"))
 
-# dummy_post
-dummydata_processed_days %>%
-  select(patient_id, all_of(names(sim_list_post))) %>%
-  write_feather(here("lib", "dummydata", "dummy_post.feather"))
-
 # dummy_treated
-dummydata_processed_dates %>% 
+dummydata_processed %>% 
   filter(!is.na(covid_vax_disease_3_date)) %>% 
   write_feather(sink = here("lib", "dummydata", "dummy_treated.feather"))
 
 # dummy_control_potential1 (reused for actual)
-dummydata_processed_dates %>% 
-  select(-all_of(str_replace(names(sim_list_post), "_day", "_date"))) %>%
+dummydata_processed %>% 
+  select(-all_of(str_replace(names(sim_list_outcome), "_day", "_date"))) %>%
   select(-matches("covid_vax_\\w+_4_date")) %>%
   write_feather(sink = here("lib", "dummydata", "dummy_control_potential1.feather"))
 

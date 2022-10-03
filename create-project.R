@@ -194,7 +194,7 @@ action_extract_and_match <- function(cohort, n_matching_rounds){
       arguments = c(cohort),
       needs = namelesslst(glue("extract_controlfinal_{cohort}")),
       highly_sensitive = lst(
-        dummydata_controlfinal = glue("output/dummydata/dummydata_control_final_{cohort}.feather")
+        dummydata_controlfinal = glue("output/dummydata/dummy_control_final_{cohort}.feather")
       ),
     ),
     

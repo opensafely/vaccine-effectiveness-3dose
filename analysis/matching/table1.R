@@ -38,8 +38,7 @@ if(length(args)==0){
 
 
 ## get cohort-specific parameters study dates and parameters ----
-
-dates <- map(study_dates[[cohort]], as.Date)
+dates <- study_dates[[cohort]]
 
 
 ## create output directories ----

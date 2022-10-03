@@ -6,7 +6,7 @@ import codelists
 
 def generate_demo_variables(index_date):
 
-  demographic_variables = dict(
+  demo_variables = dict(
 
   has_follow_up_previous_6weeks=patients.registered_with_one_practice_between(
     start_date=f"{index_date} - 42 days",

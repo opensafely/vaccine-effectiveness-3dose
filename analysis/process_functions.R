@@ -81,7 +81,7 @@ process_jcvi <- function(.data) {
 
 
 ################################################################################
-process_demographic <- function(.data) {
+process_demo <- function(.data) {
   .data %>%
     mutate(
       ageband = cut(
@@ -147,6 +147,158 @@ process_pre <- function(.data) {
       anycovid_0_date = pmax(positive_test_0_date, covidemergency_0_date, admitted_covid_0_date, na.rm=TRUE),
       # any reason for the discrepancy between events used to define prior_covid_infection and anycovid_0_date?
     )
+  
+}
+
+################################################################################
+process_vax <- function(.data, stage) {
+  
+  data_vax <- local({
+    
+    data_vax_pfizer <- .data %>%
+      select(patient_id, matches("covid\\_vax\\_pfizer\\_\\d+\\_date")) %>%
+      pivot_longer(
+        cols = -patient_id,
+        names_to = c(NA, "vax_pfizer_index"),
+        names_pattern = "^(.*)_(\\d+)_date",
+        values_to = "date",
+        values_drop_na = TRUE
+      ) %>%
+      arrange(patient_id, date)
+    
+    data_vax_az <- .data %>%
+      select(patient_id, matches("covid\\_vax\\_az\\_\\d+\\_date")) %>%
+      pivot_longer(
+        cols = -patient_id,
+        names_to = c(NA, "vax_az_index"),
+        names_pattern = "^(.*)_(\\d+)_date",
+        values_to = "date",
+        values_drop_na = TRUE
+      ) %>%
+      arrange(patient_id, date)
+    
+    data_vax_moderna <- .data %>%
+      select(patient_id, matches("covid\\_vax\\_moderna\\_\\d+\\_date")) %>%
+      pivot_longer(
+        cols = -patient_id,
+        names_to = c(NA, "vax_moderna_index"),
+        names_pattern = "^(.*)_(\\d+)_date",
+        values_to = "date",
+        values_drop_na = TRUE
+      ) %>%
+      arrange(patient_id, date)
+    
+    
+    data_vax <-
+      data_vax_pfizer %>%
+      full_join(data_vax_az, by=c("patient_id", "date")) %>%
+      full_join(data_vax_moderna, by=c("patient_id", "date")) %>%
+      mutate(
+        type = fct_case_when(
+          (!is.na(vax_az_index)) & is.na(vax_pfizer_index) & is.na(vax_moderna_index) ~ "az",
+          is.na(vax_az_index) & (!is.na(vax_pfizer_index)) & is.na(vax_moderna_index) ~ "pfizer",
+          is.na(vax_az_index) & is.na(vax_pfizer_index) & (!is.na(vax_moderna_index)) ~ "moderna",
+          (!is.na(vax_az_index)) + (!is.na(vax_pfizer_index)) + (!is.na(vax_moderna_index)) > 1 ~ "duplicate",
+          TRUE ~ NA_character_
+        )
+      ) %>%
+      arrange(patient_id, date) %>%
+      group_by(patient_id) %>%
+      mutate(
+        vax_index=row_number()
+      ) %>%
+      ungroup()
+    
+    data_vax
+    
+  })
+  
+  data_vax_wide = data_vax %>%
+    pivot_wider(
+      id_cols= patient_id,
+      names_from = c("vax_index"),
+      values_from = c("date", "type"),
+      names_glue = "covid_vax_{vax_index}_{.value}"
+    )
+  
+  # only add variables corresponding to 4th dose if stage = treated
+  if (stage == "treated") {
+    vax4_vars <- rlang::quos(
+      
+      vax4_type = covid_vax_4_type,
+      
+      vax4_type_descr = fct_case_when(
+        vax4_type == "pfizer" ~ "BNT162b2",
+        vax4_type == "az" ~ "ChAdOx1",
+        vax4_type == "moderna" ~ "Moderna",
+        TRUE ~ NA_character_
+      ),
+      
+      vax4_date = covid_vax_4_date,
+      
+      vax4_day = as.integer(floor((vax4_date - study_dates$index_date))+1), # day 0 is the day before "start_date"
+      
+      vax4_week = as.integer(floor((vax4_date - study_dates$index_date)/7)+1), # week 1 is days 1-7.
+      
+    )
+  } else if (stage == "potential") {
+    vax4_vars <- rlang::quos(
+      NULL
+    )
+  }
+  
+  .data %>%
+    left_join(data_vax_wide, by ="patient_id") %>%
+    mutate(
+      vax1_type = covid_vax_1_type,
+      vax2_type = covid_vax_2_type,
+      vax3_type = covid_vax_3_type,
+      
+      
+      vax12_type = paste0(vax1_type, "-", vax2_type),
+      
+      
+      
+      vax1_type_descr = fct_case_when(
+        vax1_type == "pfizer" ~ "BNT162b2",
+        vax1_type == "az" ~ "ChAdOx1",
+        vax1_type == "moderna" ~ "Moderna",
+        TRUE ~ NA_character_
+      ),
+      vax2_type_descr = fct_case_when(
+        vax2_type == "pfizer" ~ "BNT162b2",
+        vax2_type == "az" ~ "ChAdOx1",
+        vax2_type == "moderna" ~ "Moderna",
+        TRUE ~ NA_character_
+      ),
+      vax3_type_descr = fct_case_when(
+        vax3_type == "pfizer" ~ "BNT162b2",
+        vax3_type == "az" ~ "ChAdOx1",
+        vax3_type == "moderna" ~ "Moderna",
+        TRUE ~ NA_character_
+      ),
+      
+      
+      vax12_type_descr = paste0(vax1_type_descr, "-", vax2_type_descr),
+      
+      vax1_date = covid_vax_1_date,
+      vax2_date = covid_vax_2_date,
+      vax3_date = covid_vax_3_date,
+      
+      vax1_day = as.integer(floor((vax1_date - study_dates$index_date))+1), # day 0 is the day before "start_date"
+      vax2_day = as.integer(floor((vax2_date - study_dates$index_date))+1), # day 0 is the day before "start_date"
+      vax3_day = as.integer(floor((vax3_date - study_dates$index_date))+1), # day 0 is the day before "start_date"
+      
+      vax1_week = as.integer(floor((vax1_date - study_dates$index_date)/7)+1), # week 1 is days 1-7.
+      vax2_week = as.integer(floor((vax2_date - study_dates$index_date)/7)+1), # week 1 is days 1-7.
+      vax3_week = as.integer(floor((vax3_date - study_dates$index_date)/7)+1), # week 1 is days 1-7.
+      
+      !!! vax4_vars
+      
+    ) %>%
+    select(
+      -starts_with("covid_vax_"),
+    ) 
   
 }
 

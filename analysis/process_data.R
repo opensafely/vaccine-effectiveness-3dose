@@ -61,11 +61,6 @@ if (length(args) == 0) {
   }
 } 
 
-## get cohort-specific parameters study dates and parameters ---- 
-if (stage == "potential") {
-  matching_round_date <- study_dates[[cohort]]$control_extract_dates[matching_round]
-}
-
 ## create output directory ----
 if (stage == "treated") {
   fs::dir_create(here("output", "pfizer", "treated"))
@@ -300,6 +295,7 @@ if (stage == "final") {
 
 ## patient-level info ----
 
+# process covariates
 if (stage %in% c("treated", "potential", "actual")) {
   data_processed <- data_extract %>%
     process_jcvi() %>%
@@ -307,6 +303,7 @@ if (stage %in% c("treated", "potential", "actual")) {
     process_pre() 
 }
 
+# process outcomes
 if (stage == "treated") {
   data_processed <- data_processed %>%
     process_outcome()
@@ -332,6 +329,7 @@ if (stage %in% c("treated", "potential")) {
 }
 
 ####################################################################################
+# Define selection criteria ----
 
 if (stage == "treated") {
   selection_stage <- rlang::quos(
@@ -361,7 +359,16 @@ if (stage == "treated") {
 } else if (stage %in% c("potential",  "actual")) {
   
   # define index_date
-  if (stage == "potential") index_date <- "matching_round_date" else if (stage == "actual") index_date <- "trial_date"
+  if (stage == "potential") {
+    
+    matching_round_date <- study_dates[[cohort]]$control_extract_dates[matching_round]
+    index_date <- "matching_round_date"
+    
+  } else if (stage == "actual") {
+    
+    index_date <- "trial_date"
+    
+  }
   
   selection_stage <- rlang::quos(
     
@@ -379,7 +386,6 @@ if (stage == "treated") {
   
 } 
 
-# Define selection criteria ----
 if (stage %in% c("treated", "potential", "actual")) {
   
 data_criteria <- data_processed %>%

@@ -4,6 +4,7 @@
 #  - import matched data
 #  - adds outcome variable and restricts follow-up
 #  - gets KM estimates, with covid and non covid death as competing risks
+#  - COX MDOELS
 #  - The script must be accompanied by three arguments:
 #    `cohort` - pfizer or moderna
 #    `subgroup` - prior_covid_infection
@@ -405,12 +406,80 @@ kmcontrasts <- function(data, cuts=NULL){
     )
 }
 
+## Cox models ----
 
-contrasts_rounded_daily <- kmcontrasts(data_surv_rounded)
-contrasts_rounded_cuts <- kmcontrasts(data_surv_rounded, postbaselinecuts)
-contrasts_rounded_overall <- kmcontrasts(data_surv_rounded, c(0,maxfup))
+coxcontrast <- function(data, cuts=NULL){
+  
+  if(is.null(cuts)){cuts <- unique(c(0,data$time))}
+  
+  fup_split <-
+    data %>%
+    select(patient_id, treated) %>%
+    uncount(weights = length(cuts)-1, .id="period_id") %>%
+    mutate(
+      fup_time = cuts[period_id],
+      fup_period = paste0(cuts[period_id], "-", cuts[period_id+1]-1)
+    ) %>%
+    droplevels() %>%
+    select(
+      patient_id, period_id, fup_time, fup_period
+    )
+  
+  data_split <-
+    tmerge(
+      data1 = data,
+      data2 = data,
+      id = patient_id,
+      tstart = 0,
+      tstop = tte_outcome,
+      ind_outcome = event(if_else(ind_outcome, tte_outcome, NA_real_))
+    ) %>%
+    # add post-treatment periods
+    tmerge(
+      data1 = .,
+      data2 = fup_split,
+      id = patient_id,
+      period_id = tdc(fup_time, period_id)
+    ) %>%
+    mutate(
+      period_start = postbaselinecuts[period_id],
+      period_end = postbaselinecuts[period_id+1],
+    )
+  
+  data_cox <-
+    data_split %>%
+    group_by(!!subgroup_sym, period_start, period_end) %>%
+    nest() %>%
+    mutate(
+      cox_obj = map(data, ~{
+        coxph(Surv(tstart, tstop, ind_outcome) ~ treatment, data = .x, y=FALSE, robust=TRUE, id=patient_id, na.action="na.fail")
+      }),
+      cox_obj_tidy = map(cox_obj, ~broom::tidy(.x)),
+    ) %>%
+    select(!!subgroup_sym, period_start, period_end, cox_obj_tidy) %>%
+    unnest(cox_obj_tidy) %>%
+    transmute(
+      !!subgroup_sym,
+      period_start,
+      period_end,
+      coxhazr = exp(estimate),
+      coxhr.se = robust.se,
+      coxhr.ll = exp(estimate + qnorm(0.025)*robust.se),
+      coxhr.ul = exp(estimate + qnorm(0.975)*robust.se),
+    )
+  data_cox
+  
+}
+
+cox_contrasts_cuts <- coxcontrast(data_matched, postbaselinecuts)
+cox_contrasts_overall <- coxcontrast(data_matched, c(0,maxfup))
+
+# cox HR is a safe statistic so no need to redact/round
+contrasts_rounded_daily <-  km_contrasts_rounded_daily # don't bother with cox as HR within daily intervals will be imprecisely estimated
+contrasts_rounded_cuts <-  left_join(km_contrasts_rounded_cuts, cox_contrasts_cuts, by=c(subgroup, "period_start", "period_end"))
+contrasts_rounded_overall <-  left_join(km_contrasts_rounded_overall, cox_contrasts_overall, by=c(subgroup, "period_start", "period_end"))
 
 
-write_rds(contrasts_rounded_daily, fs::path(output_dir, "contrasts_daily_rounded.rds"))
-write_rds(contrasts_rounded_cuts, fs::path(output_dir, "contrasts_cuts_rounded.rds"))
-write_rds(contrasts_rounded_overall, fs::path(output_dir, "contrasts_overall_rounded.rds"))
+write_csv(contrasts_rounded_daily, fs::path(output_dir, "contrasts_daily.csv"))
+write_csv(contrasts_rounded_cuts, fs::path(output_dir, "contrasts_cuts.csv"))
+write_csv(contrasts_rounded_overall, fs::path(output_dir, "contrasts_overall.csv"))

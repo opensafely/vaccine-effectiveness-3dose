@@ -245,13 +245,14 @@ km_plot_rounded <- km_plot(data_surv_rounded)
 ggsave(filename=fs::path(output_dir, "km_plot_unrounded.png"), km_plot_unrounded, width=20, height=15, units="cm")
 ggsave(filename=fs::path(output_dir, "km_plot_rounded.png"), km_plot_rounded, width=20, height=15, units="cm")
 
-
+# define contrast functions ----
+# km
 ## calculate quantities relating to cumulative incidence curve and their ratio / difference / etc
 
 kmcontrasts <- function(data, cuts=NULL){
 
-  # if cuts=NULL then fucntion provides daily estimates
-  # if eg c(0,14,28,42,...) then follow u[ is split on these days
+  # if cuts=NULL then function provides daily estimates
+  # if eg c(0,14,28,42,...) then follow up is split on these days
   # c(0, 140)
   
   if(is.null(cuts)){cuts <- unique(c(0,data$time))}
@@ -406,15 +407,24 @@ kmcontrasts <- function(data, cuts=NULL){
     )
 }
 
-## Cox models ----
+# cox
 
 coxcontrast <- function(data, cuts=NULL){
   
-  if(is.null(cuts)){cuts <- unique(c(0,data$time))}
+  # if(is.null(cuts)){cuts <- unique(c(0,data$time))}
+  if(is.null(cuts)){stop("Specify cuts.")}
+  
+  data <- data %>% 
+    # create a new id to account for the fact that some controls become treated
+    group_by(patient_id, match_id) %>% 
+    mutate(new_id = cur_group_id()) %>% 
+    ungroup() %>%
+    # create variable for cuts[1] for tstart in tmerge
+    mutate(time0 = cuts[1])
   
   fup_split <-
     data %>%
-    select(patient_id, treated) %>%
+    select(new_id, treated) %>%
     uncount(weights = length(cuts)-1, .id="period_id") %>%
     mutate(
       fup_time = cuts[period_id],
@@ -422,15 +432,15 @@ coxcontrast <- function(data, cuts=NULL){
     ) %>%
     droplevels() %>%
     select(
-      patient_id, period_id, fup_time, fup_period
+      new_id, period_id, fup_time, fup_period
     )
   
   data_split <-
     tmerge(
       data1 = data,
       data2 = data,
-      id = patient_id,
-      tstart = 0,
+      id = new_id,
+      tstart = time0,
       tstop = tte_outcome,
       ind_outcome = event(if_else(ind_outcome, tte_outcome, NA_real_))
     ) %>%
@@ -438,12 +448,12 @@ coxcontrast <- function(data, cuts=NULL){
     tmerge(
       data1 = .,
       data2 = fup_split,
-      id = patient_id,
+      id = new_id,
       period_id = tdc(fup_time, period_id)
     ) %>%
     mutate(
-      period_start = postbaselinecuts[period_id],
-      period_end = postbaselinecuts[period_id+1],
+      period_start = cuts[period_id],
+      period_end = cuts[period_id+1],
     )
   
   data_cox <-
@@ -452,7 +462,7 @@ coxcontrast <- function(data, cuts=NULL){
     nest() %>%
     mutate(
       cox_obj = map(data, ~{
-        coxph(Surv(tstart, tstop, ind_outcome) ~ treatment, data = .x, y=FALSE, robust=TRUE, id=patient_id, na.action="na.fail")
+        coxph(Surv(tstart, tstop, ind_outcome) ~ treated, data = .x, y=FALSE, robust=TRUE, id=new_id, na.action="na.fail")
       }),
       cox_obj_tidy = map(cox_obj, ~broom::tidy(.x)),
     ) %>%
@@ -471,7 +481,16 @@ coxcontrast <- function(data, cuts=NULL){
   
 }
 
-cox_contrasts_cuts <- coxcontrast(data_matched, postbaselinecuts)
+# apply contrast functions ----
+
+# TODO decide whether these should start at 0 or 14
+# km
+km_contrasts_rounded_daily <- kmcontrasts(data_surv_rounded)
+km_contrasts_rounded_cuts <- kmcontrasts(data_surv_rounded, c(0,postbaselinecuts))
+km_contrasts_rounded_overall <- kmcontrasts(data_surv_rounded, c(0,maxfup))
+
+# cox
+cox_contrasts_cuts <- coxcontrast(data_matched, c(0,postbaselinecuts))
 cox_contrasts_overall <- coxcontrast(data_matched, c(0,maxfup))
 
 # cox HR is a safe statistic so no need to redact/round

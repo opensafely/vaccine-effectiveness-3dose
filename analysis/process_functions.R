@@ -84,6 +84,9 @@ process_jcvi <- function(.data) {
 process_demo <- function(.data) {
   .data %>%
     mutate(
+      
+      age65plus=age>=65,
+      
       ageband = cut(
         age,
         breaks=c(-Inf, 18, 40, 50, 60, 70, 80, 90, Inf),

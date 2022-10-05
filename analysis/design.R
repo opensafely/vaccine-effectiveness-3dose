@@ -90,13 +90,13 @@ events_lookup <- tribble(
 
 treatement_lookup <-
   tribble(
-    ~treatment, ~treatment_descr,
-    "pfizer", "BNT162b2",
-    "az", "ChAdOx1-S",
-    "moderna", "mRNA-1273",
-    "pfizer-pfizer", "BNT162b2",
-    "az-az", "ChAdOx1-S",
-    "moderna-moderna", "mRNA-1273"
+    ~dose, ~treatment, ~treatment_descr,
+    "3","pfizer", "BNT162b2",
+    "3", "az", "ChAdOx1-S",
+    "3", "moderna", "mRNA-1273",
+    "12", "pfizer-pfizer", "BNT162b2",
+    "12", "az-az", "ChAdOx1-S",
+    "12", "moderna-moderna", "mRNA-1273"
   )
 
 ## lookups to convert coded variables to full, descriptive variables ----
@@ -105,7 +105,9 @@ recoder <-
   lst(
     subgroups = c(
       `Main` = "all",
-      `Prior SARS-CoV-2 infection` = "prior_covid_infection"
+      `Prior SARS-CoV-2 infection` = "prior_covid_infection",
+      `Primary course vaccine brand` = "vax12_type",
+      `Age` = "age65plus"
     ),
     status = c(
       `Unmatched`= "unmatched",
@@ -121,6 +123,14 @@ recoder <-
       `No prior SARS-CoV-2 infection` = "FALSE",
       `Prior SARS-CoV-2 infection` = "TRUE"
     ),
+    vax12_type = c(
+      `BNT162b2` = "pfizer-pfizer",
+      `ChAdOx1-S` = "az-az"
+    ),
+    age65plus = c(
+      `under 65 years` = "FALSE",
+      `65 years or over` = "TRUE" 
+    )
   )
 
 

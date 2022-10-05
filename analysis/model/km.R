@@ -7,7 +7,7 @@
 #  - COX MDOELS
 #  - The script must be accompanied by three arguments:
 #    `cohort` - pfizer or moderna
-#    `subgroup` - prior_covid_infection
+#    `subgroup` - prior_covid_infection, vax12_type, cev, age65plus
 #    `outcome` - the dependent variable
 
 # # # # # # # # # # # # # # # # # # # # #
@@ -65,10 +65,14 @@ data_matched <- read_rds(ghere("output", cohort, "match", "data_matched.rds"))
 ## import baseline data, restrict to matched individuals and derive time-to-event variables
 data_matched <- 
   data_matched %>%
+  # create a new id to account for the fact that some controls become treated (this is only needed for cox models)
+  group_by(patient_id, match_id, matching_round, treated) %>% 
+  mutate(new_id = cur_group_id()) %>% 
+  ungroup() %>%
   mutate(all="all") %>%
   select(
     # select only variables needed for models to save space
-    patient_id, treated, trial_date, match_id, 
+    new_id, treated, trial_date, 
     controlistreated_date,
     vax3_date,
     death_date, dereg_date, coviddeath_date, noncoviddeath_date, vax4_date,
@@ -415,10 +419,6 @@ coxcontrast <- function(data, cuts=NULL){
   if(is.null(cuts)){stop("Specify cuts.")}
   
   data <- data %>% 
-    # create a new id to account for the fact that some controls become treated
-    group_by(patient_id, match_id) %>% 
-    mutate(new_id = cur_group_id()) %>% 
-    ungroup() %>%
     # create variable for cuts[1] for tstart in tmerge
     mutate(time0 = cuts[1])
   

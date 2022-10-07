@@ -25,17 +25,13 @@ study_dates <- lst(
   
   pfizer = lst( # pfizer dose 3
    start_date = "2021-09-16", #start of recruitment thursday 16 september first pfizer booster jabs administered in england
-   end_date = "2021-12-16", # end of recruitment (13 weeks later)
-   # followupend_date = "2022-01-02", # end of follow-up
   ),
   
   moderna = lst( # moderna dose 3
     start_date = "2021-10-29", #start of recruitment friday 29 october first moderna booster jabs administered in england
-    end_date = "2021-12-16", # end of recruitment (7 weeks later)
-    # followupend_date = "2022-07-10" # end of follow-up
   ),
   
-  studyend_date = "2021-12-31", # end of follow-up
+  studyend_date = "2022-03-31", # last day of public testing in England
   
   lastvax2_date = "2021-12-01", # don't recruit anyone with second vaccination after this date
   
@@ -45,6 +41,9 @@ study_dates <- lst(
   firstmoderna_date = "2021-04-13", # first moderna vaccination in national roll-out
   firstpossiblevax_date = "2020-06-01", # used to catch "real" vaccination dates (eg not 1900-01-01)
 )
+
+# end recrtuitment for both cohorts weeks before study_dates$studyend_date
+study_dates$pfizer$end_date <- study_dates$moderna$end_date <- as.Date(study_dates$studyend_date) - 14
 
 study_dates$index_date = study_dates$pfizer$start_date
 

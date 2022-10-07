@@ -483,14 +483,13 @@ coxcontrast <- function(data, cuts=NULL){
 
 # apply contrast functions ----
 
-# TODO decide whether these should start at 0 or 14
 # km
 km_contrasts_rounded_daily <- kmcontrasts(data_surv_rounded)
-km_contrasts_rounded_cuts <- kmcontrasts(data_surv_rounded, c(0,postbaselinecuts))
+km_contrasts_rounded_cuts <- kmcontrasts(data_surv_rounded, postbaselinecuts)
 km_contrasts_rounded_overall <- kmcontrasts(data_surv_rounded, c(0,maxfup))
 
 # cox
-cox_contrasts_cuts <- coxcontrast(data_matched, c(0,postbaselinecuts))
+cox_contrasts_cuts <- coxcontrast(data_matched, postbaselinecuts)
 cox_contrasts_overall <- coxcontrast(data_matched, c(0,maxfup))
 
 # cox HR is a safe statistic so no need to redact/round

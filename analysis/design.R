@@ -139,7 +139,7 @@ recoder <-
 postbaselinedays <- 28
 
 # where to split follow-up time after recruitment
-postbaselinecuts <- c(14, 14 + (1:6)*postbaselinedays)
+postbaselinecuts <- c(0, 14, 14 + (1:6)*postbaselinedays)
 
 # maximum follow-up
 maxfup <- max(postbaselinecuts)

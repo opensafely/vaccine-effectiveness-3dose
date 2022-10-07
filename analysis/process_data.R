@@ -430,9 +430,8 @@ data_criteria <- data_processed %>%
     c5 = c4 & has_age & has_sex & has_imd & has_ethnicity & has_region,
     c6 = c5 & no_recentcovid30,
     c7 = c6 & isnot_inhospital,
-    c8 = c7 & TRUE, # TODO define c8 (this will be TRUE when stage!=treated)
     
-    include = c8,
+    include = c7,
     
   )
 
@@ -491,7 +490,6 @@ if (stage == "treated") {
         crit == "c5" ~ "  no missing demographic information",
         crit == "c6" ~ "  no evidence of covid in 30 days before third dose",
         crit == "c7" ~ "  not in hospital (unplanned) during booster vaccination",
-        crit == "c8" ~ "  did not received 3rd dose at unusual time given region, priority group, and 2nd dose date.", #TODO
         TRUE ~ NA_character_
       )
     ) %>%

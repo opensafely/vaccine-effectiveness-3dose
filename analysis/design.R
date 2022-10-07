@@ -172,6 +172,3 @@ caliper_variables <- c(
   NULL
 )
 matching_variables <- c(exact_variables, names(caliper_variables))
-
-# cut-off for rolling 7 day average, that determines recruitment period
-recruitment_period_cutoff <- 50

@@ -45,8 +45,6 @@ study_dates <- lst(
 # end recrtuitment for both cohorts weeks before study_dates$studyend_date
 study_dates$pfizer$end_date <- study_dates$moderna$end_date <- as.Date(study_dates$studyend_date) - 14
 
-study_dates$index_date = study_dates$pfizer$start_date
-
 extract_increment <- 14
 
 study_dates$pfizer$control_extract_dates = as.Date(study_dates$pfizer$start_date) + (0:26)*extract_increment

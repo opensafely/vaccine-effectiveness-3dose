@@ -24,6 +24,8 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
 source(here("lib", "functions", "utility.R"))
 
 source(here("analysis", "design.R"))
+  
+index_date <- as.Date("2020-01-01") # doesn't matter what this is, just need some constant date
 
 # import all datasets of matched controls, including matching variables
 data_matchedcontrols <- 
@@ -33,7 +35,7 @@ data_matchedcontrols <-
     .id="matching_round"
   ) %>%
   mutate(
-    trial_day = as.integer(trial_date - study_dates$index_date)
+    trial_day = as.integer(trial_date - index_date)
   ) %>%
   select(
     # select variables with_value_from_file
@@ -71,7 +73,7 @@ dummydata %>%
   #convert logical to integer as study defs output 0/1 not TRUE/FALSE
   # mutate(across(where(is.logical), ~ as.integer(.))) %>%
   #convert integer days to dates since index date and rename vars
-  mutate(across(ends_with("_day"), ~ as.Date(as.character(study_dates$index_date + .)))) %>%
+  mutate(across(ends_with("_day"), ~ as.Date(as.character(index_date + .)))) %>%
   rename_with(~str_replace(., "_day", "_date"), ends_with("_day")) %>%
   write_feather(sink = here("output", cohort, "dummydata", "dummy_control_final.feather"))
 

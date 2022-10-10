@@ -17,14 +17,6 @@ from cohortextractor import (
 cohort = params["cohort"]
 n_matching_rounds = params["n_matching_rounds"]
 
-# import study dates defined in "./analysis/design.R" script
-with open("./lib/design/study-dates.json") as f:
-  study_dates = json.load(f)
-
-# change these in design.R if necessary
-index_date = study_dates["index_date"]
-
-
 ############################################################
 ## outcome variables
 from variables_outcome import generate_outcome_variables 

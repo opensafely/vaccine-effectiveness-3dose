@@ -241,10 +241,6 @@ process_vax <- function(.data, stage) {
       
       vax4_date = covid_vax_4_date,
       
-      vax4_day = as.integer(floor((vax4_date - study_dates$index_date))+1), # day 0 is the day before "start_date"
-      
-      vax4_week = as.integer(floor((vax4_date - study_dates$index_date)/7)+1), # week 1 is days 1-7.
-      
     )
   } else if (stage == "potential") {
     vax4_vars <- rlang::quos(
@@ -290,13 +286,8 @@ process_vax <- function(.data, stage) {
       vax2_date = covid_vax_2_date,
       vax3_date = covid_vax_3_date,
       
-      vax1_day = as.integer(floor((vax1_date - study_dates$index_date))+1), # day 0 is the day before "start_date"
-      vax2_day = as.integer(floor((vax2_date - study_dates$index_date))+1), # day 0 is the day before "start_date"
-      vax3_day = as.integer(floor((vax3_date - study_dates$index_date))+1), # day 0 is the day before "start_date"
-      
-      vax1_week = as.integer(floor((vax1_date - study_dates$index_date)/7)+1), # week 1 is days 1-7.
-      vax2_week = as.integer(floor((vax2_date - study_dates$index_date)/7)+1), # week 1 is days 1-7.
-      vax3_week = as.integer(floor((vax3_date - study_dates$index_date)/7)+1), # week 1 is days 1-7.
+      # day of second dose relative to start of vaccination rollout (used in matching)
+      vax2_day = as.integer(floor((vax2_date - as.Date("2020-12-08")))),
       
       !!! vax4_vars
       

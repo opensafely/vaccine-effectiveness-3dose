@@ -27,7 +27,7 @@ args <- commandArgs(trailingOnly=TRUE)
 
 if(length(args)==0){
   # use for interactive testing
-  cohort <- "over12"
+  cohort <- "pfizer"
 } else {
   cohort <- args[[1]]
 }

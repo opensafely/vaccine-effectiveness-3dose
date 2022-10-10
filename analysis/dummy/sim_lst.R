@@ -1,62 +1,27 @@
 # sim list vax ----
 sim_list_vax <- lst(
   
-  first_vax_type = bn_node(~rcat(n=..n, c("pfizer","az","moderna",""), c(0.49,0.4,0.1,0.01)), keep=FALSE),
-  covid_vax_pfizer_1_day = bn_node(
-    ~as.integer(runif(n=..n, firstpfizer_day, firstpfizer_day+60)),
-    missing_rate = ~1-(first_vax_type=="pfizer")
+  anyvax = bn_node(
+    ~rbernoulli(n=..n, p = 0.99), 
+    keep=FALSE
+    ),
+  covid_vax_disease_1_day = bn_node(
+    ~as.integer(runif(n=..n, firstpfizer_day, firstmoderna_day+60)),
+    missing_rate = ~1-anyvax
   ),
-  covid_vax_pfizer_2_day = bn_node(
-    ~as.integer(runif(n=..n, covid_vax_pfizer_1_day+30, covid_vax_pfizer_1_day+60)),
-    needs = c("covid_vax_pfizer_1_day"),
+  covid_vax_disease_2_day = bn_node(
+    ~as.integer(runif(n=..n, covid_vax_disease_1_day+30, covid_vax_disease_1_day+60)),
+    needs = c("covid_vax_disease_1_day"),
     missing_rate = ~0.01
   ),
-  covid_vax_pfizer_3_day = bn_node(
-    ~as.integer(runif(n=..n, max(covid_vax_pfizer_2_day+15,pfizerstart_day), max(covid_vax_pfizer_2_day, pfizerstart_day)+100)),
-    needs = c("covid_vax_pfizer_2_day"),
+  covid_vax_disease_3_day = bn_node(
+    ~as.integer(runif(n=..n, max(covid_vax_disease_2_day+15,pfizerstart_day), max(covid_vax_disease_2_day, modernastart_day)+100)),
+    needs = c("covid_vax_disease_2_day"),
     missing_rate = ~0.5
   ),
-  covid_vax_pfizer_4_day = bn_node(
-    ~as.integer(runif(n=..n, covid_vax_pfizer_3_day+120, covid_vax_pfizer_3_day+200)),
-    needs = c("covid_vax_pfizer_3_day"),
-    missing_rate = ~0.99
-  ),
-  covid_vax_az_1_day = bn_node(
-    ~as.integer(runif(n=..n, firstaz_day, firstaz_day+60)),
-    missing_rate = ~1-(first_vax_type=="az")
-  ),
-  covid_vax_az_2_day = bn_node(
-    ~as.integer(runif(n=..n, covid_vax_az_1_day+30, covid_vax_az_1_day+60)),
-    needs = c("covid_vax_az_1_day"),
-    missing_rate = ~0.01
-  ),
-  covid_vax_az_3_day = bn_node(
-    ~as.integer(runif(n=..n, max(covid_vax_az_2_day+15,pfizerstart_day), max(covid_vax_az_2_day,pfizerstart_day)+100)),
-    needs = c("covid_vax_az_2_day"),
-    missing_rate = ~0.99
-  ),
-  covid_vax_az_4_day = bn_node(
-    ~as.integer(runif(n=..n, covid_vax_az_3_day+120, covid_vax_az_3_day+200)),
-    needs = c("covid_vax_az_3_day"),
-    missing_rate = ~0.99
-  ),
-  covid_vax_moderna_1_day = bn_node(
-    ~as.integer(runif(n=..n, firstmoderna_day, firstmoderna_day+60)),
-    missing_rate = ~1-(first_vax_type=="moderna")
-  ),
-  covid_vax_moderna_2_day = bn_node(
-    ~as.integer(runif(n=..n, covid_vax_moderna_1_day+30, covid_vax_moderna_1_day+60)),
-    needs = c("covid_vax_moderna_1_day"),
-    missing_rate = ~0.01
-  ),
-  covid_vax_moderna_3_day = bn_node(
-    ~as.integer(runif(n=..n, max(covid_vax_moderna_2_day+15, modernastart_day), max(covid_vax_moderna_2_day,modernastart_day)+100)),
-    needs = c("covid_vax_moderna_2_day"),
-    missing_rate = ~0.5
-  ),
-  covid_vax_moderna_4_day = bn_node(
-    ~as.integer(runif(n=..n, covid_vax_moderna_3_day+120, covid_vax_moderna_3_day+200)),
-    needs = c("covid_vax_moderna_3_day"),
+  covid_vax_disease_4_day = bn_node(
+    ~as.integer(runif(n=..n, covid_vax_disease_3_day+120, covid_vax_disease_3_day+200)),
+    needs = c("covid_vax_disease_3_day"),
     missing_rate = ~0.99
   ),
   

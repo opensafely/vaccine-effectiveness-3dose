@@ -87,7 +87,7 @@ data_matched <-
     # follow-up time is up to and including censor date
     censor_date = pmin(
       dereg_date,
-      vax4_date-1, # -1 because we assume vax occurs at the start of the day
+      # vax4_date-1, # -1 because we assume vax occurs at the start of the day
       death_date,
       study_dates$studyend_date,
       trial_date + maxfup,

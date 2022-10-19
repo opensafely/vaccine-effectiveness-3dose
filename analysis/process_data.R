@@ -66,9 +66,13 @@ if (stage == "treated") {
   fs::dir_create(here("output", "pfizer", "treated"))
   fs::dir_create(here("output", "moderna", "treated"))
   fs::dir_create(here("output", "treated", "eligible"))
+  fs::dir_create(here("output", "treated", "process"))
 } else if (stage == "potential") {
   fs::dir_create(ghere("output", cohort, "matchround{matching_round}", "process"))
+  fs::dir_create(ghere("output", cohort, "matchround{matching_round}", "extract", "potential"))
+  fs::dir_create(ghere("output", cohort, "matchround{matching_round}", "potential"))
 } else if (stage == "actual") {
+  fs::dir_create(ghere("output", cohort, "matchround{matching_round}", "extract", "actual"))
   fs::dir_create(ghere("output", cohort, "matchround{matching_round}", "actual"))
 } else if (stage == "final") {
   fs::dir_create(ghere("output", cohort, "match"))
@@ -87,6 +91,9 @@ if (stage == "actual") {
 # use externally created dummy data if not running in the server
 # check variables are as they should be
 if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
+  
+  # set seed so that dummy data results are reproducible
+  set.seed(10)
   
   # ideally in future this will check column existence and types from metadata,
   # rather than from a cohort-extractor-generated dummy data
@@ -208,6 +215,15 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
   
 }
 
+# summarise extracted data 
+if (stage == "treated") {
+  my_skim(data_extract, path = here("output", "treated", "extract", "input_treated_skim.txt"))
+} else if (stage %in% c("potential", "actual")) {
+  my_skim(data_extract, path = ghere("output", cohort, "matchround{matching_round}", "extract", stage, "input_control{stage}_skim.txt"))
+} else if (stage == "final") {
+  my_skim(data_extract, path = ghere("output", cohort, "extract", "input_control{stage}_skim.txt"))
+}
+
 # process the final dataset ----
 if (stage == "final") {
   
@@ -260,6 +276,16 @@ if (stage == "final") {
   
   write_rds(data_matched, here("output", cohort, "match", "data_matched.rds"), compress="gz")
   
+  # summarise matched data by treatment group
+  data_matched %>% filter(treated==0) %>%
+    my_skim(
+      path = here("output", cohort, "match", "data_matched_control_skim.txt")
+    )
+  data_matched %>% filter(treated==1) %>%
+    my_skim(
+      path = here("output", cohort, "match", "data_matched_treated_skim.txt")
+    )
+  
   # matching status of all treated, eligible people ----
   
   data_treatedeligible_matchstatus <- 
@@ -297,16 +323,20 @@ if (stage == "final") {
 
 # process covariates
 if (stage %in% c("treated", "potential", "actual")) {
+  
   data_processed <- data_extract %>%
     process_jcvi() %>%
     process_demo() %>%
     process_pre() 
+  
 }
 
 # process outcomes
 if (stage == "treated") {
+  
   data_processed <- data_processed %>%
     process_outcome()
+  
 }
 
 ## process vaccination data ----
@@ -324,8 +354,26 @@ if (stage %in% c("treated", "potential")) {
     select(patient_id, matches("^vax\\d"))
   
   data_processed <- data_processed %>%
-    left_join(data_vax_wide, by = "patient_id")
+    left_join(data_vax_wide, by = "patient_id") %>%
+    # the following line is needed for applying the eligibility criteria: covid_vax_disease_\d_date_matches_vax\d_date
+    # it has already been checked that this is true in the process_potential stage, 
+    # but `covid_vax_disease_\d_date` is added to avoid having to add extra logic statements for the case when stage="actual"
+    mutate(
+      covid_vax_disease_1_date = vax1_date,
+      covid_vax_disease_2_date = vax2_date,
+      covid_vax_disease_3_date = vax3_date
+      )
   
+}
+
+# summarise processed data
+if (stage %in% c("treated", "potential", "actual")) {
+  if (stage == "treated") {
+    skim_path <- here("output", "treated", "process", "data_processed_skim.txt")
+  } else {
+    skim_path <- ghere("output", cohort, "matchround{matching_round}", stage, "data_processed_skim.txt")
+  }
+  my_skim(data_processed, path = skim_path)
 }
 
 ####################################################################################
@@ -352,7 +400,7 @@ if (stage == "treated") {
     index_date = vax3_date,
     
     c0 = is_adult & vax3_date <= study_dates$studyend_date,
-    c1 = c0 & vax3_notbeforestartdate & vax3_beforeenddate & has_expectedvax3type & has_vaxgap23,
+    c1 = c0 & vax3_notbeforestartdate & vax3_beforeenddate & has_expectedvax3type & has_vaxgap23 & covid_vax_disease_3_date_matches_vax_3_date,
     
   )
   
@@ -380,7 +428,7 @@ if (stage == "treated") {
     ),
     
     c0 = is_adult,
-    c1 = c0 & vax3_notbeforeindexdate,
+    c1 = c0 & vax3_notbeforeindexdate & covid_vax_disease_3_date_matches_vax_3_date,
     
   )
   
@@ -389,6 +437,10 @@ if (stage == "treated") {
 if (stage %in% c("treated", "potential", "actual")) {
   
 data_criteria <- data_processed %>%
+  left_join(
+    data_extract %>% select(patient_id, matches("covid_vax_disease_\\d_date")),
+    by = "patient_id"
+  ) %>%
   transmute(
     
     patient_id,
@@ -403,6 +455,13 @@ data_criteria <- data_processed %>%
     isnot_carehomeresident = !care_home_combined,
     isnot_endoflife = !endoflife,
     isnot_housebound = !housebound,
+    
+    # make sure vaccine dates match for all doses
+    covid_vax_disease_12_date_matches_vax_12_date = 
+      (covid_vax_disease_1_date == vax1_date) & 
+      (covid_vax_disease_2_date == vax2_date),
+    covid_vax_disease_3_date_matches_vax_3_date = 
+      ((covid_vax_disease_3_date == vax3_date) | (is.na(covid_vax_disease_3_date) & is.na(vax3_date))),
     
     vax1_afterfirstvaxdate = case_when(
       (vax1_type=="pfizer") & (vax1_date >= study_dates$firstpfizer_date) ~ TRUE,
@@ -424,7 +483,7 @@ data_criteria <- data_processed %>%
     
     isnot_inhospital = is.na(admitted_unplanned_0_date) | (!is.na(discharged_unplanned_0_date) & discharged_unplanned_0_date < index_date),
     
-    c2 = c1 & vax1_afterfirstvaxdate & vax2_beforelastvaxdate & has_vaxgap12 & has_knownvax1 & has_knownvax2 & vax12_homologous,
+    c2 = c1 & vax1_afterfirstvaxdate & vax2_beforelastvaxdate & has_vaxgap12 & has_knownvax1 & has_knownvax2 & vax12_homologous & covid_vax_disease_12_date_matches_vax_12_date,
     c3 = c2 & isnot_hscworker,
     c4 = c3 & isnot_carehomeresident & isnot_endoflife & isnot_housebound,
     c5 = c4 & has_age & has_sex & has_imd & has_ethnicity & has_region,
@@ -446,15 +505,23 @@ data_eligible <- data_criteria %>%
 # save cohort-specific datasets ----
 if (stage == "treated") {
   
+  data_eligible %>% filter(vax1_type == "pfizer") %>%
+    my_skim(path = here("output", "treated", "eligible", "data_eligible_pfizer_skim.txt"))
+  
   write_rds(data_eligible %>% filter(vax3_type == "pfizer"), 
             here("output", "pfizer", "treated", "data_treatedeligible.rds"),
             compress="gz")
+  
+  data_eligible %>% filter(vax1_type == "moderna") %>%
+    my_skim(path = here("output", "treated", "eligible", "data_eligible_moderna_skim.txt"))
   
   write_rds(data_eligible %>% filter(vax3_type == "moderna"), 
             here("output", "moderna", "treated", "data_treatedeligible.rds"), 
             compress="gz")
   
 } else if (stage == "potential") {
+  
+  my_skim(data_eligible, path = ghere("output", cohort, "matchround{matching_round}", "process", "data_controlpotential_skim.txt"))
   
   write_rds(data_eligible, 
             ghere("output", cohort, "matchround{matching_round}", "process", "data_controlpotential.rds"),
@@ -483,8 +550,8 @@ if (stage == "treated") {
       crit = str_extract(criteria, "^c\\d+"),
       criteria = fct_case_when(
         crit == "c0" ~ "Aged 18+ with 3rd dose on or before {study_dates$studyend_date}", 
-        crit == "c1" ~ "  at least 17 days between 2nd and 3rd dose and 3rd dose of pfizer received between {study_dates$pfizer$start_date} and {study_dates$pfizer$end_date} or 3rd dose of moderna received between {study_dates$moderna$start_date} and {study_dates$moderna$end_date}",
-        crit == "c2" ~ "  homologous primary vaccination course of pfizer or AZ and at least 17 days between doses",
+        crit == "c1" ~ "  no unreliable vaccination data for dose 3",
+        crit == "c2" ~ "  no unreliable vaccination data for doses 1 and 2",
         crit == "c3" ~ "  not a HSC worker",
         crit == "c4" ~ "  not a care/nursing home resident, end-of-life or housebound",
         crit == "c5" ~ "  no missing demographic information",
@@ -496,6 +563,18 @@ if (stage == "treated") {
     mutate(across(criteria, factor, labels = sapply(levels(.$criteria), glue)))
   
   write_rds(data_flowchart, here("output", "treated", "eligible", "flowchart_treatedeligible.rds"))
+  
+  # save rounded flowchart for release
+  data_flowchart %>%
+    transmute(
+      criteria, crit, 
+      n = ceiling_any(n, to=7),
+      n_exclude = lag(n) - n,
+      pct_exclude = n_exclude/lag(n),
+      pct_all = n / first(n),
+      pct_step = n / lag(n),
+    ) %>%
+    write_csv(here("output", "treated", "eligible", "flowchart_treatedeligible_rounded.csv")) 
   
 }
 
@@ -626,7 +705,7 @@ if (stage == "actual") {
     summarise(n=n()) %>% group_by(treated) %>% summarise(ndups = sum(n>1)) %>%
     print()
   
-  
+  my_skim(data_eligible, path = ghere("output", cohort, "matchround{matching_round}", "actual", "data_successful_matchedcontrols_skim.txt"))
   write_rds(data_successful_matchstatus %>% filter(treated==0L), ghere("output", cohort, "matchround{matching_round}", "actual", "data_successful_matchedcontrols.rds"), compress="gz")
   
   ## size of dataset

@@ -113,6 +113,11 @@ action_1matchround <- function(cohort, matching_round){
       ),
       highly_sensitive = lst(
         rds = glue("output/{cohort}/matchround{matching_round}/process/*.rds")
+      ),
+      moderately_sensitive = lst(
+        input_controlpotential_skim = glue("output/{cohort}/matchround{matching_round}/extract/potential/*.txt"),
+        data_processed_skim = glue("output/{cohort}/matchround{matching_round}/potential/*.txt"),
+        data_controlpotential_skim = glue("output/{cohort}/matchround{matching_round}/process/*.txt")
       )
     ),
     
@@ -165,6 +170,10 @@ action_1matchround <- function(cohort, matching_round){
       highly_sensitive = lst(
         rds = glue("output/{cohort}/matchround{matching_round}/actual/*.rds"),
         csv = glue("output/{cohort}/matchround{matching_round}/actual/*.csv.gz"),
+      ),
+      moderately_sensitive = lst(
+        input_controlactual_skim = glue("output/{cohort}/matchround{matching_round}/extract/actual/*.txt"),
+        data_actual_skim = glue("output/{cohort}/matchround{matching_round}/actual/*.txt"),
       )
     )
 
@@ -231,6 +240,10 @@ action_extract_and_match <- function(cohort, n_matching_rounds){
       highly_sensitive = lst(
         extract = glue("output/{cohort}/match/*.rds")
       ),
+      moderately_sensitive = lst(
+        input_controlfinal_skim = glue("output/{cohort}/extract/*.txt"),
+        data_matched_skim = glue("output/{cohort}/match/*.txt")
+      )
     )
   )
   
@@ -293,7 +306,22 @@ action_table1 <- function(cohort){
     ),
     moderately_sensitive= lst(
       csv= glue("output/{cohort}/table1/*.csv"),
-      # png= glue("output/{cohort}/table1/*.png"),
+      png= glue("output/{cohort}/table1/*.png")
+    )
+  )
+}
+
+action_cinc_dose4 <- function(cohort){
+  action(
+    name = glue("cinc_dose4_{cohort}"),
+    run = glue("r:latest analysis/model/cinc_dose4.R"),
+    arguments = c(cohort),
+    needs = namelesslst(
+      glue("process_controlfinal_{cohort}"),
+    ),
+    moderately_sensitive= lst(
+      csv= glue("output/{cohort}/models/cinc_dose4/*.csv"),
+      png= glue("output/{cohort}/models/cinc_dose4/*.png")
     )
   )
 }
@@ -356,10 +384,16 @@ actions_list <- splice(
       "extract_treated"
     ),
     highly_sensitive = lst(
-      eligible = "output/treated/eligible/*.rds",
+      eligiblerds = "output/treated/eligible/*.rds",
       pfizer = "output/pfizer/treated/*.rds",
       moderna = "output/moderna/treated/*.rds"
     ),
+    moderately_sensitive = lst(
+      eligiblecsv = "output/treated/eligible/*.csv",
+      input_treated_skim = "output/treated/extract/*.txt",
+      data_processed_skim = "output/treated/process/*.txt",
+      data_eligible_skim = "output/treated/eligible/*.txt"
+    )
   ),
 
   lapply_actions(
@@ -376,6 +410,8 @@ actions_list <- splice(
         action_extract_and_match(x, n_matching_rounds),
         
         action_table1(x),
+        
+        action_cinc_dose4(x),
         
         comment("# # # # # # # # # # # # # # # # # # #",
                 "Model"),

@@ -356,10 +356,13 @@ actions_list <- splice(
       "extract_treated"
     ),
     highly_sensitive = lst(
-      eligible = "output/treated/eligible/*.rds",
+      eligiblerds = "output/treated/eligible/*.rds",
       pfizer = "output/pfizer/treated/*.rds",
       moderna = "output/moderna/treated/*.rds"
     ),
+    moderately_sensitive = lst(
+      eligiblecsv = "output/treated/eligible/*.csv"
+    )
   ),
 
   lapply_actions(

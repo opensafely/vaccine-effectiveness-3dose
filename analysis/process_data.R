@@ -519,6 +519,17 @@ if (stage == "treated") {
   
   write_rds(data_flowchart, here("output", "treated", "eligible", "flowchart_treatedeligible.rds"))
   
+  data_flowchart %>%
+    transmute(
+      criteria, crit, 
+      n = ceiling_any(n, to=7),
+      n_exclude = lag(n) - n,
+      pct_exclude = n_exclude/lag(n),
+      pct_all = n / first(n),
+      pct_step = n / lag(n),
+    ) %>%
+    write_csv(here("output", "treated", "eligible", "flowchart_treatedeligible_rounded.csv")) 
+  
 }
 
 # check matching (only when stage="actual") ----

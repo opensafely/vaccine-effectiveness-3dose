@@ -66,9 +66,13 @@ if (stage == "treated") {
   fs::dir_create(here("output", "pfizer", "treated"))
   fs::dir_create(here("output", "moderna", "treated"))
   fs::dir_create(here("output", "treated", "eligible"))
+  fs::dir_create(here("output", "treated", "process"))
 } else if (stage == "potential") {
   fs::dir_create(ghere("output", cohort, "matchround{matching_round}", "process"))
+  fs::dir_create(ghere("output", cohort, "matchround{matching_round}", "extract", "potential"))
+  fs::dir_create(ghere("output", cohort, "matchround{matching_round}", "potential"))
 } else if (stage == "actual") {
+  fs::dir_create(ghere("output", cohort, "matchround{matching_round}", "extract", "actual"))
   fs::dir_create(ghere("output", cohort, "matchround{matching_round}", "actual"))
 } else if (stage == "final") {
   fs::dir_create(ghere("output", cohort, "match"))
@@ -211,6 +215,15 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
   
 }
 
+# summarise extracted data 
+if (stage == "treated") {
+  my_skim(data_extract, path = here("output", "treated", "extract", "input_treated_skim.txt"))
+} else if (stage %in% c("potential", "actual")) {
+  my_skim(data_extract, path = ghere("output", cohort, "matchround{matching_round}", "extract", stage, "input_control{stage}_skim.txt"))
+} else if (stage == "final") {
+  my_skim(data_extract, path = ghere("output", cohort, "extract", "input_control{stage}_skim.txt"))
+}
+
 # process the final dataset ----
 if (stage == "final") {
   
@@ -263,6 +276,9 @@ if (stage == "final") {
   
   write_rds(data_matched, here("output", cohort, "match", "data_matched.rds"), compress="gz")
   
+  # summarise matched data
+  my_skim(data_matched, path = here("output", cohort, "match", "data_matched_skim.txt"))
+  
   # matching status of all treated, eligible people ----
   
   data_treatedeligible_matchstatus <- 
@@ -300,16 +316,20 @@ if (stage == "final") {
 
 # process covariates
 if (stage %in% c("treated", "potential", "actual")) {
+  
   data_processed <- data_extract %>%
     process_jcvi() %>%
     process_demo() %>%
     process_pre() 
+  
 }
 
 # process outcomes
 if (stage == "treated") {
+  
   data_processed <- data_processed %>%
     process_outcome()
+  
 }
 
 ## process vaccination data ----
@@ -337,6 +357,16 @@ if (stage %in% c("treated", "potential")) {
       covid_vax_disease_3_date = vax3_date
       )
   
+}
+
+# summarise processed data
+if (stage %in% c("treated", "potential", "actual")) {
+  if (stage == "treated") {
+    skim_path <- here("output", "treated", "process", "data_processed_skim.txt")
+  } else {
+    skim_path <- ghere("output", cohort, "matchround{matching_round}", stage, "data_processed_skim.txt")
+  }
+  my_skim(data_processed, path = skim_path)
 }
 
 ####################################################################################
@@ -468,15 +498,23 @@ data_eligible <- data_criteria %>%
 # save cohort-specific datasets ----
 if (stage == "treated") {
   
+  data_eligible %>% filter(vax1_type == "pfizer") %>%
+    my_skim(path = here("output", "treated", "eligible", "data_eligible_pfizer_skim.txt"))
+  
   write_rds(data_eligible %>% filter(vax3_type == "pfizer"), 
             here("output", "pfizer", "treated", "data_treatedeligible.rds"),
             compress="gz")
+  
+  data_eligible %>% filter(vax1_type == "moderna") %>%
+    my_skim(path = here("output", "treated", "eligible", "data_eligible_moderna_skim.txt"))
   
   write_rds(data_eligible %>% filter(vax3_type == "moderna"), 
             here("output", "moderna", "treated", "data_treatedeligible.rds"), 
             compress="gz")
   
 } else if (stage == "potential") {
+  
+  my_skim(data_eligible, path = ghere("output", cohort, "matchround{matching_round}", "process", "data_controlpotential_skim.txt"))
   
   write_rds(data_eligible, 
             ghere("output", cohort, "matchround{matching_round}", "process", "data_controlpotential.rds"),
@@ -659,7 +697,7 @@ if (stage == "actual") {
     summarise(n=n()) %>% group_by(treated) %>% summarise(ndups = sum(n>1)) %>%
     print()
   
-  
+  my_skim(data_eligible, path = ghere("output", cohort, "matchround{matching_round}", "actual", "data_successful_matchedcontrols_skim.txt"))
   write_rds(data_successful_matchstatus %>% filter(treated==0L), ghere("output", cohort, "matchround{matching_round}", "actual", "data_successful_matchedcontrols.rds"), compress="gz")
   
   ## size of dataset

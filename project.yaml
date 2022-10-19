@@ -41,9 +41,14 @@ actions:
     - extract_treated
     outputs:
       highly_sensitive:
-        eligible: output/treated/eligible/*.rds
+        eligiblerds: output/treated/eligible/*.rds
         pfizer: output/pfizer/treated/*.rds
         moderna: output/moderna/treated/*.rds
+      moderately_sensitive:
+        eligiblecsv: output/treated/eligible/*.csv
+        input_treated_skim: output/treated/extract/*.txt
+        data_processed_skim: output/treated/process/*.txt
+        data_eligible_skim: output/treated/eligible/*.txt
 
   ## # # # # # # # # # # # # # # # # # # # 
   ## pfizer cohort 
@@ -68,6 +73,10 @@ actions:
     outputs:
       highly_sensitive:
         rds: output/pfizer/matchround1/process/*.rds
+      moderately_sensitive:
+        input_controlpotential_skim: output/pfizer/matchround1/extract/potential/*.txt
+        data_processed_skim: output/pfizer/matchround1/potential/*.txt
+        data_controlpotential_skim: output/pfizer/matchround1/process/*.txt
 
   match_potential_pfizer_1:
     run: r:latest analysis/matching/match_potential.R pfizer 1
@@ -102,6 +111,9 @@ actions:
       highly_sensitive:
         rds: output/pfizer/matchround1/actual/*.rds
         csv: output/pfizer/matchround1/actual/*.csv.gz
+      moderately_sensitive:
+        input_controlactual_skim: output/pfizer/matchround1/extract/actual/*.txt
+        data_actual_skim: output/pfizer/matchround1/actual/*.txt
 
   extract_controlpotential_pfizer_2:
     run: cohortextractor:latest generate_cohort --study-definition study_definition_controlpotential
@@ -121,6 +133,10 @@ actions:
     outputs:
       highly_sensitive:
         rds: output/pfizer/matchround2/process/*.rds
+      moderately_sensitive:
+        input_controlpotential_skim: output/pfizer/matchround2/extract/potential/*.txt
+        data_processed_skim: output/pfizer/matchround2/potential/*.txt
+        data_controlpotential_skim: output/pfizer/matchround2/process/*.txt
 
   match_potential_pfizer_2:
     run: r:latest analysis/matching/match_potential.R pfizer 2
@@ -157,6 +173,9 @@ actions:
       highly_sensitive:
         rds: output/pfizer/matchround2/actual/*.rds
         csv: output/pfizer/matchround2/actual/*.csv.gz
+      moderately_sensitive:
+        input_controlactual_skim: output/pfizer/matchround2/extract/actual/*.txt
+        data_actual_skim: output/pfizer/matchround2/actual/*.txt
 
   extract_controlfinal_pfizer:
     run: cohortextractor:latest generate_cohort --study-definition study_definition_controlfinal
@@ -189,6 +208,9 @@ actions:
     outputs:
       highly_sensitive:
         extract: output/pfizer/match/*.rds
+      moderately_sensitive:
+        input_controlfinal_skim: output/pfizer/extract/*.txt
+        data_matched_skim: output/pfizer/match/*.txt
 
   table1_pfizer:
     run: r:latest analysis/matching/table1.R pfizer
@@ -531,6 +553,10 @@ actions:
     outputs:
       highly_sensitive:
         rds: output/moderna/matchround1/process/*.rds
+      moderately_sensitive:
+        input_controlpotential_skim: output/moderna/matchround1/extract/potential/*.txt
+        data_processed_skim: output/moderna/matchround1/potential/*.txt
+        data_controlpotential_skim: output/moderna/matchround1/process/*.txt
 
   match_potential_moderna_1:
     run: r:latest analysis/matching/match_potential.R moderna 1
@@ -565,6 +591,9 @@ actions:
       highly_sensitive:
         rds: output/moderna/matchround1/actual/*.rds
         csv: output/moderna/matchround1/actual/*.csv.gz
+      moderately_sensitive:
+        input_controlactual_skim: output/moderna/matchround1/extract/actual/*.txt
+        data_actual_skim: output/moderna/matchround1/actual/*.txt
 
   extract_controlpotential_moderna_2:
     run: cohortextractor:latest generate_cohort --study-definition study_definition_controlpotential
@@ -584,6 +613,10 @@ actions:
     outputs:
       highly_sensitive:
         rds: output/moderna/matchround2/process/*.rds
+      moderately_sensitive:
+        input_controlpotential_skim: output/moderna/matchround2/extract/potential/*.txt
+        data_processed_skim: output/moderna/matchround2/potential/*.txt
+        data_controlpotential_skim: output/moderna/matchround2/process/*.txt
 
   match_potential_moderna_2:
     run: r:latest analysis/matching/match_potential.R moderna 2
@@ -620,6 +653,9 @@ actions:
       highly_sensitive:
         rds: output/moderna/matchround2/actual/*.rds
         csv: output/moderna/matchround2/actual/*.csv.gz
+      moderately_sensitive:
+        input_controlactual_skim: output/moderna/matchround2/extract/actual/*.txt
+        data_actual_skim: output/moderna/matchround2/actual/*.txt
 
   extract_controlfinal_moderna:
     run: cohortextractor:latest generate_cohort --study-definition study_definition_controlfinal
@@ -652,6 +688,9 @@ actions:
     outputs:
       highly_sensitive:
         extract: output/moderna/match/*.rds
+      moderately_sensitive:
+        input_controlfinal_skim: output/moderna/extract/*.txt
+        data_matched_skim: output/moderna/match/*.txt
 
   table1_moderna:
     run: r:latest analysis/matching/table1.R moderna

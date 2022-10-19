@@ -113,6 +113,11 @@ action_1matchround <- function(cohort, matching_round){
       ),
       highly_sensitive = lst(
         rds = glue("output/{cohort}/matchround{matching_round}/process/*.rds")
+      ),
+      moderately_sensitive = lst(
+        input_controlpotential_skim = glue("output/{cohort}/matchround{matching_round}/extract/potential/*.txt"),
+        data_processed_skim = glue("output/{cohort}/matchround{matching_round}/potential/*.txt"),
+        data_controlpotential_skim = glue("output/{cohort}/matchround{matching_round}/process/*.txt")
       )
     ),
     
@@ -165,6 +170,10 @@ action_1matchround <- function(cohort, matching_round){
       highly_sensitive = lst(
         rds = glue("output/{cohort}/matchround{matching_round}/actual/*.rds"),
         csv = glue("output/{cohort}/matchround{matching_round}/actual/*.csv.gz"),
+      ),
+      moderately_sensitive = lst(
+        input_controlactual_skim = glue("output/{cohort}/matchround{matching_round}/extract/actual/*.txt"),
+        data_actual_skim = glue("output/{cohort}/matchround{matching_round}/actual/*.txt"),
       )
     )
 
@@ -231,6 +240,10 @@ action_extract_and_match <- function(cohort, n_matching_rounds){
       highly_sensitive = lst(
         extract = glue("output/{cohort}/match/*.rds")
       ),
+      moderately_sensitive = lst(
+        input_controlfinal_skim = glue("output/{cohort}/extract/*.txt"),
+        data_matched_skim = glue("output/{cohort}/match/*.txt")
+      )
     )
   )
   
@@ -361,7 +374,10 @@ actions_list <- splice(
       moderna = "output/moderna/treated/*.rds"
     ),
     moderately_sensitive = lst(
-      eligiblecsv = "output/treated/eligible/*.csv"
+      eligiblecsv = "output/treated/eligible/*.csv",
+      input_treated_skim = "output/treated/extract/*.txt",
+      data_processed_skim = "output/treated/process/*.txt",
+      data_eligible_skim = "output/treated/eligible/*.txt"
     )
   ),
 

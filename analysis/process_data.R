@@ -564,6 +564,7 @@ if (stage == "treated") {
   
   write_rds(data_flowchart, here("output", "treated", "eligible", "flowchart_treatedeligible.rds"))
   
+  # save rounded flowchart for release
   data_flowchart %>%
     transmute(
       criteria, crit, 

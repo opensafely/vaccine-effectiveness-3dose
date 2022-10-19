@@ -276,8 +276,15 @@ if (stage == "final") {
   
   write_rds(data_matched, here("output", cohort, "match", "data_matched.rds"), compress="gz")
   
-  # summarise matched data
-  my_skim(data_matched, path = here("output", cohort, "match", "data_matched_skim.txt"))
+  # summarise matched data by treatment group
+  data_matched %>% filter(treated==0) %>%
+    my_skim(
+      path = here("output", cohort, "match", "data_matched_control_skim.txt")
+    )
+  data_matched %>% filter(treated==1) %>%
+    my_skim(
+      path = here("output", cohort, "match", "data_matched_treated_skim.txt")
+    )
   
   # matching status of all treated, eligible people ----
   

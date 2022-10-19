@@ -311,6 +311,21 @@ action_table1 <- function(cohort){
   )
 }
 
+action_cinc_dose4 <- function(cohort){
+  action(
+    name = glue("cinc_dose4_{cohort}"),
+    run = glue("r:latest analysis/model/cinc_dose4.R"),
+    arguments = c(cohort),
+    needs = namelesslst(
+      glue("process_controlfinal_{cohort}"),
+    ),
+    moderately_sensitive= lst(
+      csv= glue("output/{cohort}/models/cinc_dose4/*.csv"),
+      png= glue("output/{cohort}/models/cinc_dose4/*.png")
+    )
+  )
+}
+
 # specify project ----
 
 ## defaults ----
@@ -395,6 +410,8 @@ actions_list <- splice(
         action_extract_and_match(x, n_matching_rounds),
         
         action_table1(x),
+        
+        action_cinc_dose4(x),
         
         comment("# # # # # # # # # # # # # # # # # # #",
                 "Model"),

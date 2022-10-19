@@ -219,6 +219,16 @@ actions:
     outputs:
       moderately_sensitive:
         csv: output/pfizer/table1/*.csv
+        png: output/pfizer/table1/*.png
+
+  cinc_dose4_pfizer:
+    run: r:latest analysis/model/cinc_dose4.R pfizer
+    needs:
+    - process_controlfinal_pfizer
+    outputs:
+      moderately_sensitive:
+        csv: output/pfizer/models/cinc_dose4/*.csv
+        png: output/pfizer/models/cinc_dose4/*.png
 
   ## # # # # # # # # # # # # # # # # # # # 
   ## Model 
@@ -699,6 +709,16 @@ actions:
     outputs:
       moderately_sensitive:
         csv: output/moderna/table1/*.csv
+        png: output/moderna/table1/*.png
+
+  cinc_dose4_moderna:
+    run: r:latest analysis/model/cinc_dose4.R moderna
+    needs:
+    - process_controlfinal_moderna
+    outputs:
+      moderately_sensitive:
+        csv: output/moderna/models/cinc_dose4/*.csv
+        png: output/moderna/models/cinc_dose4/*.png
 
   ## # # # # # # # # # # # # # # # # # # # 
   ## Model 

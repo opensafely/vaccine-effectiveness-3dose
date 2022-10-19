@@ -177,13 +177,137 @@ actions:
         input_controlactual_skim: output/pfizer/matchround2/extract/actual/*.txt
         data_actual_skim: output/pfizer/matchround2/actual/*.txt
 
-  extract_controlfinal_pfizer:
-    run: cohortextractor:latest generate_cohort --study-definition study_definition_controlfinal
-      --output-file output/pfizer/extract/input_controlfinal.feather --param cohort=pfizer
-      --param n_matching_rounds=2
+  extract_controlpotential_pfizer_3:
+    run: cohortextractor:latest generate_cohort --study-definition study_definition_controlpotential
+      --output-file output/pfizer/matchround3/extract/input_controlpotential.feather
+      --param cohort=pfizer --param matching_round=3 --param index_date=2021-10-14
     needs:
     - design
     - process_controlactual_pfizer_2
+    outputs:
+      highly_sensitive:
+        cohort: output/pfizer/matchround3/extract/input_controlpotential.feather
+
+  process_controlpotential_pfizer_3:
+    run: r:latest analysis/process_data.R potential pfizer 3
+    needs:
+    - extract_controlpotential_pfizer_3
+    outputs:
+      highly_sensitive:
+        rds: output/pfizer/matchround3/process/*.rds
+      moderately_sensitive:
+        input_controlpotential_skim: output/pfizer/matchround3/extract/potential/*.txt
+        data_processed_skim: output/pfizer/matchround3/potential/*.txt
+        data_controlpotential_skim: output/pfizer/matchround3/process/*.txt
+
+  match_potential_pfizer_3:
+    run: r:latest analysis/matching/match_potential.R pfizer 3
+    needs:
+    - process_treated
+    - process_controlpotential_pfizer_3
+    - process_controlactual_pfizer_2
+    outputs:
+      highly_sensitive:
+        rds: output/pfizer/matchround3/potential/*.rds
+        csv: output/pfizer/matchround3/potential/*.csv.gz
+
+  extract_controlactual_pfizer_3:
+    run: cohortextractor:latest generate_cohort --study-definition study_definition_controlactual
+      --output-file output/pfizer/matchround3/extract/input_controlactual.feather
+      --param cohort=pfizer --param matching_round=3
+    needs:
+    - design
+    - match_potential_pfizer_3
+    outputs:
+      highly_sensitive:
+        cohort: output/pfizer/matchround3/extract/input_controlactual.feather
+
+  process_controlactual_pfizer_3:
+    run: r:latest analysis/process_data.R actual pfizer 3
+    needs:
+    - process_treated
+    - match_potential_pfizer_3
+    - extract_controlpotential_pfizer_3
+    - process_controlpotential_pfizer_3
+    - extract_controlactual_pfizer_3
+    - process_controlactual_pfizer_2
+    outputs:
+      highly_sensitive:
+        rds: output/pfizer/matchround3/actual/*.rds
+        csv: output/pfizer/matchround3/actual/*.csv.gz
+      moderately_sensitive:
+        input_controlactual_skim: output/pfizer/matchround3/extract/actual/*.txt
+        data_actual_skim: output/pfizer/matchround3/actual/*.txt
+
+  extract_controlpotential_pfizer_4:
+    run: cohortextractor:latest generate_cohort --study-definition study_definition_controlpotential
+      --output-file output/pfizer/matchround4/extract/input_controlpotential.feather
+      --param cohort=pfizer --param matching_round=4 --param index_date=2021-10-28
+    needs:
+    - design
+    - process_controlactual_pfizer_3
+    outputs:
+      highly_sensitive:
+        cohort: output/pfizer/matchround4/extract/input_controlpotential.feather
+
+  process_controlpotential_pfizer_4:
+    run: r:latest analysis/process_data.R potential pfizer 4
+    needs:
+    - extract_controlpotential_pfizer_4
+    outputs:
+      highly_sensitive:
+        rds: output/pfizer/matchround4/process/*.rds
+      moderately_sensitive:
+        input_controlpotential_skim: output/pfizer/matchround4/extract/potential/*.txt
+        data_processed_skim: output/pfizer/matchround4/potential/*.txt
+        data_controlpotential_skim: output/pfizer/matchround4/process/*.txt
+
+  match_potential_pfizer_4:
+    run: r:latest analysis/matching/match_potential.R pfizer 4
+    needs:
+    - process_treated
+    - process_controlpotential_pfizer_4
+    - process_controlactual_pfizer_3
+    outputs:
+      highly_sensitive:
+        rds: output/pfizer/matchround4/potential/*.rds
+        csv: output/pfizer/matchround4/potential/*.csv.gz
+
+  extract_controlactual_pfizer_4:
+    run: cohortextractor:latest generate_cohort --study-definition study_definition_controlactual
+      --output-file output/pfizer/matchround4/extract/input_controlactual.feather
+      --param cohort=pfizer --param matching_round=4
+    needs:
+    - design
+    - match_potential_pfizer_4
+    outputs:
+      highly_sensitive:
+        cohort: output/pfizer/matchround4/extract/input_controlactual.feather
+
+  process_controlactual_pfizer_4:
+    run: r:latest analysis/process_data.R actual pfizer 4
+    needs:
+    - process_treated
+    - match_potential_pfizer_4
+    - extract_controlpotential_pfizer_4
+    - process_controlpotential_pfizer_4
+    - extract_controlactual_pfizer_4
+    - process_controlactual_pfizer_3
+    outputs:
+      highly_sensitive:
+        rds: output/pfizer/matchround4/actual/*.rds
+        csv: output/pfizer/matchround4/actual/*.csv.gz
+      moderately_sensitive:
+        input_controlactual_skim: output/pfizer/matchround4/extract/actual/*.txt
+        data_actual_skim: output/pfizer/matchround4/actual/*.txt
+
+  extract_controlfinal_pfizer:
+    run: cohortextractor:latest generate_cohort --study-definition study_definition_controlfinal
+      --output-file output/pfizer/extract/input_controlfinal.feather --param cohort=pfizer
+      --param n_matching_rounds=4
+    needs:
+    - design
+    - process_controlactual_pfizer_4
     outputs:
       highly_sensitive:
         extract: output/pfizer/extract/input_controlfinal.feather
@@ -193,6 +317,8 @@ actions:
     needs:
     - process_controlactual_pfizer_1
     - process_controlactual_pfizer_2
+    - process_controlactual_pfizer_3
+    - process_controlactual_pfizer_4
     outputs:
       highly_sensitive:
         dummydata_controlfinal: output/pfizer/dummydata/dummy_control_final.feather
@@ -202,6 +328,8 @@ actions:
     needs:
     - process_controlactual_pfizer_1
     - process_controlactual_pfizer_2
+    - process_controlactual_pfizer_3
+    - process_controlactual_pfizer_4
     - extract_controlfinal_pfizer
     - process_treated
     - dummydata_controlfinal_pfizer
@@ -667,13 +795,137 @@ actions:
         input_controlactual_skim: output/moderna/matchround2/extract/actual/*.txt
         data_actual_skim: output/moderna/matchround2/actual/*.txt
 
-  extract_controlfinal_moderna:
-    run: cohortextractor:latest generate_cohort --study-definition study_definition_controlfinal
-      --output-file output/moderna/extract/input_controlfinal.feather --param cohort=moderna
-      --param n_matching_rounds=2
+  extract_controlpotential_moderna_3:
+    run: cohortextractor:latest generate_cohort --study-definition study_definition_controlpotential
+      --output-file output/moderna/matchround3/extract/input_controlpotential.feather
+      --param cohort=moderna --param matching_round=3 --param index_date=2021-11-26
     needs:
     - design
     - process_controlactual_moderna_2
+    outputs:
+      highly_sensitive:
+        cohort: output/moderna/matchround3/extract/input_controlpotential.feather
+
+  process_controlpotential_moderna_3:
+    run: r:latest analysis/process_data.R potential moderna 3
+    needs:
+    - extract_controlpotential_moderna_3
+    outputs:
+      highly_sensitive:
+        rds: output/moderna/matchround3/process/*.rds
+      moderately_sensitive:
+        input_controlpotential_skim: output/moderna/matchround3/extract/potential/*.txt
+        data_processed_skim: output/moderna/matchround3/potential/*.txt
+        data_controlpotential_skim: output/moderna/matchround3/process/*.txt
+
+  match_potential_moderna_3:
+    run: r:latest analysis/matching/match_potential.R moderna 3
+    needs:
+    - process_treated
+    - process_controlpotential_moderna_3
+    - process_controlactual_moderna_2
+    outputs:
+      highly_sensitive:
+        rds: output/moderna/matchround3/potential/*.rds
+        csv: output/moderna/matchround3/potential/*.csv.gz
+
+  extract_controlactual_moderna_3:
+    run: cohortextractor:latest generate_cohort --study-definition study_definition_controlactual
+      --output-file output/moderna/matchround3/extract/input_controlactual.feather
+      --param cohort=moderna --param matching_round=3
+    needs:
+    - design
+    - match_potential_moderna_3
+    outputs:
+      highly_sensitive:
+        cohort: output/moderna/matchround3/extract/input_controlactual.feather
+
+  process_controlactual_moderna_3:
+    run: r:latest analysis/process_data.R actual moderna 3
+    needs:
+    - process_treated
+    - match_potential_moderna_3
+    - extract_controlpotential_moderna_3
+    - process_controlpotential_moderna_3
+    - extract_controlactual_moderna_3
+    - process_controlactual_moderna_2
+    outputs:
+      highly_sensitive:
+        rds: output/moderna/matchround3/actual/*.rds
+        csv: output/moderna/matchround3/actual/*.csv.gz
+      moderately_sensitive:
+        input_controlactual_skim: output/moderna/matchround3/extract/actual/*.txt
+        data_actual_skim: output/moderna/matchround3/actual/*.txt
+
+  extract_controlpotential_moderna_4:
+    run: cohortextractor:latest generate_cohort --study-definition study_definition_controlpotential
+      --output-file output/moderna/matchround4/extract/input_controlpotential.feather
+      --param cohort=moderna --param matching_round=4 --param index_date=2021-12-10
+    needs:
+    - design
+    - process_controlactual_moderna_3
+    outputs:
+      highly_sensitive:
+        cohort: output/moderna/matchround4/extract/input_controlpotential.feather
+
+  process_controlpotential_moderna_4:
+    run: r:latest analysis/process_data.R potential moderna 4
+    needs:
+    - extract_controlpotential_moderna_4
+    outputs:
+      highly_sensitive:
+        rds: output/moderna/matchround4/process/*.rds
+      moderately_sensitive:
+        input_controlpotential_skim: output/moderna/matchround4/extract/potential/*.txt
+        data_processed_skim: output/moderna/matchround4/potential/*.txt
+        data_controlpotential_skim: output/moderna/matchround4/process/*.txt
+
+  match_potential_moderna_4:
+    run: r:latest analysis/matching/match_potential.R moderna 4
+    needs:
+    - process_treated
+    - process_controlpotential_moderna_4
+    - process_controlactual_moderna_3
+    outputs:
+      highly_sensitive:
+        rds: output/moderna/matchround4/potential/*.rds
+        csv: output/moderna/matchround4/potential/*.csv.gz
+
+  extract_controlactual_moderna_4:
+    run: cohortextractor:latest generate_cohort --study-definition study_definition_controlactual
+      --output-file output/moderna/matchround4/extract/input_controlactual.feather
+      --param cohort=moderna --param matching_round=4
+    needs:
+    - design
+    - match_potential_moderna_4
+    outputs:
+      highly_sensitive:
+        cohort: output/moderna/matchround4/extract/input_controlactual.feather
+
+  process_controlactual_moderna_4:
+    run: r:latest analysis/process_data.R actual moderna 4
+    needs:
+    - process_treated
+    - match_potential_moderna_4
+    - extract_controlpotential_moderna_4
+    - process_controlpotential_moderna_4
+    - extract_controlactual_moderna_4
+    - process_controlactual_moderna_3
+    outputs:
+      highly_sensitive:
+        rds: output/moderna/matchround4/actual/*.rds
+        csv: output/moderna/matchround4/actual/*.csv.gz
+      moderately_sensitive:
+        input_controlactual_skim: output/moderna/matchround4/extract/actual/*.txt
+        data_actual_skim: output/moderna/matchround4/actual/*.txt
+
+  extract_controlfinal_moderna:
+    run: cohortextractor:latest generate_cohort --study-definition study_definition_controlfinal
+      --output-file output/moderna/extract/input_controlfinal.feather --param cohort=moderna
+      --param n_matching_rounds=4
+    needs:
+    - design
+    - process_controlactual_moderna_4
     outputs:
       highly_sensitive:
         extract: output/moderna/extract/input_controlfinal.feather
@@ -683,6 +935,8 @@ actions:
     needs:
     - process_controlactual_moderna_1
     - process_controlactual_moderna_2
+    - process_controlactual_moderna_3
+    - process_controlactual_moderna_4
     outputs:
       highly_sensitive:
         dummydata_controlfinal: output/moderna/dummydata/dummy_control_final.feather
@@ -692,6 +946,8 @@ actions:
     needs:
     - process_controlactual_moderna_1
     - process_controlactual_moderna_2
+    - process_controlactual_moderna_3
+    - process_controlactual_moderna_4
     - extract_controlfinal_moderna
     - process_treated
     - dummydata_controlfinal_moderna

@@ -93,7 +93,19 @@ data_coverage <-
   ) %>%
   arrange(status_descr, vax3_date)
 
-
+# plot coverage for checking (not release)
+plot_coverage <- data_coverage %>%
+  pivot_longer(cols = c(n, cumuln)) %>%
+  mutate(across(name, factor, levels = c("n", "cumuln"))) %>%
+  ggplot(aes(x=vax3_date, y=value, fill=status_descr)) +
+  geom_bar(stat="identity") +
+  facet_grid(name~., scales = "free_y") +
+  theme(legend.position = "bottom")
+ggsave(
+  filename=here("output", cohort, "table1", "coverage.png"),
+  plot_coverage,
+  width=15, height=20, units="cm"
+)  
 
 ## round to nearest 6 for disclosure control
 threshold <- 6

@@ -306,7 +306,7 @@ action_table1 <- function(cohort){
     ),
     moderately_sensitive= lst(
       csv= glue("output/{cohort}/table1/*.csv"),
-      # png= glue("output/{cohort}/table1/*.png"),
+      png= glue("output/{cohort}/table1/*.png")
     )
   )
 }

@@ -25,17 +25,13 @@ study_dates <- lst(
   
   pfizer = lst( # pfizer dose 3
    start_date = "2021-09-16", #start of recruitment thursday 16 september first pfizer booster jabs administered in england
-   end_date = "2021-12-16", # end of recruitment (13 weeks later)
-   # followupend_date = "2022-01-02", # end of follow-up
   ),
   
   moderna = lst( # moderna dose 3
     start_date = "2021-10-29", #start of recruitment friday 29 october first moderna booster jabs administered in england
-    end_date = "2021-12-16", # end of recruitment (7 weeks later)
-    # followupend_date = "2022-07-10" # end of follow-up
   ),
   
-  studyend_date = "2021-12-31", # end of follow-up
+  studyend_date = "2022-03-31", # last day of public testing in England
   
   lastvax2_date = "2021-12-01", # don't recruit anyone with second vaccination after this date
   
@@ -46,7 +42,8 @@ study_dates <- lst(
   firstpossiblevax_date = "2020-06-01", # used to catch "real" vaccination dates (eg not 1900-01-01)
 )
 
-study_dates$index_date = study_dates$pfizer$start_date
+# end recrtuitment for both cohorts weeks before study_dates$studyend_date
+study_dates$pfizer$end_date <- study_dates$moderna$end_date <- as.Date(study_dates$studyend_date) - 14
 
 extract_increment <- 14
 
@@ -90,13 +87,13 @@ events_lookup <- tribble(
 
 treatement_lookup <-
   tribble(
-    ~treatment, ~treatment_descr,
-    "pfizer", "BNT162b2",
-    "az", "ChAdOx1-S",
-    "moderna", "mRNA-1273",
-    "pfizer-pfizer", "BNT162b2",
-    "az-az", "ChAdOx1-S",
-    "moderna-moderna", "mRNA-1273"
+    ~dose, ~treatment, ~treatment_descr,
+    "3","pfizer", "BNT162b2",
+    "3", "az", "ChAdOx1-S",
+    "3", "moderna", "mRNA-1273",
+    "12", "pfizer-pfizer", "BNT162b2",
+    "12", "az-az", "ChAdOx1-S",
+    "12", "moderna-moderna", "mRNA-1273"
   )
 
 ## lookups to convert coded variables to full, descriptive variables ----
@@ -105,7 +102,9 @@ recoder <-
   lst(
     subgroups = c(
       `Main` = "all",
-      `Prior SARS-CoV-2 infection` = "prior_covid_infection"
+      `Prior SARS-CoV-2 infection` = "prior_covid_infection",
+      `Primary course vaccine brand` = "vax12_type",
+      `Age` = "age65plus"
     ),
     status = c(
       `Unmatched`= "unmatched",
@@ -121,6 +120,14 @@ recoder <-
       `No prior SARS-CoV-2 infection` = "FALSE",
       `Prior SARS-CoV-2 infection` = "TRUE"
     ),
+    vax12_type = c(
+      `BNT162b2` = "pfizer-pfizer",
+      `ChAdOx1-S` = "az-az"
+    ),
+    age65plus = c(
+      `under 65 years` = "FALSE",
+      `65 years or over` = "TRUE" 
+    )
   )
 
 
@@ -130,7 +137,7 @@ recoder <-
 postbaselinedays <- 28
 
 # where to split follow-up time after recruitment
-postbaselinecuts <- c(14, 14 + (1:6)*postbaselinedays)
+postbaselinecuts <- c(0, 14, 14 + (1:6)*postbaselinedays)
 
 # maximum follow-up
 maxfup <- max(postbaselinecuts)
@@ -162,6 +169,3 @@ caliper_variables <- c(
   NULL
 )
 matching_variables <- c(exact_variables, names(caliper_variables))
-
-# cut-off for rolling 7 day average, that determines recruitment period
-recruitment_period_cutoff <- 50

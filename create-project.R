@@ -4,7 +4,9 @@ library("here")
 library("glue")
 #library("rlang")
  
+## import local functions and parameters ---
 source(here("analysis", "design.R"))
+
 
 # create action functions ----
 
@@ -14,6 +16,18 @@ comment <- function(...) {
   comments <- map(list_comments, ~paste0("## ", ., " ##"))
   comments
 }
+
+## create a list of actions
+lapply_actions <- function(X, FUN) {
+  unlist(
+    lapply(
+      X,
+      FUN
+    ),
+    recursive = FALSE
+  )
+}
+
 
 
 ## create function to convert comment "actions" in a yaml string into proper comments
@@ -255,7 +269,7 @@ action_km_combine <- function(
       as.list(
         glue_data(
           .x=expand_grid(
-            subgroup=c("all", "prior_covid_infection"),
+            subgroup=c("all", "prior_covid_infection", "vax12_type", "age65plus"),
             outcome=c("postest", "emergency", "covidemergency", "covidadmitted", "covidcritcare", "coviddeath", "noncoviddeath"),
           ),
           "km_{cohort}_{subgroup}_{outcome}"
@@ -348,72 +362,48 @@ actions_list <- splice(
     ),
   ),
 
-  
-  comment("# # # # # # # # # # # # # # # # # # #",
-          "Pfizer cohort",
-          "# # # # # # # # # # # # # # # # # # #"),
-
-  comment("# # # # # # # # # # # # # # # # # # #",
-          "Extract and match"),
-
-  action_extract_and_match("pfizer", n_matching_rounds),
-
-  action_table1("pfizer"),
-
-  comment("# # # # # # # # # # # # # # # # # # #",
-          "Model"),
-
-  action_km("pfizer", "all", "postest"),
-  action_km("pfizer", "all", "emergency"),
-  action_km("pfizer", "all", "covidemergency"),
-  action_km("pfizer", "all", "covidadmitted"),
-  action_km("pfizer", "all", "covidcritcare"),
-  action_km("pfizer", "all", "coviddeath"),
-  action_km("pfizer", "all", "noncoviddeath"),
-  # 
-  # action_km("pfizer", "prior_covid_infection", "postest"),
-  # action_km("pfizer", "prior_covid_infection", "emergency"),
-  # action_km("pfizer", "prior_covid_infection", "covidemergency"),
-  # action_km("pfizer", "prior_covid_infection", "covidadmitted"),
-  # action_km("pfizer", "prior_covid_infection", "covidcritcare"),
-  # action_km("pfizer", "prior_covid_infection", "coviddeath"),
-  # action_km("pfizer", "prior_covid_infection", "noncoviddeath"),
-  # 
-  # 
-  # action_km_combine("pfizer"),
-  
-  
-  # comment("# # # # # # # # # # # # # # # # # # #", 
-  #         "Under 12s cohort", 
-  #         "# # # # # # # # # # # # # # # # # # #"),
-  # 
-  # comment("# # # # # # # # # # # # # # # # # # #", 
-  #         "Extract and match"),
-  # 
-  # action_extract_and_match("under12", n_matching_rounds),
-  # 
-  # action_table1("under12"),
-  # 
-  # comment("# # # # # # # # # # # # # # # # # # #", 
-  #         "Model"),
-  # 
-  # action_km("under12", "all", "postest"),
-  # action_km("under12", "all", "emergency"),
-  # action_km("under12", "all", "covidemergency"),
-  # action_km("under12", "all", "covidadmitted"),
-  # action_km("under12", "all", "covidcritcare"),
-  # action_km("under12", "all", "coviddeath"),
-  # action_km("under12", "all", "noncoviddeath"),
-  # 
-  # action_km("under12", "prior_covid_infection", "postest"),
-  # action_km("under12", "prior_covid_infection", "emergency"),
-  # action_km("under12", "prior_covid_infection", "covidemergency"),
-  # action_km("under12", "prior_covid_infection", "covidadmitted"),
-  # action_km("under12", "prior_covid_infection", "covidcritcare"),
-  # action_km("under12", "prior_covid_infection", "coviddeath"),
-  # action_km("under12", "prior_covid_infection", "noncoviddeath"),
-  # 
-  # action_km_combine("under12"),
+  lapply_actions(
+    c("pfizer", "moderna"),
+    function(x) {
+      c(
+        comment("# # # # # # # # # # # # # # # # # # #",
+                glue("{x} cohort"),
+                "# # # # # # # # # # # # # # # # # # #"),
+        
+        comment("# # # # # # # # # # # # # # # # # # #",
+                "Extract and match"),
+        
+        action_extract_and_match(x, n_matching_rounds),
+        
+        action_table1(x),
+        
+        comment("# # # # # # # # # # # # # # # # # # #",
+                "Model"),
+        
+        lapply_actions(
+          c("all", "prior_covid_infection", "vax12_type", "age65plus"),
+          function(y) {
+            c(
+              comment("# # # # # # # # # # # # # # # # # # #",
+                      glue("cohort: {x}; subgroup: {y}"),
+                      "# # # # # # # # # # # # # # # # # # #"),
+              lapply_actions(
+                c("postest", "emergency", "covidemergency", "covidadmitted", "covidcritcare", "coviddeath", "noncoviddeath"),
+                function(z) action_km(x,y,z)
+              )
+            )
+          }
+        ),
+        
+        comment("# # # # # # # # # # # # # # # # # # #",
+                glue("combine all outputs for {x} cohort"),
+                "# # # # # # # # # # # # # # # # # # #"),
+        
+        action_km_combine(x)
+        
+      )
+    }
+  ),
   # 
   # comment("# # # # # # # # # # # # # # # # # # #", 
   #         "Move files for release", 

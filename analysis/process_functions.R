@@ -84,6 +84,9 @@ process_jcvi <- function(.data) {
 process_demo <- function(.data) {
   .data %>%
     mutate(
+      
+      age65plus=age>=65,
+      
       ageband = cut(
         age,
         breaks=c(-Inf, 18, 40, 50, 60, 70, 80, 90, Inf),
@@ -142,10 +145,12 @@ process_pre <- function(.data) {
     mutate(
       prior_tests_cat = cut(prior_covid_test_frequency, breaks=c(0, 1, 2, 3, Inf), labels=c("0", "1", "2", "3+"), right=FALSE),
       # any covid event before study start
-      prior_covid_infection = (!is.na(positive_test_0_date)) | (!is.na(admitted_covid_0_date)) | (!is.na(primary_care_covid_case_0_date)),
+      prior_covid_infection = (!is.na(positive_test_0_date)) | (!is.na(admitted_covid_0_date)) | (!is.na(covidemergency_0_date)) | (!is.na(primary_care_covid_case_0_date)),
       # date of latest covid event before study start
       anycovid_0_date = pmax(positive_test_0_date, covidemergency_0_date, admitted_covid_0_date, na.rm=TRUE),
-      # any reason for the discrepancy between events used to define prior_covid_infection and anycovid_0_date?
+      # note the slight discrepancy between definitions of `prior_covid_infection` (matching variable) and `anycovid_0_date` (used in exclusion criteria):
+      # - `primary_care_covid_case_0_date` used to define `prior_covid_infection` but not `anycovid_0_date` 
+      #    because it could refer to "history of" rather than "current"
     )
   
 }
@@ -236,10 +241,6 @@ process_vax <- function(.data, stage) {
       
       vax4_date = covid_vax_4_date,
       
-      vax4_day = as.integer(floor((vax4_date - study_dates$index_date))+1), # day 0 is the day before "start_date"
-      
-      vax4_week = as.integer(floor((vax4_date - study_dates$index_date)/7)+1), # week 1 is days 1-7.
-      
     )
   } else if (stage == "potential") {
     vax4_vars <- rlang::quos(
@@ -285,13 +286,8 @@ process_vax <- function(.data, stage) {
       vax2_date = covid_vax_2_date,
       vax3_date = covid_vax_3_date,
       
-      vax1_day = as.integer(floor((vax1_date - study_dates$index_date))+1), # day 0 is the day before "start_date"
-      vax2_day = as.integer(floor((vax2_date - study_dates$index_date))+1), # day 0 is the day before "start_date"
-      vax3_day = as.integer(floor((vax3_date - study_dates$index_date))+1), # day 0 is the day before "start_date"
-      
-      vax1_week = as.integer(floor((vax1_date - study_dates$index_date)/7)+1), # week 1 is days 1-7.
-      vax2_week = as.integer(floor((vax2_date - study_dates$index_date)/7)+1), # week 1 is days 1-7.
-      vax3_week = as.integer(floor((vax3_date - study_dates$index_date)/7)+1), # week 1 is days 1-7.
+      # day of second dose relative to start of vaccination rollout (used in matching)
+      vax2_day = as.integer(floor((vax2_date - as.Date("2020-12-08")))),
       
       !!! vax4_vars
       

@@ -30,7 +30,7 @@ firstpfizer_date <- as.Date(study_dates$firstpfizer_date)
 firstaz_date <- as.Date(study_dates$firstaz_date)
 firstmoderna_date <- as.Date(study_dates$firstmoderna_date)
 
-index_date <- as.Date(study_dates$index_date)
+index_date <- as.Date("2020-01-01") # doesn't matter what this is, just need some constant date
 
 index_day <- 0L
 pfizerstart_day <- as.integer(pfizerstart_date - index_date)
@@ -64,23 +64,41 @@ set.seed(10)
 dummydata <- bn_simulate(bn, pop_size = population_size, keep_all = FALSE, .id = "patient_id")
 
 # create covid_vax_disease variables, as the dependencies are difficult to specify using bn_node
-dummydata_vax <- dummydata %>% 
+dummydata_vax <- dummydata %>%
   select(patient_id, starts_with("covid_vax")) %>% 
+  mutate(
+    covid_vax_disease_1_type = if_else(
+      !is.na(covid_vax_disease_1_day),
+      sample(x = c("pfizer","az","moderna"), size = nrow(.), prob = c(0.5,0.4,0.1), replace=TRUE),
+      NA_character_
+    ),
+    covid_vax_disease_2_type = if_else(
+      !is.na(covid_vax_disease_2_day),
+      covid_vax_disease_1_type,
+      NA_character_
+    ),
+    covid_vax_disease_3_type = if_else(
+      !is.na(covid_vax_disease_3_day),
+      sample(x = c("pfizer","az","moderna"), size = nrow(.), prob = c(0.5, 0.1, 0.4), replace=TRUE),
+      NA_character_
+    ),
+    covid_vax_disease_4_type = if_else(
+      !is.na(covid_vax_disease_4_day),
+      sample(x = c("pfizer","az","moderna"), size = nrow(.), prob = c(0.5, 0.1, 0.4), replace=TRUE),
+      NA_character_
+    )
+  ) %>%
   pivot_longer(
     cols = -patient_id,
+    names_to = c("sequence", ".value"),
+    names_pattern = "covid_vax_disease_(.)_(.*)",
     values_drop_na = TRUE
   ) %>%
-  group_by(patient_id) %>%
-  mutate(sequence = rank(value, ties = "random")) %>%
-  ungroup() %>%
-  filter(sequence<=4) %>%
-  select(-name) %>%
   pivot_wider(
-    names_from = sequence,
-    names_glue = "covid_vax_disease_{sequence}_day",
-    values_from = value
+    names_from = c("sequence", "type"),
+    names_glue = "covid_vax_{type}_{sequence}_day",
+    values_from = day
   )
-
 
 dummydata_processed <- dummydata  %>%
   left_join(dummydata_vax, by = "patient_id") %>%

@@ -194,6 +194,7 @@ local({
 
     safely_matchit <- purrr::safely(matchit)
     
+    set.seed(10)
     # run matching algorithm
     obj_matchit_i <-
       safely_matchit(
@@ -204,7 +205,7 @@ local({
         estimand = "ATT",
         exact = exact_variables,
         caliper = caliper_variables, std.caliper=FALSE,
-        m.order = "data", # data is sorted on (effectively random) patient ID
+        m.order = "random",
         #verbose = TRUE,
         ratio = 1L # 1:1 matching
       )[[1]]

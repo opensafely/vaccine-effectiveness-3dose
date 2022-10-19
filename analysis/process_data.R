@@ -31,12 +31,12 @@ args <- commandArgs(trailingOnly = TRUE)
 
 if (length(args) == 0) {
   # use for interactive testing
-  stage <- "treated"
+  # stage <- "treated"
   # stage <- "potential"
-  # stage <- "actual"
+  stage <- "actual"
   # stage <- "final"
-  # cohort <- "pfizer"
-  # matching_round <- as.integer("1")
+  cohort <- "pfizer"
+  matching_round <- as.integer("1")
 } else {
   stage <- args[[1]]
   
@@ -60,11 +60,6 @@ if (length(args) == 0) {
     
   }
 } 
-
-## get cohort-specific parameters study dates and parameters ---- 
-if (stage == "potential") {
-  matching_round_date <- study_dates[[cohort]]$control_extract_dates[matching_round]
-}
 
 ## create output directory ----
 if (stage == "treated") {
@@ -300,6 +295,7 @@ if (stage == "final") {
 
 ## patient-level info ----
 
+# process covariates
 if (stage %in% c("treated", "potential", "actual")) {
   data_processed <- data_extract %>%
     process_jcvi() %>%
@@ -307,6 +303,7 @@ if (stage %in% c("treated", "potential", "actual")) {
     process_pre() 
 }
 
+# process outcomes
 if (stage == "treated") {
   data_processed <- data_processed %>%
     process_outcome()
@@ -332,6 +329,7 @@ if (stage %in% c("treated", "potential")) {
 }
 
 ####################################################################################
+# Define selection criteria ----
 
 if (stage == "treated") {
   selection_stage <- rlang::quos(
@@ -361,7 +359,16 @@ if (stage == "treated") {
 } else if (stage %in% c("potential",  "actual")) {
   
   # define index_date
-  if (stage == "potential") index_date <- "matching_round_date" else if (stage == "actual") index_date <- "trial_date"
+  if (stage == "potential") {
+    
+    matching_round_date <- study_dates[[cohort]]$control_extract_dates[matching_round]
+    index_date <- "matching_round_date"
+    
+  } else if (stage == "actual") {
+    
+    index_date <- "trial_date"
+    
+  }
   
   selection_stage <- rlang::quos(
     
@@ -379,7 +386,6 @@ if (stage == "treated") {
   
 } 
 
-# Define selection criteria ----
 if (stage %in% c("treated", "potential", "actual")) {
   
 data_criteria <- data_processed %>%
@@ -424,9 +430,8 @@ data_criteria <- data_processed %>%
     c5 = c4 & has_age & has_sex & has_imd & has_ethnicity & has_region,
     c6 = c5 & no_recentcovid30,
     c7 = c6 & isnot_inhospital,
-    c8 = c7 & TRUE, # TODO define c8 (this will be TRUE when stage!=treated)
     
-    include = c8,
+    include = c7,
     
   )
 
@@ -485,7 +490,6 @@ if (stage == "treated") {
         crit == "c5" ~ "  no missing demographic information",
         crit == "c6" ~ "  no evidence of covid in 30 days before third dose",
         crit == "c7" ~ "  not in hospital (unplanned) during booster vaccination",
-        crit == "c8" ~ "  did not received 3rd dose at unusual time given region, priority group, and 2nd dose date.", #TODO
         TRUE ~ NA_character_
       )
     ) %>%
@@ -517,54 +521,57 @@ if (stage == "actual") {
   matching_candidates_missing <- map(matching_candidates, ~any(is.na(.x)))
   sort(names(matching_candidates_missing[unlist(matching_candidates_missing)]))
   
-  # run matching algorithm ----
-  obj_matchit <-
-    MatchIt::matchit(
-      formula = treated ~ 1,
-      data = matching_candidates,
-      method = "nearest", distance = "glm", # these two options don't really do anything because we only want exact + caliper matching
-      replace = FALSE,
-      estimand = "ATT",
-      exact = c("match_id", "trial_date", exact_variables),
-      caliper = caliper_variables, std.caliper=FALSE,
-      m.order = "data", # data is sorted on (effectively random) patient ID
-      #verbose = TRUE,
-      ratio = 1L # irritatingly you can't set this for "exact" method, so have to filter later
-    )
+  # rematch ----
+  rematch <-
+    # first join on exact variables + match_id + trial_date
+    inner_join(
+      x=data_treated %>% select(match_id, trial_date, all_of(c(names(caliper_variables), exact_variables))),
+      y=data_control %>% select(match_id, trial_date, all_of(c(names(caliper_variables), exact_variables))),
+      by = c("match_id", "trial_date", exact_variables)
+    ) 
   
   
-  data_matchstatus <-
-    tibble(
-      patient_id = matching_candidates$patient_id,
-      matched = !is.na(obj_matchit$subclass)*1L,
-      #thread_id = data_thread$thread_id,
-      match_id = as.integer(as.character(obj_matchit$subclass)),
-      treated = obj_matchit$treat,
-      #weight = obj_matchit$weights,
-      trial_time = matching_candidates$trial_time,
-      trial_date = matching_candidates$trial_date,
-      matching_round = matching_round,
-      # controlistreated_date = matching_candidates$controlistreated_date
+  if(length(caliper_variables) >0 ){
+    # check caliper_variables are still within caliper
+    rematch <- rematch %>%
+      bind_cols(
+        map_dfr(
+          set_names(names(caliper_variables), names(caliper_variables)),
+          ~ abs(rematch[[str_c(.x, ".x")]] - rematch[[str_c(.x, ".y")]]) <= caliper_variables[.x]
+        )
+      ) %>%
+      # dplyr::if_all not in opensafely version of dplyr so use filter_at instead
+      # filter(if_all(
+      #   all_of(names(caliper_variables))
+      # )) 
+      filter_at(
+        all_of(names(caliper_variables)),
+        all_vars(.)
+      )
+    
+    
+  } 
+  
+  rematch <- rematch %>%
+    select(match_id, trial_date) %>%
+    mutate(matched=1)
+  
+  data_successful_match <-
+    matching_candidates %>%
+    inner_join(rematch, by=c("match_id", "trial_date", "matched")) %>%
+    mutate(
+      matching_round = matching_round
     ) %>%
-    arrange(matched, match_id, treated) 
+    arrange(trial_date, match_id, treated)
   
   
   ###
+  
   matchstatus_vars <- c("patient_id", "match_id", "trial_date", "matching_round", "treated", "controlistreated_date")
   
   data_successful_matchstatus <- 
-    data_matchstatus %>% 
-    filter(matched) %>%
-    left_join(
-      # now joining all variables from the processed data as they are required for adjustments in the cox model
-      matching_candidates %>% select(-all_of(c("trial_time", "trial_date", "match_id", "matched", "control", "controlistreated_date"))),
-      by = c("patient_id", "treated")
-    ) %>%
-    group_by(match_id) %>%
-    mutate(
-      controlistreated_date = vax3_date[treated==0], # this only works because of the group_by statement above! do not remove group_by statement!
-    ) %>%
-    ungroup() %>%
+    data_successful_match %>% 
+    # keep all variables from the processed data as they are required for adjustments in the cox model
     select(all_of(matchstatus_vars), everything())
   
   ## size of dataset

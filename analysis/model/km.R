@@ -4,9 +4,10 @@
 #  - import matched data
 #  - adds outcome variable and restricts follow-up
 #  - gets KM estimates, with covid and non covid death as competing risks
+#  - COX MDOELS
 #  - The script must be accompanied by three arguments:
 #    `cohort` - pfizer or moderna
-#    `subgroup` - prior_covid_infection
+#    `subgroup` - prior_covid_infection, vax12_type, cev, age65plus
 #    `outcome` - the dependent variable
 
 # # # # # # # # # # # # # # # # # # # # #
@@ -64,10 +65,14 @@ data_matched <- read_rds(ghere("output", cohort, "match", "data_matched.rds"))
 ## import baseline data, restrict to matched individuals and derive time-to-event variables
 data_matched <- 
   data_matched %>%
+  # create a new id to account for the fact that some controls become treated (this is only needed for cox models)
+  group_by(patient_id, match_id, matching_round, treated) %>% 
+  mutate(new_id = cur_group_id()) %>% 
+  ungroup() %>%
   mutate(all="all") %>%
   select(
     # select only variables needed for models to save space
-    patient_id, treated, trial_date, match_id, 
+    new_id, treated, trial_date, 
     controlistreated_date,
     vax3_date,
     death_date, dereg_date, coviddeath_date, noncoviddeath_date, vax4_date,
@@ -244,13 +249,14 @@ km_plot_rounded <- km_plot(data_surv_rounded)
 ggsave(filename=fs::path(output_dir, "km_plot_unrounded.png"), km_plot_unrounded, width=20, height=15, units="cm")
 ggsave(filename=fs::path(output_dir, "km_plot_rounded.png"), km_plot_rounded, width=20, height=15, units="cm")
 
-
+# define contrast functions ----
+# km
 ## calculate quantities relating to cumulative incidence curve and their ratio / difference / etc
 
 kmcontrasts <- function(data, cuts=NULL){
 
-  # if cuts=NULL then fucntion provides daily estimates
-  # if eg c(0,14,28,42,...) then follow u[ is split on these days
+  # if cuts=NULL then function provides daily estimates
+  # if eg c(0,14,28,42,...) then follow up is split on these days
   # c(0, 140)
   
   if(is.null(cuts)){cuts <- unique(c(0,data$time))}
@@ -405,10 +411,91 @@ kmcontrasts <- function(data, cuts=NULL){
     )
 }
 
+# cox
 
-contrasts_rounded_daily <- kmcontrasts(data_surv_rounded)
-contrasts_rounded_cuts <- kmcontrasts(data_surv_rounded, postbaselinecuts)
-contrasts_rounded_overall <- kmcontrasts(data_surv_rounded, c(0,maxfup))
+coxcontrast <- function(data, cuts=NULL){
+  
+  # if(is.null(cuts)){cuts <- unique(c(0,data$time))}
+  if(is.null(cuts)){stop("Specify cuts.")}
+  
+  data <- data %>% 
+    # create variable for cuts[1] for tstart in tmerge
+    mutate(time0 = cuts[1])
+  
+  fup_split <-
+    data %>%
+    select(new_id, treated) %>%
+    uncount(weights = length(cuts)-1, .id="period_id") %>%
+    mutate(
+      fup_time = cuts[period_id],
+      fup_period = paste0(cuts[period_id], "-", cuts[period_id+1]-1)
+    ) %>%
+    droplevels() %>%
+    select(
+      new_id, period_id, fup_time, fup_period
+    )
+  
+  data_split <-
+    tmerge(
+      data1 = data,
+      data2 = data,
+      id = new_id,
+      tstart = time0,
+      tstop = tte_outcome,
+      ind_outcome = event(if_else(ind_outcome, tte_outcome, NA_real_))
+    ) %>%
+    # add post-treatment periods
+    tmerge(
+      data1 = .,
+      data2 = fup_split,
+      id = new_id,
+      period_id = tdc(fup_time, period_id)
+    ) %>%
+    mutate(
+      period_start = cuts[period_id],
+      period_end = cuts[period_id+1],
+    )
+  
+  data_cox <-
+    data_split %>%
+    group_by(!!subgroup_sym, period_start, period_end) %>%
+    nest() %>%
+    mutate(
+      cox_obj = map(data, ~{
+        coxph(Surv(tstart, tstop, ind_outcome) ~ treated, data = .x, y=FALSE, robust=TRUE, id=new_id, na.action="na.fail")
+      }),
+      cox_obj_tidy = map(cox_obj, ~broom::tidy(.x)),
+    ) %>%
+    select(!!subgroup_sym, period_start, period_end, cox_obj_tidy) %>%
+    unnest(cox_obj_tidy) %>%
+    transmute(
+      !!subgroup_sym,
+      period_start,
+      period_end,
+      coxhazr = exp(estimate),
+      coxhr.se = robust.se,
+      coxhr.ll = exp(estimate + qnorm(0.025)*robust.se),
+      coxhr.ul = exp(estimate + qnorm(0.975)*robust.se),
+    )
+  data_cox
+  
+}
+
+# apply contrast functions ----
+
+# km
+km_contrasts_rounded_daily <- kmcontrasts(data_surv_rounded)
+km_contrasts_rounded_cuts <- kmcontrasts(data_surv_rounded, postbaselinecuts)
+km_contrasts_rounded_overall <- kmcontrasts(data_surv_rounded, c(0,maxfup))
+
+# cox
+cox_contrasts_cuts <- coxcontrast(data_matched, postbaselinecuts)
+cox_contrasts_overall <- coxcontrast(data_matched, c(0,maxfup))
+
+# cox HR is a safe statistic so no need to redact/round
+contrasts_rounded_daily <-  km_contrasts_rounded_daily # don't bother with cox as HR within daily intervals will be imprecisely estimated
+contrasts_rounded_cuts <-  left_join(km_contrasts_rounded_cuts, cox_contrasts_cuts, by=c(subgroup, "period_start", "period_end"))
+contrasts_rounded_overall <-  left_join(km_contrasts_rounded_overall, cox_contrasts_overall, by=c(subgroup, "period_start", "period_end"))
 
 
 write_rds(contrasts_rounded_daily, fs::path(output_dir, "contrasts_daily_rounded.rds"))

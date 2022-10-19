@@ -327,7 +327,15 @@ if (stage %in% c("treated", "potential")) {
     select(patient_id, matches("^vax\\d"))
   
   data_processed <- data_processed %>%
-    left_join(data_vax_wide, by = "patient_id")
+    left_join(data_vax_wide, by = "patient_id") %>%
+    # the following line is needed for applying the eligibility criteria: covid_vax_disease_\d_date_matches_vax\d_date
+    # it has already been checked that this is true in the process_potential stage, 
+    # but `covid_vax_disease_\d_date` is added to avoid having to add extra logic statements for the case when stage="actual"
+    mutate(
+      covid_vax_disease_1_date = vax1_date,
+      covid_vax_disease_2_date = vax2_date,
+      covid_vax_disease_3_date = vax3_date
+      )
   
 }
 
@@ -355,7 +363,7 @@ if (stage == "treated") {
     index_date = vax3_date,
     
     c0 = is_adult & vax3_date <= study_dates$studyend_date,
-    c1 = c0 & vax3_notbeforestartdate & vax3_beforeenddate & has_expectedvax3type & has_vaxgap23,
+    c1 = c0 & vax3_notbeforestartdate & vax3_beforeenddate & has_expectedvax3type & has_vaxgap23 & covid_vax_disease_3_date_matches_vax_3_date,
     
   )
   
@@ -383,7 +391,7 @@ if (stage == "treated") {
     ),
     
     c0 = is_adult,
-    c1 = c0 & vax3_notbeforeindexdate,
+    c1 = c0 & vax3_notbeforeindexdate & covid_vax_disease_3_date_matches_vax_3_date,
     
   )
   
@@ -392,6 +400,10 @@ if (stage == "treated") {
 if (stage %in% c("treated", "potential", "actual")) {
   
 data_criteria <- data_processed %>%
+  left_join(
+    data_extract %>% select(patient_id, matches("covid_vax_disease_\\d_date")),
+    by = "patient_id"
+  ) %>%
   transmute(
     
     patient_id,
@@ -406,6 +418,13 @@ data_criteria <- data_processed %>%
     isnot_carehomeresident = !care_home_combined,
     isnot_endoflife = !endoflife,
     isnot_housebound = !housebound,
+    
+    # make sure vaccine dates match for all doses
+    covid_vax_disease_12_date_matches_vax_12_date = 
+      (covid_vax_disease_1_date == vax1_date) & 
+      (covid_vax_disease_2_date == vax2_date),
+    covid_vax_disease_3_date_matches_vax_3_date = 
+      ((covid_vax_disease_3_date == vax3_date) | (is.na(covid_vax_disease_3_date) & is.na(vax3_date))),
     
     vax1_afterfirstvaxdate = case_when(
       (vax1_type=="pfizer") & (vax1_date >= study_dates$firstpfizer_date) ~ TRUE,
@@ -427,7 +446,7 @@ data_criteria <- data_processed %>%
     
     isnot_inhospital = is.na(admitted_unplanned_0_date) | (!is.na(discharged_unplanned_0_date) & discharged_unplanned_0_date < index_date),
     
-    c2 = c1 & vax1_afterfirstvaxdate & vax2_beforelastvaxdate & has_vaxgap12 & has_knownvax1 & has_knownvax2 & vax12_homologous,
+    c2 = c1 & vax1_afterfirstvaxdate & vax2_beforelastvaxdate & has_vaxgap12 & has_knownvax1 & has_knownvax2 & vax12_homologous & covid_vax_disease_12_date_matches_vax_12_date,
     c3 = c2 & isnot_hscworker,
     c4 = c3 & isnot_carehomeresident & isnot_endoflife & isnot_housebound,
     c5 = c4 & has_age & has_sex & has_imd & has_ethnicity & has_region,
@@ -486,8 +505,8 @@ if (stage == "treated") {
       crit = str_extract(criteria, "^c\\d+"),
       criteria = fct_case_when(
         crit == "c0" ~ "Aged 18+ with 3rd dose on or before {study_dates$studyend_date}", 
-        crit == "c1" ~ "  at least 17 days between 2nd and 3rd dose and 3rd dose of pfizer received between {study_dates$pfizer$start_date} and {study_dates$pfizer$end_date} or 3rd dose of moderna received between {study_dates$moderna$start_date} and {study_dates$moderna$end_date}",
-        crit == "c2" ~ "  homologous primary vaccination course of pfizer or AZ and at least 17 days between doses",
+        crit == "c1" ~ "  no unreliable vaccination data for dose 3",
+        crit == "c2" ~ "  no unreliable vaccination data for doses 1 and 2",
         crit == "c3" ~ "  not a HSC worker",
         crit == "c4" ~ "  not a care/nursing home resident, end-of-life or housebound",
         crit == "c5" ~ "  no missing demographic information",

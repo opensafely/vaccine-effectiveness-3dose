@@ -384,13 +384,6 @@ if (stage == "treated") {
     
     has_expectedvax3type = vax3_type %in% c("pfizer", "moderna"),
     
-    # at least 17 days between second and third vaccinations
-    has_vaxgap23 = case_when(
-      is.na(vax2_date) | is.na(vax3_date) ~ FALSE,
-      vax3_date >= (vax2_date+17) ~ TRUE,
-      TRUE ~ FALSE
-      ), 
-    
     vax3_notbeforestartdate = case_when(
       is.na(vax3_date) ~ FALSE,
       (vax3_type=="pfizer") & (vax3_date < study_dates$pfizer$start_date) ~ FALSE,
@@ -407,7 +400,7 @@ if (stage == "treated") {
     index_date = vax3_date,
     
     reliable_vax3 = vax3_notbeforestartdate & vax3_beforeenddate & 
-      has_expectedvax3type & has_vaxgap23 & 
+      has_expectedvax3type & has_vaxgap2index & 
       covid_vax_disease_3_date_matches_vax_3_date,
     
   )
@@ -437,6 +430,7 @@ if (stage == "treated") {
     ),
     
     reliable_vax3 = vax3_notbeforeindexdate & 
+      has_vaxgap2index &
       covid_vax_disease_3_date_matches_vax_3_date,
     
   )
@@ -497,11 +491,18 @@ data_criteria <- data_processed %>%
       vax1_type==vax2_type ~ TRUE,
       TRUE ~ FALSE
       ),
+    # at least 17 days between first two vaccinations
     has_vaxgap12 = case_when(
       is.na(vax1_date) | is.na(vax2_date) ~ FALSE,
-      vax2_date >= (vax1_date+17) ~ TRUE, # at least 17 days between first two vaccinations
+      vax2_date >= (vax1_date+17) ~ TRUE, 
       TRUE ~ FALSE
     ),
+    # at least 17 days between second vaccination and index date (index_date=vax3_date for treated)
+    has_vaxgap2index = case_when(
+      is.na(vax2_date) | is.na(index_date) ~ FALSE,
+      index_date >= (vax2_date+17) ~ TRUE,
+      TRUE ~ FALSE
+    ), 
     
     # read in stage specific vars
     !!! selection_stage,

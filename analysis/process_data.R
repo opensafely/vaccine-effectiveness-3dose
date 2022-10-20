@@ -31,12 +31,12 @@ args <- commandArgs(trailingOnly = TRUE)
 
 if (length(args) == 0) {
   # use for interactive testing
-  # stage <- "treated"
+  stage <- "treated"
   # stage <- "potential"
-  stage <- "actual"
+  # stage <- "actual"
   # stage <- "final"
-  cohort <- "pfizer"
-  matching_round <- as.integer("1")
+  # cohort <- "pfizer"
+  # matching_round <- as.integer("1")
 } else {
   stage <- args[[1]]
   
@@ -384,23 +384,31 @@ if (stage == "treated") {
     
     has_expectedvax3type = vax3_type %in% c("pfizer", "moderna"),
     
-    has_vaxgap23 = vax3_date >= (vax2_date+17) | is.na(vax3_date), # at least 17 days between second and third vaccinations
+    # at least 17 days between second and third vaccinations
+    has_vaxgap23 = case_when(
+      is.na(vax2_date) | is.na(vax3_date) ~ FALSE,
+      vax3_date >= (vax2_date+17) ~ TRUE,
+      TRUE ~ FALSE
+      ), 
     
     vax3_notbeforestartdate = case_when(
+      is.na(vax3_date) ~ FALSE,
       (vax3_type=="pfizer") & (vax3_date < study_dates$pfizer$start_date) ~ FALSE,
       (vax3_type=="moderna") & (vax3_date < study_dates$moderna$start_date) ~ FALSE,
       TRUE ~ TRUE
     ),
     vax3_beforeenddate = case_when(
-      (vax3_type=="pfizer") & (vax3_date <= study_dates$pfizer$end_date) & !is.na(vax3_date) ~ TRUE,
-      (vax3_type=="moderna") & (vax3_date <= study_dates$moderna$end_date) & !is.na(vax3_date) ~ TRUE,
+      is.na(vax3_date) ~ FALSE,
+      (vax3_type=="pfizer") & (vax3_date <= study_dates$pfizer$end_date) ~ TRUE,
+      (vax3_type=="moderna") & (vax3_date <= study_dates$moderna$end_date) ~ TRUE,
       TRUE ~ FALSE
     ),
     
     index_date = vax3_date,
     
-    c0 = is_adult & vax3_date <= study_dates$studyend_date,
-    c1 = c0 & vax3_notbeforestartdate & vax3_beforeenddate & has_expectedvax3type & has_vaxgap23 & covid_vax_disease_3_date_matches_vax_3_date,
+    reliable_vax3 = vax3_notbeforestartdate & vax3_beforeenddate & 
+      has_expectedvax3type & has_vaxgap23 & 
+      covid_vax_disease_3_date_matches_vax_3_date,
     
   )
   
@@ -423,12 +431,13 @@ if (stage == "treated") {
     index_date = !! sym(index_date),
     
     vax3_notbeforeindexdate = case_when(
-      is.na(vax3_date) | (vax3_date > index_date) ~ TRUE,
+      is.na(vax3_date) ~ TRUE,
+      vax3_date > index_date ~ TRUE,
       TRUE ~ FALSE
     ),
     
-    c0 = is_adult,
-    c1 = c0 & vax3_notbeforeindexdate & covid_vax_disease_3_date_matches_vax_3_date,
+    reliable_vax3 = vax3_notbeforeindexdate & 
+      covid_vax_disease_3_date_matches_vax_3_date,
     
   )
   
@@ -450,39 +459,69 @@ data_criteria <- data_processed %>%
     has_imd = imd_Q5 != "Unknown",
     has_ethnicity = !is.na(ethnicity_combined),
     has_region = !is.na(region),
-    #has_msoa = !is.na(msoa),
     isnot_hscworker = !hscworker,
     isnot_carehomeresident = !care_home_combined,
     isnot_endoflife = !endoflife,
     isnot_housebound = !housebound,
     
     # make sure vaccine dates match for all doses
-    covid_vax_disease_12_date_matches_vax_12_date = 
-      (covid_vax_disease_1_date == vax1_date) & 
-      (covid_vax_disease_2_date == vax2_date),
-    covid_vax_disease_3_date_matches_vax_3_date = 
-      ((covid_vax_disease_3_date == vax3_date) | (is.na(covid_vax_disease_3_date) & is.na(vax3_date))),
+    covid_vax_disease_12_date_matches_vax_12_date = case_when(
+      is.na(vax1_date) | is.na(vax2_date) ~ FALSE,
+      (covid_vax_disease_1_date == vax1_date) & (covid_vax_disease_2_date == vax2_date) ~ TRUE,
+      TRUE ~ FALSE
+    ),
+    covid_vax_disease_3_date_matches_vax_3_date = case_when(
+      is.na(vax3_date) & is.na(covid_vax_disease_3_date) ~ TRUE,
+      covid_vax_disease_3_date == vax3_date ~ TRUE,
+      TRUE ~ FALSE
+    ),
     
     vax1_afterfirstvaxdate = case_when(
+      is.na(vax1_date) ~ FALSE,
       (vax1_type=="pfizer") & (vax1_date >= study_dates$firstpfizer_date) ~ TRUE,
       (vax1_type=="az") & (vax1_date >= study_dates$firstaz_date) ~ TRUE,
       (vax1_type=="moderna") & (vax1_date >= study_dates$firstmoderna_date) ~ TRUE,
       TRUE ~ FALSE
     ),
-    vax2_beforelastvaxdate = !is.na(vax2_date) & (vax2_date <= study_dates$lastvax2_date),
+    vax2_beforelastvaxdate = case_when(
+      is.na(vax2_date) ~ FALSE,
+      vax2_date <= study_dates$lastvax2_date ~ TRUE,
+      TRUE ~ FALSE
+      ),
     
     has_knownvax1 = vax1_type %in% c("pfizer", "az"),
     has_knownvax2 = vax2_type %in% c("pfizer", "az"),
     
-    vax12_homologous = vax1_type==vax2_type,
-    has_vaxgap12 = vax2_date >= (vax1_date+17), # at least 17 days between first two vaccinations
+    vax12_homologous = case_when(
+      is.na(vax1_type) | is.na(vax2_type) ~ FALSE,
+      vax1_type==vax2_type ~ TRUE,
+      TRUE ~ FALSE
+      ),
+    has_vaxgap12 = case_when(
+      is.na(vax1_date) | is.na(vax2_date) ~ FALSE,
+      vax2_date >= (vax1_date+17) ~ TRUE, # at least 17 days between first two vaccinations
+      TRUE ~ FALSE
+    ),
     
+    # read in stage specific vars
     !!! selection_stage,
     
-    no_recentcovid30 = is.na(anycovid_0_date) | ((index_date - anycovid_0_date) > 30),
+    no_recentcovid30 = case_when(
+      is.na(index_date) ~ FALSE,
+      is.na(anycovid_0_date) ~ TRUE,
+      (index_date - anycovid_0_date) > 30 ~ TRUE,
+      TRUE ~ FALSE
+      ),
     
-    isnot_inhospital = is.na(admitted_unplanned_0_date) | (!is.na(discharged_unplanned_0_date) & discharged_unplanned_0_date < index_date),
+    isnot_inhospital = case_when(
+      is.na(index_date) ~ FALSE,
+      is.na(admitted_unplanned_0_date) ~ TRUE,
+      !is.na(discharged_unplanned_0_date) & (discharged_unplanned_0_date < index_date) ~ TRUE,
+      TRUE ~ FALSE
+    ),
     
+    c0 = is_adult, # everyone read in from study definition (all adults, but add this condition for dummy data)
+    c1 = c0 & reliable_vax3,
     c2 = c1 & vax1_afterfirstvaxdate & vax2_beforelastvaxdate & has_vaxgap12 & has_knownvax1 & has_knownvax2 & vax12_homologous & covid_vax_disease_12_date_matches_vax_12_date,
     c3 = c2 & isnot_hscworker,
     c4 = c3 & isnot_carehomeresident & isnot_endoflife & isnot_housebound,
@@ -505,14 +544,14 @@ data_eligible <- data_criteria %>%
 # save cohort-specific datasets ----
 if (stage == "treated") {
   
-  data_eligible %>% filter(vax1_type == "pfizer") %>%
+  data_eligible %>% filter(vax3_type == "pfizer") %>%
     my_skim(path = here("output", "treated", "eligible", "data_eligible_pfizer_skim.txt"))
   
   write_rds(data_eligible %>% filter(vax3_type == "pfizer"), 
             here("output", "pfizer", "treated", "data_treatedeligible.rds"),
             compress="gz")
   
-  data_eligible %>% filter(vax1_type == "moderna") %>%
+  data_eligible %>% filter(vax3_type == "moderna") %>%
     my_skim(path = here("output", "treated", "eligible", "data_eligible_moderna_skim.txt"))
   
   write_rds(data_eligible %>% filter(vax3_type == "moderna"), 
@@ -549,9 +588,9 @@ if (stage == "treated") {
       pct_step = n / lag(n),
       crit = str_extract(criteria, "^c\\d+"),
       criteria = fct_case_when(
-        crit == "c0" ~ "Aged 18+ with 3rd dose on or before {study_dates$studyend_date}", 
-        crit == "c1" ~ "  no unreliable vaccination data for dose 3",
-        crit == "c2" ~ "  no unreliable vaccination data for doses 1 and 2",
+        crit == "c0" ~ "Aged 18+ with 3rd dose in vaccination record", 
+        crit == "c1" ~ "  pfizer or moderna for 3rd dose and no unreliable vaccination data for 3rd dose",
+        crit == "c2" ~ "  pfizer or az for primary course and no unreliable vaccination data for primary course",
         crit == "c3" ~ "  not a HSC worker",
         crit == "c4" ~ "  not a care/nursing home resident, end-of-life or housebound",
         crit == "c5" ~ "  no missing demographic information",

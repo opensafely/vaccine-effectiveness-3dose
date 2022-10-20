@@ -471,7 +471,7 @@ data_criteria <- data_processed %>%
       TRUE ~ FALSE
     ),
     covid_vax_disease_3_date_matches_vax_3_date = case_when(
-      is.na(vax3_date) ~ FALSE,
+      is.na(vax3_date) & is.na(covid_vax_disease_3_date) ~ TRUE,
       covid_vax_disease_3_date == vax3_date ~ TRUE,
       TRUE ~ FALSE
     ),

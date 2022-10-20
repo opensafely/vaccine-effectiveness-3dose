@@ -42,7 +42,7 @@ study_dates <- lst(
   firstpossiblevax_date = "2020-06-01", # used to catch "real" vaccination dates (eg not 1900-01-01)
 )
 
-# end recrtuitment for both cohorts weeks before study_dates$studyend_date
+# end recruitment for both cohorts 2 weeks before study_dates$studyend_date
 study_dates$pfizer$end_date <- study_dates$moderna$end_date <- as.Date(study_dates$studyend_date) - 14
 
 extract_increment <- 14

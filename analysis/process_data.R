@@ -497,10 +497,10 @@ data_criteria <- data_processed %>%
       vax2_date >= (vax1_date+17) ~ TRUE, 
       TRUE ~ FALSE
     ),
-    # at least 17 days between second vaccination and index date (index_date=vax3_date for treated)
+    # at least 75 days between second vaccination and index date (index_date=vax3_date for treated)
     has_vaxgap2index = case_when(
       is.na(vax2_date) | is.na(index_date) ~ FALSE,
-      index_date >= (vax2_date+17) ~ TRUE,
+      index_date >= (vax2_date+75) ~ TRUE,
       TRUE ~ FALSE
     ), 
     

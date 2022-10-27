@@ -7,6 +7,8 @@ library("glue")
 ## import local functions and parameters ---
 source(here("analysis", "design.R"))
 
+outcomes <- c("postest",  "covidadmitted", "covidcritcareordeath", "emergency", "covidemergency", "noncoviddeath")
+subgroups <- c("all", "vax3_type", "prior_covid_infection", "vax12_type", "ageband")
 
 # create action functions ----
 
@@ -82,7 +84,7 @@ namelesslst <- function(...){
 
 action_1matchround <- function(cohort, matching_round){
   
-  control_extract_date <- study_dates[[cohort]][[glue("control_extract_dates")]][matching_round]
+  control_extract_date <- study_dates[[cohort]][["control_extract_dates"]][matching_round]
   
   splice(
     action(
@@ -184,7 +186,9 @@ action_1matchround <- function(cohort, matching_round){
 #action_1matchround("pfizer", 2)
 
 # create all necessary actions for n matching rounds
-action_extract_and_match <- function(cohort, n_matching_rounds){
+action_extract_and_match <- function(cohort){
+  
+  n_matching_rounds <- n_matching_rounds_list[[cohort]]
   
   allrounds <- map(seq_len(n_matching_rounds), ~action_1matchround(cohort, .x)) %>% flatten
   
@@ -282,8 +286,8 @@ action_km_combine <- function(
       as.list(
         glue_data(
           .x=expand_grid(
-            subgroup=c("all", "prior_covid_infection", "vax12_type", "age65plus"),
-            outcome=c("postest", "emergency", "covidemergency", "covidadmitted", "covidcritcare", "coviddeath", "noncoviddeath"),
+            subgroup=subgroups,
+            outcome=outcomes,
           ),
           "km_{cohort}_{subgroup}_{outcome}"
         )
@@ -397,7 +401,7 @@ actions_list <- splice(
   ),
 
   lapply_actions(
-    c("pfizer", "moderna"),
+    "mrna",
     function(x) {
       c(
         comment("# # # # # # # # # # # # # # # # # # #",
@@ -407,7 +411,7 @@ actions_list <- splice(
         comment("# # # # # # # # # # # # # # # # # # #",
                 "Extract and match"),
         
-        action_extract_and_match(x, n_matching_rounds),
+        action_extract_and_match(x),
         
         action_table1(x),
         
@@ -417,14 +421,14 @@ actions_list <- splice(
                 "Model"),
         
         lapply_actions(
-          c("all", "prior_covid_infection", "vax12_type", "age65plus"),
+          subgroups,
           function(y) {
             c(
               comment("# # # # # # # # # # # # # # # # # # #",
                       glue("cohort: {x}; subgroup: {y}"),
                       "# # # # # # # # # # # # # # # # # # #"),
               lapply_actions(
-                c("postest", "emergency", "covidemergency", "covidadmitted", "covidcritcare", "coviddeath", "noncoviddeath"),
+                outcomes,
                 function(z) action_km(x,y,z)
               )
             )

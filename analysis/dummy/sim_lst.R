@@ -31,10 +31,6 @@ sim_list_vax <- lst(
 sim_list_jcvi <- lst(
   age_aug2021 = bn_node(~age),
   
-  bmi = bn_node(
-    ~rfactor(n=..n, levels = c("Not obese", "Obese I (30-34.9)", "Obese II (35-39.9)", "Obese III (40+)"), p = c(0.5, 0.2, 0.2, 0.1)),
-  ),
-  
   care_home_type = bn_node(
     ~rfactor(n=..n, levels=c("Carehome", "Nursinghome", "Mixed", ""), p = c(0.01, 0.01, 0.01, 0.97))
   ),
@@ -158,6 +154,28 @@ sim_list_demographic <- lst(
   
 )
 
+# sim list covs ----
+sim_list_covs <- lst(
+  
+  bmi = bn_node(
+    ~rfactor(n=..n, levels = c("Not obese", "Obese I (30-34.9)", "Obese II (35-39.9)", "Obese III (40+)"), p = c(0.5, 0.2, 0.2, 0.1)),
+  ),
+  
+  pregnancy = bn_node(
+    ~rbernoulli(n=..n, p=0.01)
+  ),
+  
+  prior_test_frequency = bn_node(
+    ~as.integer(rpois(n=..n, lambda=3)),
+    missing_rate = ~0
+  ),
+  
+  flu_vaccine = bn_node(
+    ~rbernoulli(n=..n, p=0.1)
+  ),
+  
+)
+
 # sim list demographic ----
 sim_list_demographic <- lst(
   
@@ -243,7 +261,7 @@ sim_list_demographic <- lst(
   
   rural_urban = bn_node(
     ~rfactor(n=..n, levels = 1:9, p = rep(1/9, 9)),
-    missing_rate = ~ 0.1
+    missing_rate = ~ 0 #can this be missing when imd nonmissing?
   ),
   
   
@@ -260,12 +278,6 @@ sim_list_pre = lst(
   primary_care_covid_case_0_day = bn_node(
     ~as.integer(runif(n=..n, index_day-100, index_day-1)),
     missing_rate = ~0.99
-  ),
-  
-  
-  prior_covid_test_frequency = bn_node(
-    ~as.integer(rpois(n=..n, lambda=3)),
-    missing_rate = ~0
   ),
   
   positive_test_0_day = bn_node(

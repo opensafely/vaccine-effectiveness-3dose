@@ -13,36 +13,6 @@ def generate_jcvi_variables(index_date):
       "2021-08-31",
     ),
 
-    # BMI category
-    # https://github.com/opensafely/risk-factors-research/issues/51
-    bmi=patients.categorised_as(
-
-      {
-        "Not obese": "DEFAULT",
-        "Obese I (30-34.9)": """ bmi_value >= 30 AND bmi_value < 35""",
-        "Obese II (35-39.9)": """ bmi_value >= 35 AND bmi_value < 40""",
-        "Obese III (40+)": """ bmi_value >= 40 AND bmi_value < 100""",
-        # set maximum to avoid any impossibly extreme values being classified as obese
-      },
-      
-      bmi_value=patients.most_recent_bmi(
-        on_or_after=f"{index_date} - 5 years",
-        minimum_age_at_measurement=16
-      ),
-    
-      return_expectations={
-        "rate": "universal",
-        "category": {
-          "ratios": {
-            "Not obese": 0.7,
-            "Obese I (30-34.9)": 0.1,
-            "Obese II (35-39.9)": 0.1,
-            "Obese III (40+)": 0.1,
-          }
-        },
-      },
-    ),
-
   ########################################################################
   ## Clinical information for jcvi grouping as at index date (from PRIMIS)
   ########################################################################

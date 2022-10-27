@@ -33,10 +33,10 @@ if (length(args) == 0) {
   # use for interactive testing
   # stage <- "treated"
   # stage <- "potential"
-  stage <- "actual"
-  # stage <- "final"
+  # stage <- "actual"
+  stage <- "final"
   cohort <- "mrna"
-  matching_round <- as.integer("1")
+  # matching_round <- as.integer("1")
 } else {
   stage <- args[[1]]
   
@@ -227,10 +227,17 @@ if (stage == "treated") {
 # process the final dataset ----
 if (stage == "final") {
   
-  data_matchstatus <- read_rds(ghere("output", cohort, "matchround{n_matching_rounds}", "actual", "data_matchstatus_allrounds.rds"))
+  data_matchstatus <- read_rds(ghere("output", cohort, "matchround{n_matching_rounds_list[[cohort]]}", "actual", "data_matchstatus_allrounds.rds"))
   
   # import data for treated group and select those who were successfully matched
-  data_treatedeligible <- read_rds(ghere("output", cohort, "treated", "data_treatedeligible.rds"))
+  if (cohort=="mrna") {
+    data_treatedeligible <- bind_rows(
+      read_rds(ghere("output", "pfizer", "treated", "data_treatedeligible.rds")),
+      read_rds(ghere("output", "moderna", "treated", "data_treatedeligible.rds"))
+    )
+  } else {
+    data_treatedeligible <- read_rds(ghere("output", cohort, "treated", "data_treatedeligible.rds"))
+  }
   
   data_treated <- 
     left_join(
@@ -248,7 +255,7 @@ if (stage == "final") {
     data_matchstatus %>% filter(treated==0L) %>%
     left_join(
       map_dfr(
-        seq_len(n_matching_rounds), 
+        seq_len(n_matching_rounds_list[[cohort]]), 
         ~{read_rds(ghere("output", cohort, glue("matchround", .x), "actual", "data_successful_matchedcontrols.rds"))}
       ) %>% select(-match_id, -trial_date, -treated, -controlistreated_date), # remove to avoid clash with already-stored variables
       by=c("patient_id", "matching_round")
@@ -271,8 +278,16 @@ if (stage == "final") {
   data_matched <-
     bind_rows(
       data_treated,
-      data_control %>% process_outcome() # process the post-baseline variables (done previously for data_treated)
-    ) 
+      data_control %>% 
+        # process the covariates and post-baseline variables (done previously for data_treated)
+        process_covs() %>%
+        process_outcome() 
+    ) %>%
+    select(
+      ends_with("_id"),
+      starts_with(c("trial", "treated", "control", "matched", "vax")),
+      any_of(c(matching_variables, covariates, events_lookup$event))
+    )
   
   write_rds(data_matched, here("output", cohort, "match", "data_matched.rds"), compress="gz")
   
@@ -290,7 +305,7 @@ if (stage == "final") {
   
   data_treatedeligible_matchstatus <- 
     left_join(
-      data_treatedeligible %>% select(patient_id, vax3_date),
+      data_treatedeligible %>% select(patient_id, vax3_date, vax3_type),
       data_matchstatus %>% filter(treated==1L),
       by="patient_id"
     ) %>%
@@ -321,7 +336,7 @@ if (stage == "final") {
 
 ## patient-level info ----
 
-# process covariates
+# process variables
 if (stage %in% c("treated", "potential", "actual")) {
   
   data_processed <- data_extract %>%
@@ -335,7 +350,9 @@ if (stage %in% c("treated", "potential", "actual")) {
 if (stage == "treated") {
   
   data_processed <- data_processed %>%
-    process_outcome()
+    process_covs() %>%
+    process_outcome() 
+    
   
 }
 
@@ -368,6 +385,7 @@ if (stage %in% c("treated", "potential")) {
 
 # summarise processed data
 if (stage %in% c("treated", "potential", "actual")) {
+  
   if (stage == "treated") {
     skim_path <- here("output", "treated", "process", "data_processed_skim.txt")
   } else {
@@ -443,7 +461,7 @@ data_criteria <- data_processed %>%
     has_age = !is.na(age),
     has_sex = !is.na(sex),
     has_imd = imd_Q5 != "Unknown",
-    has_ethnicity = !is.na(ethnicity_combined),
+    has_ethnicity = !is.na(ethnicity),
     has_region = !is.na(region),
     isnot_hscworker = !hscworker,
     isnot_carehomeresident = !care_home_combined,
@@ -501,12 +519,7 @@ data_criteria <- data_processed %>%
     # read in stage specific vars
     !!! selection_stage,
     
-    no_recentcovid30 = case_when(
-      is.na(index_date) ~ FALSE,
-      is.na(anycovid_0_date) ~ TRUE,
-      (index_date - anycovid_0_date) > 30 ~ TRUE,
-      TRUE ~ FALSE
-      ),
+    no_recentinfection = time_since_infection!="1-30",
     
     isnot_inhospital = case_when(
       is.na(index_date) ~ FALSE,
@@ -521,7 +534,7 @@ data_criteria <- data_processed %>%
     c3 = c2 & isnot_hscworker,
     c4 = c3 & isnot_carehomeresident & isnot_endoflife & isnot_housebound,
     c5 = c4 & has_age & has_sex & has_imd & has_ethnicity & has_region,
-    c6 = c5 & no_recentcovid30,
+    c6 = c5 & no_recentinfection,
     c7 = c6 & isnot_inhospital,
     
     include = c7,
@@ -531,7 +544,13 @@ data_criteria <- data_processed %>%
 data_eligible <- data_criteria %>%
   filter(include) %>%
   select(patient_id) %>%
-  left_join(data_processed, by="patient_id") %>%
+  left_join(data_processed %>%
+              select(
+                ends_with("_id"),
+                starts_with(c("trial", "treated", "control", "matched", "vax")),
+                any_of(c(matching_variables, covariates, events_lookup$event))
+                ), 
+            by="patient_id") %>%
   droplevels()
 
 }

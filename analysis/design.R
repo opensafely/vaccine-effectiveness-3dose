@@ -13,22 +13,25 @@ library('here')
 fs::dir_create(here("lib", "design"))
 
 
+
+# number of matching rounds to perform
+
+n_matching_rounds <- 4
+
+
 # define key dates ----
 
 study_dates <- lst(
   
-  #start of recruitment 16 September first pfizer booster jabs administered in England
-  pfizerstart_date = "2021-09-16",
-  #start of recruitment 29 October first moderna booster jabs administered in England
-  modernastart_date = "2021-10-29", 
+  pfizer = lst( # pfizer dose 3
+   start_date = "2021-09-16", #start of recruitment thursday 16 september first pfizer booster jabs administered in england
+  ),
   
-  recruitmentstart_date = pfizerstart_date,
-  # see page 21 of https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1072064/Vaccine-surveillance-report-week-17.pdf
-  # vaccine uptake leveled off in all groups by end of Feb (must earlier in older groups)
-  recruitmentend_date = "2022-02-28",
+  moderna = lst( # moderna dose 3
+    start_date = "2021-10-29", #start of recruitment friday 29 october first moderna booster jabs administered in england
+  ),
   
-  testend_date = "2022-03-31", # last day of public testing in England
-  studyend_date = "2022-06-30", # end of available hospitalization data
+  studyend_date = "2022-03-31", # last day of public testing in England
   
   lastvax2_date = "2021-12-01", # don't recruit anyone with second vaccination after this date
   
@@ -39,17 +42,21 @@ study_dates <- lst(
   firstpossiblevax_date = "2020-06-01", # used to catch "real" vaccination dates (eg not 1900-01-01)
 )
 
-study_dates <- map(study_dates, as.Date)
+# end recruitment for both cohorts 2 weeks before study_dates$studyend_date
+study_dates$pfizer$end_date <- study_dates$moderna$end_date <- as.Date(study_dates$studyend_date) - 14
 
 extract_increment <- 14
 
-study_dates$control_extract_dates = seq(study_dates$recruitmentstart_date, study_dates$recruitmentend_date, extract_increment)
+study_dates$pfizer$control_extract_dates = as.Date(study_dates$pfizer$start_date) + (0:26)*extract_increment
+study_dates$moderna$control_extract_dates = as.Date(study_dates$moderna$start_date) + (0:26)*extract_increment
 
 jsonlite::write_json(study_dates, path = here("lib", "design", "study-dates.json"), auto_unbox=TRUE, pretty =TRUE)
 
-# number of matching rounds to perform
-
-n_matching_rounds <- length(study_dates$control_extract_dates)
+# all as dates
+lens <- sapply(study_dates, length)
+dates_general <- map(study_dates[lens==1], as.Date)
+dates_cohort <- map(study_dates[lens==3], ~map(.x, as.Date))
+study_dates <- splice(dates_general, dates_cohort)[names(study_dates)]
 
 # define outcomes ----
 
@@ -57,24 +64,23 @@ events_lookup <- tribble(
   ~event, ~event_var, ~event_descr,
 
   # other
-  "anytest", "anytest_date", "SARS-CoV-2 test",
-  "symptest", "symptest_date", "SARS-CoV-2 test (symptomatic)",
-  "pcrtest", "pcrtest_date", "SARS-CoV-2 test (PCR)",
-  "lftest", "lftest_date", "SARS-CoV-2 test (lateral flow)",
+  "test", "covid_test_date", "SARS-CoV-2 test",
 
   # effectiveness
   "postest", "positive_test_date", "Positive SARS-CoV-2 test",
+  "covidemergency", "covidemergency_date", "COVID-19 A&E attendance",
   "covidadmitted", "covidadmitted_date", "COVID-19 hospitalisation",
+  "noncovidadmitted", "noncovidadmitted_date", "Non-COVID-19 hospitalisation",
+  "covidadmittedproxy1", "covidadmittedproxy1_date", "COVID-19 hospitalisation (A&E proxy)",
+  "covidadmittedproxy2", "covidadmittedproxy2_date", "COVID-19 hospitalisation (A&E proxy v2)",
   "covidcritcare", "covidcritcare_date", "COVID-19 critical care",
   "coviddeath", "coviddeath_date", "COVID-19 death",
-  "covidcritcareordeath", "covidcritcareordeath_date", "COVID-19 critical care or death",
-
-  # other
-  "emergency", "emergency_date", "A&E attendance",
-  "covidemergency", "covidemergency_date", "COVID-19 A&E attendance",
   "noncoviddeath", "noncoviddeath_date", "Non-COVID-19 death",
   "death", "death_date", "Any death",
-  
+
+  # safety
+  "admitted", "admitted_unplanned_1_date", "Unplanned hospitalisation",
+  "emergency", "emergency_date", "A&E attendance",
 )
 
 # define treatments ----
@@ -85,9 +91,9 @@ treatement_lookup <-
     "3","pfizer", "BNT162b2",
     "3", "az", "ChAdOx1-S",
     "3", "moderna", "mRNA-1273",
-    "primary", "pfizer-pfizer", "BNT162b2",
-    "primary", "az-az", "ChAdOx1-S",
-    "primary", "moderna-moderna", "mRNA-1273"
+    "12", "pfizer-pfizer", "BNT162b2",
+    "12", "az-az", "ChAdOx1-S",
+    "12", "moderna-moderna", "mRNA-1273"
   )
 
 ## lookups to convert coded variables to full, descriptive variables ----
@@ -96,10 +102,9 @@ recoder <-
   lst(
     subgroups = c(
       `Main` = "all",
-      `Third dose brand` = "vax3_type",
       `Prior SARS-CoV-2 infection` = "prior_covid_infection",
       `Primary course vaccine brand` = "vax12_type",
-      `Age` = "ageband"
+      `Age` = "age65plus"
     ),
     status = c(
       `Unmatched`= "unmatched",
@@ -119,11 +124,9 @@ recoder <-
       `BNT162b2` = "pfizer-pfizer",
       `ChAdOx1-S` = "az-az"
     ),
-    ageband = c(
-      `18-39 years` = "18-39",
-      `40-64 years` = "40-64",
-      `65-79 years` = "65-79",
-      `80+ years` = "85+"
+    age65plus = c(
+      `under 65 years` = "FALSE",
+      `65 years or over` = "TRUE" 
     )
   )
 

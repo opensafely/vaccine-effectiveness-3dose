@@ -31,12 +31,12 @@ args <- commandArgs(trailingOnly = TRUE)
 
 if (length(args) == 0) {
   # use for interactive testing
-  stage <- "treated"
+  # stage <- "treated"
   # stage <- "potential"
-  # stage <- "actual"
+  stage <- "actual"
   # stage <- "final"
-  # cohort <- "pfizer"
-  # matching_round <- as.integer("1")
+  cohort <- "mrna"
+  matching_round <- as.integer("1")
 } else {
   stage <- args[[1]]
   
@@ -392,12 +392,9 @@ if (stage == "treated") {
     ),
     vax3_beforeenddate = case_when(
       is.na(vax3_date) ~ FALSE,
-      (vax3_type=="pfizer") & (vax3_date <= study_dates$pfizer$end_date) ~ TRUE,
-      (vax3_type=="moderna") & (vax3_date <= study_dates$moderna$end_date) ~ TRUE,
+      (vax3_type%in%c("pfizer", "moderna")) & (vax3_date <= study_dates$recruitmentend_date) ~ TRUE,
       TRUE ~ FALSE
     ),
-    
-    index_date = vax3_date,
     
     reliable_vax3 = vax3_notbeforestartdate & vax3_beforeenddate & 
       has_expectedvax3type & has_vaxgap2index & 
@@ -407,21 +404,9 @@ if (stage == "treated") {
   
 } else if (stage %in% c("potential",  "actual")) {
   
-  # define index_date
-  if (stage == "potential") {
-    
-    matching_round_date <- study_dates[[cohort]]$control_extract_dates[matching_round]
-    index_date <- "matching_round_date"
-    
-  } else if (stage == "actual") {
-    
-    index_date <- "trial_date"
-    
-  }
+  matching_round_date <- study_dates[[cohort]]$control_extract_dates[matching_round]
   
   selection_stage <- rlang::quos(
-    
-    index_date = !! sym(index_date),
     
     vax3_notbeforeindexdate = case_when(
       is.na(vax3_date) ~ TRUE,
@@ -438,6 +423,13 @@ if (stage == "treated") {
 } 
 
 if (stage %in% c("treated", "potential", "actual")) {
+  
+  # define index_date depending on stage
+  stage_index_date <- case_when(
+    stage=="treated" ~ "vax3_date",
+    stage=="potential" ~ "matching_round_date",
+    stage=="actual" ~ "trial_date"
+  )
   
 data_criteria <- data_processed %>%
   left_join(
@@ -457,6 +449,8 @@ data_criteria <- data_processed %>%
     isnot_carehomeresident = !care_home_combined,
     isnot_endoflife = !endoflife,
     isnot_housebound = !housebound,
+    
+    index_date = !! sym(stage_index_date),
     
     # make sure vaccine dates match for all doses
     covid_vax_disease_12_date_matches_vax_12_date = case_when(
@@ -623,10 +617,19 @@ if (stage == "actual") {
   
   data_control <- data_eligible
   
+  if (cohort == "mrna") {
+    data_alltreated <- bind_rows(
+      read_rds(ghere("output", "pfizer", "treated", "data_treatedeligible.rds")), 
+      read_rds(ghere("output", "moderna", "treated", "data_treatedeligible.rds"))
+    ) 
+  } else {
+    data_alltreated <- read_rds(ghere("output", cohort, "treated", "data_treatedeligible.rds")) 
+  }
+  
   data_treated <- 
     left_join(
       data_potential_matchstatus %>% filter(treated==1L),
-      read_rds(ghere("output", cohort, "treated", "data_treatedeligible.rds")) %>% 
+      data_alltreated %>% 
         # only keep variables that are in data_control (this gets rid of outcomes and vax4 dates)
         select(any_of(names(data_control))),
       by="patient_id"

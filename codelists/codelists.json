@@ -305,6 +305,36 @@
       "url": "https://codelists.opensafely.org/codelist/opensafely/no-longer-housebound/29a88ca6/",
       "downloaded_at": "2022-09-21 07:51:11.631502Z",
       "sha": "cedcdcc0354885c1aa08224072718ff6bdae7450"
+    },
+    "primis-covid19-vacc-uptake-pregdel.csv": {
+      "id": "primis-covid19-vacc-uptake/pregdel/v1.2.1",
+      "url": "https://codelists.opensafely.org/codelist/primis-covid19-vacc-uptake/pregdel/v1.2.1/",
+      "downloaded_at": "2022-10-27 12:53:28.187677Z",
+      "sha": "2022725be26bfeb9ec1410f8abaad61828fd4e58"
+    },
+    "primis-covid19-vacc-uptake-preg.csv": {
+      "id": "primis-covid19-vacc-uptake/preg/v1",
+      "url": "https://codelists.opensafely.org/codelist/primis-covid19-vacc-uptake/preg/v1/",
+      "downloaded_at": "2022-10-27 12:53:28.628868Z",
+      "sha": "16b9bdf6c37c9f5e802912a98542c5dd5d21183d"
+    },
+    "opensafely-influenza-vaccination.csv": {
+      "id": "opensafely/influenza-vaccination/2020-05-12",
+      "url": "https://codelists.opensafely.org/codelist/opensafely/influenza-vaccination/2020-05-12/",
+      "downloaded_at": "2022-10-27 13:08:20.026062Z",
+      "sha": "aa7cf32d4c16deb5a14fb3d68f0a2babfe431caf"
+    },
+    "opensafely-influenza-vaccination-clinical-codes-given.csv": {
+      "id": "opensafely/influenza-vaccination-clinical-codes-given/2020-05-21",
+      "url": "https://codelists.opensafely.org/codelist/opensafely/influenza-vaccination-clinical-codes-given/2020-05-21/",
+      "downloaded_at": "2022-10-27 13:08:20.362661Z",
+      "sha": "c5e7b06fcd7a4f786bcf549e2c0c4ca944eba9b1"
+    },
+    "opensafely-influenza-vaccination-clinical-codes-not-given.csv": {
+      "id": "opensafely/influenza-vaccination-clinical-codes-not-given/2020-05-19",
+      "url": "https://codelists.opensafely.org/codelist/opensafely/influenza-vaccination-clinical-codes-not-given/2020-05-19/",
+      "downloaded_at": "2022-10-27 13:08:20.601249Z",
+      "sha": "db68fd1368358f1ecbbc006c83419b3b47bcb82c"
     }
   }
 }

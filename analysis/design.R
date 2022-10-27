@@ -54,7 +54,8 @@ for (c in cohorts) {
   study_dates[[c]]$control_extract_dates = seq(study_dates[[c]]$start_date, study_dates$recruitmentend_date, extract_increment)
 }
 
-jsonlite::write_json(study_dates, path = here("lib", "design", "study-dates.json"), auto_unbox=TRUE, pretty =TRUE)
+# just for testing, remove and rerun when ready to run on real data!
+study_dates[["mrna"]]$control_extract_dates <- study_dates[["mrna"]]$control_extract_dates[1:2]
 
 # number of matching rounds to perform for each cohort
 
@@ -62,7 +63,9 @@ n_matching_rounds_list <- sapply(
   cohorts,
   function(x) length(study_dates[[x]][["control_extract_dates"]]),
   USE.NAMES = TRUE
-  ) 
+) %>% as.list()
+
+jsonlite::write_json(study_dates, path = here("lib", "design", "study-dates.json"), auto_unbox=TRUE, pretty =TRUE)
 
 # define outcomes ----
 
@@ -89,6 +92,8 @@ events_lookup <- tribble(
   "death", "death_date", "Any death",
   
 )
+
+outcomes <- c("postest",  "covidadmitted", "covidcritcareordeath", "emergency", "covidemergency", "noncoviddeath")
 
 # define treatments ----
 
@@ -140,6 +145,8 @@ recoder <-
     )
   )
 
+subgroups <- c("all", "vax3_type", "prior_covid_infection", "vax12_type", "ageband")
+
 
 ## follow-up time ----
 
@@ -156,19 +163,11 @@ maxfup <- max(postbaselinecuts)
 
 # exact variables
 exact_variables <- c(
-  
   "jcvi_ageband",
   "cev_cv",
   "vax12_type",
-  #"vax2_week",
   "region",
-  #"sex",
-  #"cev_cv",
-  
-  #"multimorb",
   "prior_covid_infection",
-  #"immunosuppressed",
-  #"status_hospplanned"
   NULL
 )
 
@@ -182,6 +181,25 @@ matching_variables <- c(exact_variables, names(caliper_variables))
 
 # covariates ----
 
-covariates <- c(
-  NULL
+covariates_model <- c(
+  "sex",
+  "ethnicity",
+  "imd_Q5",
+  "rural_urban_group",
+  "bmi",
+  "learndis",
+  "sev_mental",
+  "immunosuppressed",
+  "multimorb",
+  "cev",
+  "pregnancy",
+  "time_since_infection",
+  "prior_test_cat",
+  "flu_vaccine"
 )
+
+covariates_summarise <- c(
+  "cv"
+)
+
+covariates <- c(covariates_model, covariates_summarise)

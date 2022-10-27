@@ -11,7 +11,7 @@ args <- commandArgs(trailingOnly=TRUE)
 
 
 if(length(args)==0){
-  cohort <- "pfizer"
+  cohort <- "mrna"
 } else {
   cohort <- args[[1]]
 }
@@ -30,7 +30,7 @@ index_date <- as.Date("2020-01-01") # doesn't matter what this is, just need som
 # import all datasets of matched controls, including matching variables
 data_matchedcontrols <- 
   map_dfr(
-    seq_len(n_matching_rounds), 
+    seq_len(n_matching_rounds_list[[cohort]]), 
     ~{read_rds(ghere("output", cohort, glue("matchround", .x), "actual", glue("data_successful_matchedcontrols.rds")))},
     .id="matching_round"
   ) %>%
@@ -53,6 +53,20 @@ set.seed(10)
 
 dummydata <- data_matchedcontrols %>%
   mutate(
+    # covariates
+    bmi = factor(
+      sample(
+        x = c("Not obese", "Obese I (30-34.9)", "Obese II (35-39.9)", "Obese III (40+)"),
+        size = n(),
+        replace = TRUE
+      ),
+      levels = c("Not obese", "Obese I (30-34.9)", "Obese II (35-39.9)", "Obese III (40+)")
+    ),
+    pregnancy = rbernoulli(n = n(), p=0.01),
+    prior_test_frequency = as.integer(rpois(n=n(), lambda=3)),
+    flu_vaccine = rbernoulli(n = n(), p=0.1),
+    
+    # post baseline
     dereg_day = missing(as.integer(runif(n=n(), trial_day, trial_day+120)), 0.99),
     primary_care_covid_case_day = missing(as.integer(runif(n=n(), trial_day, trial_day+100)), 0.7),
     covid_test_day = missing(as.integer(runif(n=n(), trial_day, trial_day+90)), 0.7),

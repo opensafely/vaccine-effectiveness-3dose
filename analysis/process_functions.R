@@ -6,6 +6,17 @@ process_jcvi <- function(.data) {
   .data %>%
     mutate(
       
+      multimorb =
+        (sev_obesity) +
+        (chronic_heart_disease) +
+        (chronic_kidney_disease) +
+        (diabetes) +
+        (chronic_liver_disease) +
+        (chronic_resp_disease | asthma) +
+        (chronic_neuro_disease),
+      multimorb = cut(multimorb, breaks = c(0, 1, 2, Inf), labels=c("0", "1", "2+"), right=FALSE),
+      immunosuppressed = immunosuppressed | asplenia,
+      
       # any carehome flag
       care_home_combined = care_home_tpp | care_home_code, 
       
@@ -18,21 +29,6 @@ process_jcvi <- function(.data) {
         cv ~ "Clinically at-risk",
         TRUE ~ "Not clinically at-risk"
       ) %>% fct_rev(),
-      
-      multimorb =
-        (sev_obesity) +
-        (chronic_heart_disease) +
-        (chronic_kidney_disease)+
-        (diabetes) +
-        (chronic_liver_disease)+
-        (chronic_resp_disease | asthma)+
-        (chronic_neuro_disease)#+
-      #(learndis)+
-      #(sev_mental),
-      ,
-      multimorb = cut(multimorb, breaks = c(0, 1, 2, Inf), labels=c("0", "1", "2+"), right=FALSE),
-      immuno = immunosuppressed | asplenia,
-      
       
       # original priority groups https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1007737/Greenbook_chapter_14a_30July2021.pdf#page=15
       # new priority groups https://www.england.nhs.uk/coronavirus/wp-content/uploads/sites/52/2021/07/C1327-covid-19-vaccination-autumn-winter-phase-3-planning.pdf
@@ -79,6 +75,26 @@ process_jcvi <- function(.data) {
     select(-care_home_type, -care_home_tpp, -care_home_code)
 }
 
+################################################################################
+process_covs <- function(.data) {
+  .data %>%
+    mutate(
+      
+      bmi = factor(bmi, levels = c("Not obese", "Obese I (30-34.9)", "Obese II (35-39.9)", "Obese III (40+)")),
+      
+      pregnancy = pregnancy & (sex == "Female") & (age < 50),
+      
+      prior_test_cat = cut(
+        prior_test_frequency, 
+        breaks=c(0, 1, 2, 3, Inf), 
+        labels=c("0", "1", "2", "3+"), 
+        right=FALSE
+        )
+      
+    )  
+}
+
+
 
 ################################################################################
 process_demo <- function(.data) {
@@ -102,14 +118,14 @@ process_demo <- function(.data) {
         TRUE ~ NA_character_
       ),
       
-      ethnicity_combined = if_else(is.na(ethnicity), ethnicity_6_sus, ethnicity),
+      ethnicity = if_else(is.na(ethnicity), ethnicity_6_sus, ethnicity),
       
-      ethnicity_combined = fct_case_when(
-        ethnicity_combined == "1" ~ "White",
-        ethnicity_combined == "4" ~ "Black",
-        ethnicity_combined == "3" ~ "South Asian",
-        ethnicity_combined == "2" ~ "Mixed",
-        ethnicity_combined == "5" ~ "Other",
+      ethnicity = fct_case_when(
+        ethnicity == "1" ~ "White",
+        ethnicity == "4" ~ "Black",
+        ethnicity == "3" ~ "South Asian",
+        ethnicity == "2" ~ "Mixed",
+        ethnicity == "5" ~ "Other",
         TRUE ~ NA_character_
         
       ),
@@ -135,7 +151,7 @@ process_demo <- function(.data) {
       ),
       
     ) %>%
-    select(-ethnicity, -ethnicity_6_sus)
+    select(-ethnicity_6_sus)
 }
 
 ################################################################################
@@ -143,15 +159,20 @@ process_pre <- function(.data) {
   
   .data %>%
     mutate(
-      prior_tests_cat = cut(prior_covid_test_frequency, breaks=c(0, 1, 2, 3, Inf), labels=c("0", "1", "2", "3+"), right=FALSE),
       # any covid event before study start
       prior_covid_infection = (!is.na(positive_test_0_date)) | (!is.na(admitted_covid_0_date)) | (!is.na(covidemergency_0_date)) | (!is.na(primary_care_covid_case_0_date)),
       # date of latest covid event before study start
-      anycovid_0_date = pmax(positive_test_0_date, covidemergency_0_date, admitted_covid_0_date, na.rm=TRUE),
+      prior_covid_infection_date = pmax(positive_test_0_date, covidemergency_0_date, admitted_covid_0_date, na.rm=TRUE),
+      time_since_infection = fct_case_when(
+        is.na(prior_covid_infection_date) ~ "never",
+        prior_covid_infection_date <= 30 ~ "1-30 days",
+        prior_covid_infection_date <= 90 ~ "31-90 days",
+        TRUE ~ "91+ days"
+      )
       # note the slight discrepancy between definitions of `prior_covid_infection` (matching variable) and `anycovid_0_date` (used in exclusion criteria):
       # - `primary_care_covid_case_0_date` used to define `prior_covid_infection` but not `anycovid_0_date` 
       #    because it could refer to "history of" rather than "current"
-    )
+    ) 
   
 }
 

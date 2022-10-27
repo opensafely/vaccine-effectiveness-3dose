@@ -7,9 +7,6 @@ library("glue")
 ## import local functions and parameters ---
 source(here("analysis", "design.R"))
 
-outcomes <- c("postest",  "covidadmitted", "covidcritcareordeath", "emergency", "covidemergency", "noncoviddeath")
-subgroups <- c("all", "vax3_type", "prior_covid_infection", "vax12_type", "ageband")
-
 # create action functions ----
 
 ## create comment function ----

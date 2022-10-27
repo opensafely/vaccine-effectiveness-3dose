@@ -58,10 +58,11 @@ jsonlite::write_json(study_dates, path = here("lib", "design", "study-dates.json
 
 # number of matching rounds to perform for each cohort
 
-n_matching_rounds <- lapply(
+n_matching_rounds_list <- sapply(
   cohorts,
-  function(x) length(study_dates[[x]][["control_extract_dates"]])
-  )
+  function(x) length(study_dates[[x]][["control_extract_dates"]]),
+  USE.NAMES = TRUE
+  ) 
 
 # define outcomes ----
 
@@ -178,3 +179,9 @@ caliper_variables <- c(
   NULL
 )
 matching_variables <- c(exact_variables, names(caliper_variables))
+
+# covariates ----
+
+covariates <- c(
+  NULL
+)

@@ -148,7 +148,7 @@ sim_list_demographic <- lst(
   
   rural_urban = bn_node(
     ~rfactor(n=..n, levels = 1:9, p = rep(1/9, 9)),
-    missing_rate = ~ 0.1
+    missing_rate = ~0 # is it possible for rural_urban to be missing when IMD non-missing?
   ),
   
   
@@ -270,10 +270,10 @@ sim_list_demographic <- lst(
 # sim list pre ----
 sim_list_pre = lst(
   
-  covid_test_0_day = bn_node(
-    ~as.integer(runif(n=..n, index_day-100, index_day-1)),
-    missing_rate = ~0.7
-  ),
+  # covid_test_0_day = bn_node(
+  #   ~as.integer(runif(n=..n, index_day-100, index_day-1)),
+  #   missing_rate = ~0.7
+  # ),
   
   primary_care_covid_case_0_day = bn_node(
     ~as.integer(runif(n=..n, index_day-100, index_day-1)),
@@ -325,14 +325,14 @@ sim_list_outcome = lst(
     ~ as.integer(runif(n = ..n, index_day, index_day + 120)),
     missing_rate = ~0.99
   ),
-  primary_care_covid_case_day = bn_node(
-    ~ as.integer(runif(n = ..n, index_day, index_day + 100)),
-    missing_rate = ~0.7
-  ),
-  covid_test_day = bn_node(
-    ~ as.integer(runif(n = ..n, index_day, index_day + 100)),
-    missing_rate = ~0.7
-  ),
+  # primary_care_covid_case_day = bn_node(
+  #   ~ as.integer(runif(n = ..n, index_day, index_day + 100)),
+  #   missing_rate = ~0.7
+  # ),
+  # covid_test_day = bn_node(
+  #   ~ as.integer(runif(n = ..n, index_day, index_day + 100)),
+  #   missing_rate = ~0.7
+  # ),
   postest_day = bn_node(
     ~ as.integer(runif(n = ..n, index_day, index_day + 100)),
     missing_rate = ~0.7
@@ -374,10 +374,10 @@ sim_list_outcome = lst(
     ~ as.integer(runif(n = ..n, index_day, index_day + 100)),
     missing_rate = ~0.8
   ),
-  admitted_unplanned_day = bn_node(
-    ~ as.integer(runif(n = ..n, index_day, index_day + 100)),
-    missing_rate = ~0.7
-  ),
+  # admitted_unplanned_day = bn_node(
+  #   ~ as.integer(runif(n = ..n, index_day, index_day + 100)),
+  #   missing_rate = ~0.7
+  # ),
   # admitted_planned_day = bn_node(
   #   ~as.integer(runif(n=..n, index_day, index_day+100)),
   #   missing_rate = ~0.7

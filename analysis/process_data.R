@@ -285,8 +285,8 @@ if (stage == "final") {
     ) %>%
     select(
       ends_with("_id"),
-      starts_with(c("trial", "treated", "control", "matched", "vax")),
-      any_of(c(matching_variables, covariates, events_lookup$event))
+      starts_with(other_variables),
+      any_of(c(matching_variables, covariates, events_lookup$event_var))
     )
   
   write_rds(data_matched, here("output", cohort, "match", "data_matched.rds"), compress="gz")
@@ -547,8 +547,8 @@ data_eligible <- data_criteria %>%
   left_join(data_processed %>%
               select(
                 ends_with("_id"),
-                starts_with(c("trial", "treated", "control", "matched", "vax")),
-                any_of(c(matching_variables, covariates, events_lookup$event))
+                starts_with(other_variables),
+                any_of(c(matching_variables, covariates, events_lookup$event_var))
                 ), 
             by="patient_id") %>%
   droplevels()

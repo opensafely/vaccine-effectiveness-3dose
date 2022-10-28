@@ -36,13 +36,12 @@ args <- commandArgs(trailingOnly=TRUE)
 
 if(length(args)==0){
   # use for interactive testing
-  removeobjects <- FALSE
-  cohort <- "pfizer"
+  cohort <- "mrna"
   subgroup <- "all"
   outcome <- "postest"
+  variants <- "split" #
   
 } else {
-  removeobjects <- TRUE
   cohort <- args[[1]]
   subgroup <- args[[2]]
   outcome <- args[[3]]
@@ -76,6 +75,7 @@ data_matched <-
     controlistreated_date,
     vax3_date,
     death_date, dereg_date, coviddeath_date, noncoviddeath_date, vax4_date,
+    all_of(covariates_model),
     all_of(c(glue("{outcome}_date"), subgroup))
   ) %>%
   
@@ -102,6 +102,63 @@ data_matched <-
     
   )
 
+variant_dates <- tribble(
+  ~variant, ~start_date, ~end_date,
+  "delta", as.character(study_dates$mrna$start_date), "2021-11-30",
+  "transistion", "2021-12-01", "2021-12-31",
+  "omicron", "2022-01-01", as.character(study_dates$studyend_date)
+) %>% mutate(across(ends_with("date"), as.Date))
+
+if (variants == "split") {
+  
+  # move this into the cox function, and also split follow-up time by cuts (this might be tricky)
+  
+  variants_fup_split <-
+    data_matched %>%
+    select(new_id, trial_date) %>%
+    uncount(weights = nrow(variant_dates), .id="variant_id") %>%
+    mutate(
+      variant = variant_dates$variant[variant_id],
+      variantstart_date = variant_dates$start_date[variant_id],
+      variantend_date = variant_dates$end_date[variant_id],
+      variantstart_day = as.integer(variantstart_date-trial_date),
+      variantend_day = as.integer(variantend_date-trial_date)
+    ) %>%
+    # earliest variantstart_day is zero 
+    mutate(across(variantstart_day, ~pmax(0, .x))) %>%
+    # latest variantend_day is trial_date + maxfup
+    mutate(across(variantend_day, ~pmin(maxfup, .x))) %>%
+    # filter nonsense rows after cleaning
+    filter(
+      # remove rows where variantend_date <= trial_date
+      variantend_day > 0,
+      # remove rows where cleaned variantend_day <= variantstart_day
+      variantend_day > variantstart_day
+      ) %>%
+    select(
+      new_id, variant_id, variant, variantstart_day, variantend_day
+    )
+  
+  variants_data_split <-
+    tmerge(
+      data1 = data_matched,
+      data2 = data_matched,
+      id = new_id,
+      tstart = 0,
+      tstop = tte_outcome,
+      ind_outcome = event(if_else(ind_outcome, tte_outcome, NA_real_))
+    ) %>%
+    # add post-treatment periods
+    tmerge(
+      data1 = .,
+      data2 = fup_split,
+      id = new_id,
+      period_id = tdc(variantstart_day, variant_id)
+    ) 
+    
+    
+}
+
 # outcome frequency
 outcomes_per_treated <- table(outcome=data_matched$ind_outcome, treated=data_matched$treated)
 
@@ -109,10 +166,6 @@ table(
   cut(data_matched$tte_outcome, c(-Inf, 0, 1, Inf), right=FALSE, labels= c("<0", "0", ">0"))
 )
 # should be c(0, 0, nrow(data_matched))
-
-## redaction threshold ----
-
-threshold <- 6
 
 ## competing risks cumulative risk differences ----
 
@@ -413,26 +466,41 @@ kmcontrasts <- function(data, cuts=NULL){
 
 # cox
 
-coxcontrast <- function(data, cuts=NULL){
+coxcontrast <- function(data, adj, cuts=NULL){
   
-  # if(is.null(cuts)){cuts <- unique(c(0,data$time))}
-  if(is.null(cuts)){stop("Specify cuts.")}
+  cox_formula <- formula(Surv(tstart, tstop, ind_outcome) ~ treated)
+  
+  if (is.null(cuts)) {
+    stop("Specify `cuts`.")
+  } else if (length(cuts) < 2) {
+    stop("`cuts` must specify a start and an end date")
+  } else if (length(cuts) > 2) {
+    # stratify by fup_period if more than one follow-up period
+    cox_formula <- cox_formula %>% update(as.formula(". ~ .:strata(fup_period)"))
+  } 
+  
+  # add covariates if fitting adjusted model
+  if (adj) {
+    cox_formula <- cox_formula %>%
+      update(as.formula(str_c(". ~ . +", str_c(covariates_model, collapse = " + "))))
+  } 
   
   data <- data %>% 
     # create variable for cuts[1] for tstart in tmerge
     mutate(time0 = cuts[1])
+  
+  fup_period_labels <- str_c(cuts[-length(cuts)]+1, "-", lead(cuts)[-length(cuts)])
   
   fup_split <-
     data %>%
     select(new_id, treated) %>%
     uncount(weights = length(cuts)-1, .id="period_id") %>%
     mutate(
-      fup_time = cuts[period_id],
-      fup_period = paste0(cuts[period_id], "-", cuts[period_id+1]-1)
+      fup_time = cuts[period_id]
     ) %>%
     droplevels() %>%
     select(
-      new_id, period_id, fup_time, fup_period
+      new_id, period_id, fup_time
     )
   
   data_split <-
@@ -452,26 +520,24 @@ coxcontrast <- function(data, cuts=NULL){
       period_id = tdc(fup_time, period_id)
     ) %>%
     mutate(
-      period_start = cuts[period_id],
-      period_end = cuts[period_id+1],
+      fup_period = factor(period_id, labels  = fup_period_labels)
     )
   
   data_cox <-
     data_split %>%
-    group_by(!!subgroup_sym, period_start, period_end) %>%
+    group_by(!!subgroup_sym) %>%
     nest() %>%
     mutate(
       cox_obj = map(data, ~{
-        coxph(Surv(tstart, tstop, ind_outcome) ~ treated, data = .x, y=FALSE, robust=TRUE, id=new_id, na.action="na.fail")
+        coxph(cox_formula, data = .x, y=FALSE, robust=TRUE, id=new_id, na.action="na.fail")
       }),
       cox_obj_tidy = map(cox_obj, ~broom::tidy(.x)),
     ) %>%
-    select(!!subgroup_sym, period_start, period_end, cox_obj_tidy) %>%
+    select(!!subgroup_sym, cox_obj_tidy) %>%
     unnest(cox_obj_tidy) %>%
     transmute(
       !!subgroup_sym,
-      period_start,
-      period_end,
+      term,
       coxhazr = exp(estimate),
       coxhr.se = robust.se,
       coxhr.ll = exp(estimate + qnorm(0.025)*robust.se),

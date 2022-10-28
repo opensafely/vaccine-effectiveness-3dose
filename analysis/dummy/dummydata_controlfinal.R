@@ -68,8 +68,8 @@ dummydata <- data_matchedcontrols %>%
     
     # post baseline
     dereg_day = missing(as.integer(runif(n=n(), trial_day, trial_day+120)), 0.99),
-    primary_care_covid_case_day = missing(as.integer(runif(n=n(), trial_day, trial_day+100)), 0.7),
-    covid_test_day = missing(as.integer(runif(n=n(), trial_day, trial_day+90)), 0.7),
+    # primary_care_covid_case_day = missing(as.integer(runif(n=n(), trial_day, trial_day+100)), 0.7),
+    # covid_test_day = missing(as.integer(runif(n=n(), trial_day, trial_day+90)), 0.7),
     postest_day = missing(as.integer(runif(n=n(), trial_day, trial_day+100)), 0.7),
     emergency_day = missing(as.integer(runif(n=n(), trial_day, trial_day+200)), 0.8),
     emergencyhosp_day = missing(as.integer(runif(n=n(), trial_day, trial_day+200)), 0.85),
@@ -77,7 +77,7 @@ dummydata <- data_matchedcontrols %>%
     covidemergencyhosp_day = missing(as.integer(runif(n=n(), trial_day, trial_day+200)), 0.85),
     covidadmitted_day = missing(as.integer(runif(n=n(), trial_day, trial_day+100)), 0.7),
     covidcritcare_day = missing(as.integer(runif(n=n(), trial_day, trial_day+100)), 0.8),
-    admitted_unplanned_day = missing(as.integer(runif(n=n(), trial_day, trial_day+100)), 0.7),
+    # admitted_unplanned_day = missing(as.integer(runif(n=n(), trial_day, trial_day+100)), 0.7),
     death_day = missing(as.integer(runif(n=n(), trial_day, trial_day+100)), 0.9),
     coviddeath_day = missing(death_day, 0.7),
   )

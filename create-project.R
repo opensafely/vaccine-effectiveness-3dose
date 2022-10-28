@@ -307,7 +307,22 @@ action_table1 <- function(cohort){
     ),
     moderately_sensitive= lst(
       csv= glue("output/{cohort}/table1/*.csv"),
-      png= glue("output/{cohort}/table1/*.png")
+      html= glue("output/{cohort}/table1/*.html")
+    )
+  )
+}
+
+action_coverage <- function(cohort){
+  action(
+    name = glue("coverage_{cohort}"),
+    run = glue("r:latest analysis/matching/coverage.R"),
+    arguments = c(cohort),
+    needs = namelesslst(
+      glue("process_controlfinal_{cohort}"),
+    ),
+    moderately_sensitive= lst(
+      csv= glue("output/{cohort}/match/coverage/*.csv"),
+      png= glue("output/{cohort}/match/coverage/*.png"),
     )
   )
 }
@@ -412,10 +427,13 @@ actions_list <- splice(
         
         action_table1(x),
         
-        action_cinc_dose4(x),
+        action_coverage(x),
         
         comment("# # # # # # # # # # # # # # # # # # #",
-                "Model"),
+                "Model",
+                "# # # # # # # # # # # # # # # # # # #"),
+        
+        action_cinc_dose4(x),
         
         lapply_actions(
           subgroups,

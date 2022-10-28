@@ -219,7 +219,19 @@ actions:
     outputs:
       moderately_sensitive:
         csv: output/mrna/table1/*.csv
-        png: output/mrna/table1/*.png
+        html: output/mrna/table1/*.html
+
+  coverage_mrna:
+    run: r:latest analysis/matching/coverage.R mrna
+    needs:
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        csv: output/mrna/match/coverage/*.csv
+        png: output/mrna/match/coverage/*.png
+
+  ## # # # # # # # # # # # # # # # # # # # 
+  ## Model 
 
   cinc_dose4_mrna:
     run: r:latest analysis/model/cinc_dose4.R mrna
@@ -230,8 +242,6 @@ actions:
         csv: output/mrna/models/cinc_dose4/*.csv
         png: output/mrna/models/cinc_dose4/*.png
 
-  ## # # # # # # # # # # # # # # # # # # # 
-  ## Model 
   ## # # # # # # # # # # # # # # # # # # # 
   ## cohort: mrna; subgroup: all 
   ## # # # # # # # # # # # # # # # # # # # 

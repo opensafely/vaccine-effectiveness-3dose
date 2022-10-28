@@ -12,30 +12,30 @@ def generate_outcome_variables(index_date):
       date_format="YYYY-MM-DD",
     ),
   
-    # Positive case identification after study start date
-    primary_care_covid_case_date=patients.with_these_clinical_events(
-      combine_codelists(
-        codelists.covid_primary_care_code,
-        codelists.covid_primary_care_positive_test,
-        codelists.covid_primary_care_sequelae,
-      ),
-      returning="date",
-      date_format="YYYY-MM-DD",
-      on_or_after=index_date,
-      find_first_match_in_period=True,
-    ),
+    # # Positive case identification after study start date
+    # primary_care_covid_case_date=patients.with_these_clinical_events(
+    #   combine_codelists(
+    #     codelists.covid_primary_care_code,
+    #     codelists.covid_primary_care_positive_test,
+    #     codelists.covid_primary_care_sequelae,
+    #   ),
+    #   returning="date",
+    #   date_format="YYYY-MM-DD",
+    #   on_or_after=index_date,
+    #   find_first_match_in_period=True,
+    # ),
     
     
-    # covid PCR test dates from SGSS
-    covid_test_date=patients.with_test_result_in_sgss(
-      pathogen="SARS-CoV-2",
-      test_result="any",
-      on_or_after=index_date,
-      find_first_match_in_period=True,
-      restrict_to_earliest_specimen_date=False,
-      returning="date",
-      date_format="YYYY-MM-DD",
-    ),
+    # # covid PCR test dates from SGSS
+    # covid_test_date=patients.with_test_result_in_sgss(
+    #   pathogen="SARS-CoV-2",
+    #   test_result="any",
+    #   on_or_after=index_date,
+    #   find_first_match_in_period=True,
+    #   restrict_to_earliest_specimen_date=False,
+    #   returning="date",
+    #   date_format="YYYY-MM-DD",
+    # ),
     
     # positive covid test
     postest_date=patients.with_test_result_in_sgss(
@@ -106,17 +106,17 @@ def generate_outcome_variables(index_date):
     ),
     
     
-    # unplanned hospital admission
-    admitted_unplanned_date=patients.admitted_to_hospital(
-      returning="date_admitted",
-      on_or_after=index_date,
-      # see https://github.com/opensafely-core/cohort-extractor/pull/497 for codes
-      # see https://docs.opensafely.org/study-def-variables/#sus for more info
-      with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
-      with_patient_classification = ["1"], # ordinary admissions only
-      date_format="YYYY-MM-DD",
-      find_first_match_in_period=True,
-    ),
+    # # unplanned hospital admission
+    # admitted_unplanned_date=patients.admitted_to_hospital(
+    #   returning="date_admitted",
+    #   on_or_after=index_date,
+    #   # see https://github.com/opensafely-core/cohort-extractor/pull/497 for codes
+    #   # see https://docs.opensafely.org/study-def-variables/#sus for more info
+    #   with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
+    #   with_patient_classification = ["1"], # ordinary admissions only
+    #   date_format="YYYY-MM-DD",
+    #   find_first_match_in_period=True,
+    # ),
     
     # # planned hospital admission
     # admitted_planned_date=patients.admitted_to_hospital(

@@ -12,7 +12,8 @@ library('here')
 ## create output directories ----
 fs::dir_create(here("lib", "design"))
 
-
+# redaction threshold ----
+threshold <- 6
 
 # define key dates ----
 
@@ -77,9 +78,10 @@ events_lookup <- tribble(
   "symptest", "symptest_date", "SARS-CoV-2 test (symptomatic)",
   "pcrtest", "pcrtest_date", "SARS-CoV-2 test (PCR)",
   "lftest", "lftest_date", "SARS-CoV-2 test (lateral flow)",
+  "dereg", "dereg_date", "Deregistration date",
   
   # effectiveness
-  "postest", "positive_test_date", "Positive SARS-CoV-2 test",
+  "postest", "postest_date", "Positive SARS-CoV-2 test",
   "covidadmitted", "covidadmitted_date", "COVID-19 hospitalisation",
   "covidcritcare", "covidcritcare_date", "COVID-19 critical care",
   "coviddeath", "coviddeath_date", "COVID-19 death",
@@ -87,13 +89,15 @@ events_lookup <- tribble(
   
   # other
   "emergency", "emergency_date", "A&E attendance",
+  "emergencyhosp", "emergencyhosp_date", "A&E attendance with disharge to hospital",
   "covidemergency", "covidemergency_date", "COVID-19 A&E attendance",
+  "covidemergencyhosp", "covidemergencyhosp_date", "COVID-19 A&E attendance with disharge to hospital",
   "noncoviddeath", "noncoviddeath_date", "Non-COVID-19 death",
   "death", "death_date", "Any death",
   
 )
 
-outcomes <- c("postest",  "covidadmitted", "covidcritcareordeath", "emergency", "covidemergency", "noncoviddeath")
+outcomes <- c("postest",  "covidadmitted", "covidcritcareordeath", "coviddeath", "emergency", "covidemergency", "noncoviddeath")
 
 # define treatments ----
 
@@ -136,6 +140,10 @@ recoder <-
     vax12_type = c(
       `BNT162b2` = "pfizer-pfizer",
       `ChAdOx1-S` = "az-az"
+    ),
+    vax3_type = c(
+      `BNT162b2` = "pfizer",
+      `mRNA-1273` = "moderna"
     ),
     ageband = c(
       `18-39 years` = "18-39",
@@ -191,7 +199,6 @@ covariates_model <- c(
   "sev_mental",
   "immunosuppressed",
   "multimorb",
-  "cev",
   "pregnancy",
   "time_since_infection",
   "prior_test_cat",
@@ -199,7 +206,12 @@ covariates_model <- c(
 )
 
 covariates_summarise <- c(
-  "cv"
+  "cv",
+  "cev"
 )
 
 covariates <- c(covariates_model, covariates_summarise)
+
+# other variables -----
+# keep all variables starting with these strings
+other_variables <- c("trial", "treated", "control", "match", "vax", "jcvi")

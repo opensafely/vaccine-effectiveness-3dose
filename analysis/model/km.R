@@ -39,12 +39,17 @@ if(length(args)==0){
   cohort <- "mrna"
   subgroup <- "all"
   outcome <- "postest"
+  variant_option <- "restrict" # ignore, split, restrict (delta, transition, omicron)
   
 } else {
   cohort <- args[[1]]
   subgroup <- args[[2]]
   outcome <- args[[3]]
+  variant_option <- args[[4]]
 }
+
+if (subgroup!="all" & variant_option != "ignore") 
+  stop("Must set `variant`=\"ignore\" for subgroup analyses.")
 
 # derive symbolic arguments for programming with
 
@@ -53,16 +58,55 @@ subgroup_sym <- sym(subgroup)
 
 # create output directories ----
 
-output_dir <- ghere("output", cohort, "models", "km", subgroup, outcome)
+output_dir <- ghere("output", cohort, "models", "km", subgroup, variant_option, outcome)
 fs::dir_create(output_dir)
 
 
 data_matched <- read_rds(ghere("output", cohort, "match", "data_matched.rds"))
 
+# define variant dates ----
+variant_dates <- tribble(
+  ~variant, ~start_date, 
+  "delta", study_dates$mrna$start_date, 
+  "transition", as.Date("2021-12-01"), 
+  "omicron", as.Date("2022-01-01"),
+) %>% 
+  mutate(end_date = lead(start_date, default = study_dates$studyend_date))
+
+if (variant_option == "restrict") {
+  data_matched <- data_matched %>%
+    uncount(weights = nrow(variant_dates), .id="variant_id") %>%
+    mutate(variant = factor(variant_id, labels = variant_dates$variant))
+} else {
+  data_matched <- data_matched %>%
+    mutate(
+      variant_id = 1L,
+      variant = factor(variant_option)
+      )
+}
 
 ## import baseline data, restrict to matched individuals and derive time-to-event variables
-data_matched <- 
-  data_matched %>%
+data_matched <- data_matched %>%
+  # derive start and end dates for variant eras
+  group_by(variant_id) %>%
+  mutate(
+    variantstart_date = if_else(
+      variant %in% c("ignore", "split"),
+      study_dates[[cohort]]$start_date,
+      max(study_dates[[cohort]]$start_date, variant_dates$start_date[variant_id])
+    ),
+    variantend_date = if_else(
+      variant %in% c("ignore", "split"),
+      study_dates$studyend_date,
+      min(study_dates$studyend_date, variant_dates$end_date[variant_id])
+    )
+  ) %>%
+  ungroup() %>%
+  # filter to keep only individuals with trial date during the variant era
+  filter(
+    trial_date >= variantstart_date,
+    trial_date <= variantend_date
+  ) %>%
   # create a new id to account for the fact that some controls become treated (this is only needed for cox models)
   group_by(patient_id, match_id, matching_round, treated) %>% 
   mutate(new_id = cur_group_id()) %>% 
@@ -70,14 +114,13 @@ data_matched <-
   mutate(all="all") %>%
   select(
     # select only variables needed for models to save space
-    new_id, treated, trial_date, 
+    new_id, treated, trial_date, variantend_date, variant,
     controlistreated_date,
     vax3_date,
     death_date, dereg_date, coviddeath_date, noncoviddeath_date, vax4_date,
     all_of(covariates_model),
     all_of(c(glue("{outcome}_date"), subgroup))
   ) %>%
-  
   mutate(
 
     #trial_date,
@@ -88,7 +131,7 @@ data_matched <-
       dereg_date,
       # vax4_date-1, # -1 because we assume vax occurs at the start of the day
       death_date,
-      study_dates$studyend_date,
+      variantend_date,
       trial_date + maxfup,
       na.rm=TRUE
     ),
@@ -98,15 +141,7 @@ data_matched <-
     tte_outcome = tte(trial_date - 1, outcome_date, matchcensor_date, na.censor=FALSE), # -1 because we assume vax occurs at the start of the day, and so outcomes occurring on the same day as treatment are assumed "1 day" long
     ind_outcome = censor_indicator(outcome_date, matchcensor_date),
     
-    
   )
-
-variant_dates <- tribble(
-  ~variant, ~start_date, ~end_date,
-  "delta", as.character(study_dates$mrna$start_date), "2021-11-30",
-  "transition", "2021-12-01", "2021-12-31",
-  "omicron", "2022-01-01", as.character(study_dates$studyend_date)
-) %>% mutate(across(ends_with("date"), as.Date))
 
 # outcome frequency
 outcomes_per_treated <- table(outcome=data_matched$ind_outcome, treated=data_matched$treated)
@@ -116,32 +151,97 @@ table(
 )
 # should be c(0, 0, nrow(data_matched))
 
+
+
 ## competing risks cumulative risk differences ----
 
 # no applicable method for 'complete' applied to an object of class "c('integer', 'numeric')"
 
-data_surv <-
-  data_matched %>%
-  group_by(treated, !!subgroup_sym) %>%
+# preprocessing for data_surv ----
+if (variant_option == "split") {
+  
+  # split follow-up time according to variant era
+  # (`fup_split_variant` is also read into the `coxcontrast` function)
+  fup_split_variant <-
+    data_matched %>%
+    select(new_id, trial_date) %>%
+    uncount(weights = nrow(variant_dates), .id="variant_id") %>%
+    mutate(
+      variant = variant_dates$variant[variant_id],
+      variantstart_date = variant_dates$start_date[variant_id],
+      variantend_date = variant_dates$end_date[variant_id],
+      variantstart_day = as.integer(variantstart_date-trial_date),
+      variantend_day = as.integer(variantend_date-trial_date)
+    ) %>%
+    # earliest variantstart_day is zero 
+    mutate(across(variantstart_day, ~pmax(0, .x))) %>%
+    # latest variantend_day is trial_date + maxfup
+    mutate(across(variantend_day, ~pmin(maxfup, .x))) %>%
+    # filter nonsense rows after cleaning
+    filter(
+      # remove rows where variantend_date < trial_date
+      variantend_day >= 0,
+      # remove rows where cleaned variantend_day < variantstart_day
+      variantend_day >= variantstart_day
+    ) %>%
+    select(
+      new_id, variant_id, variant, variantstart_day, variantend_day
+    )
+  
+  data_split_variant <-
+    tmerge(
+      data1 = data_matched,
+      data2 = data_matched,
+      id = new_id,
+      tstart = 0,
+      tstop = tte_outcome,
+      ind_outcome = event(if_else(ind_outcome, tte_outcome, NA_real_))
+    ) %>%
+    # add post-treatment periods
+    tmerge(
+      data1 = .,
+      data2 = fup_split_variant,
+      id = new_id,
+      variant_id = tdc(variantstart_day, variant_id)
+    ) 
+  
+  data_surv <- data_split_variant %>%
+    # update the variant variable from "split" to the variant using variant_id
+    mutate(variant = factor(variant_dates$variant[variant_id], levels = variant_dates$variant))
+  
+  surv_formula <- formula(Surv(tstart, tstop, ind_outcome) ~ 1)
+  
+} else {
+  
+  data_surv <- data_matched
+  
+  surv_formula <- formula(Surv(tte_outcome, ind_outcome) ~ 1)
+  
+}
+
+# derive data_surv ----
+data_surv <- data_surv %>%
+  group_by(treated, !!subgroup_sym, variant) %>%
   nest() %>%
   mutate(
     surv_obj = map(data, ~{
-      survfit(Surv(tte_outcome, ind_outcome) ~ 1, data = .x)
+      survfit(surv_formula, data = .x)
     }),
     surv_obj_tidy = map(surv_obj, ~{
       broom::tidy(.x) %>%
-      complete(
-        time = seq_len(maxfup), # fill in 1 row for each day of follow up
-        fill = list(n.event = 0, n.censor = 0) # fill in zero events on those days
-      ) %>%
-      fill(n.risk, .direction = c("up")) # fill in n.risk on each zero-event day
+        complete(
+          time = seq_len(maxfup), # fill in 1 row for each day of follow up
+          fill = list(n.event = 0, n.censor = 0) # fill in zero events on those days
+        ) %>%
+        fill(n.risk, .direction = c("up")) # fill in n.risk on each zero-event day
     }), # return survival table for each day of follow up
   ) %>%
-  select(!!subgroup_sym, treated, surv_obj_tidy) %>%
+  select(!!subgroup_sym, variant, treated, surv_obj_tidy) %>%
   unnest(surv_obj_tidy)
 
 
- km_process <- function(.data, round_by){
+
+km_process <- function(.data, round_by){
    
   .data %>% mutate(
     
@@ -183,7 +283,7 @@ data_surv <-
     risk.ll = 1 - surv.ul,
     risk.ul = 1 - surv.ll
   ) %>% select(
-    !!subgroup_sym, treated, time, lagtime, leadtime, interval,
+    !!subgroup_sym, variant, treated, time, lagtime, leadtime, interval,
     cml.event, cml.censor,
     n.risk, n.event, n.censor,
     surv, surv.se, surv.ll, surv.ul,
@@ -200,6 +300,10 @@ write_rds(data_surv_rounded, fs::path(output_dir, "km_estimates_rounded.rds"))
 
 
 km_plot <- function(.data) {
+  
+  # define variable to facet by
+  if (subgroup == "all") facet_sym <- sym("variant") else facet_sym <- subgroup_sym 
+  
   .data %>%
     group_modify(
       ~add_row(
@@ -224,7 +328,7 @@ km_plot <- function(.data) {
     geom_step(aes(x=time, y=risk), direction="vh")+
     geom_step(aes(x=time, y=risk), direction="vh", linetype="dashed", alpha=0.5)+
     geom_rect(aes(xmin=lagtime, xmax=time, ymin=risk.ll, ymax=risk.ul), alpha=0.1, colour="transparent")+
-    facet_grid(rows=vars(!!subgroup_sym))+
+    facet_grid(rows=vars(!!facet_sym))+
     scale_color_brewer(type="qual", palette="Set1", na.value="grey") +
     scale_fill_brewer(type="qual", palette="Set1", guide="none", na.value="grey") +
     scale_x_continuous(breaks = seq(0,600,14))+
@@ -266,7 +370,7 @@ kmcontrasts <- function(data, cuts=NULL){
   data %>%
     filter(time!=0) %>%
     transmute(
-      !!subgroup_sym,
+      !!subgroup_sym, variant,
       treated,
 
       time, lagtime, interval,
@@ -292,7 +396,7 @@ kmcontrasts <- function(data, cuts=NULL){
       inc2 = diff(c(0,-log(surv)))
 
     ) %>%
-    group_by(!!subgroup_sym, treated, period_start, period_end, period) %>%
+    group_by(!!subgroup_sym, variant, treated, period_start, period_end, period) %>%
     summarise(
 
       ## time-period-specific quantities
@@ -339,7 +443,7 @@ kmcontrasts <- function(data, cuts=NULL){
     ) %>%
     ungroup() %>%
     pivot_wider(
-      id_cols= all_of(c(subgroup, "period_start", "period_end", "period",  "interval")),
+      id_cols= all_of(c(subgroup, "variant", "period_start", "period_end", "period",  "interval")),
       names_from=treated,
       names_glue="{.value}_{treated}",
       values_from=c(
@@ -418,7 +522,7 @@ kmcontrasts <- function(data, cuts=NULL){
 # variant = "ignore": ignore the effect of variant
 # variant = "split": split follow-up time by variants
 # variant = "delta"/"transition"/"omicron": restrict to a variant era
-coxcontrast <- function(data, adj = FALSE, variant = "ignore", cuts=NULL){
+coxcontrast <- function(data, adj = FALSE, cuts=NULL){
   
   cox_formula <- formula(Surv(tstart, tstop, ind_outcome) ~ treated)
   
@@ -443,28 +547,9 @@ coxcontrast <- function(data, adj = FALSE, variant = "ignore", cuts=NULL){
     # create variable for cuts[1] for tstart in tmerge
     mutate(time0 = cuts[1])
   
-  # derive data for analyses restricted to a variant era
-  if (variant %in% c("delta", "transition", "omicron")) {
-    
-    fup_period_labels <- str_c(fup_period_labels, variant, sep = "; ")
-    
-    data <- data %>%
-      filter(
-        trial_date >= variant_dates[variant_dates$variant == variant, ]$start_date
-      ) %>%
-      mutate(
-        variantend_day = as.integer(variant_dates[variant_dates$variant == variant, ]$end_date - trial_date)
-        ) %>%
-      # update ind_outcome to FALSE if variantend_day < tte_outcome
-      mutate(across(ind_outcome, ~if_else(variantend_day < tte_outcome, FALSE, .x))) %>%
-      # update tte_outcome
-      mutate(across(tte_outcome, ~pmin(.x, variantend_day)))
-    
-  }
-  
   fup_split <-
     data %>%
-    select(new_id, treated) %>%
+    select(new_id, variant, treated) %>%
     uncount(weights = length(cuts)-1, .id="period_id") %>%
     mutate(
       fupstart_time = cuts[period_id],
@@ -472,52 +557,53 @@ coxcontrast <- function(data, adj = FALSE, variant = "ignore", cuts=NULL){
     ) %>%
     droplevels() %>%
     select(
-      new_id, period_id, fupstart_time, fupend_time# fup_time
+      new_id, variant, period_id, fupstart_time, fupend_time# fup_time
     ) %>%
     mutate(across(period_id, factor, labels = fup_period_labels))
   
+  # add variant label for follow-up periods
+  if (variant_option != "ignore") {
+    fup_period_labels <- str_c(rep(fup_period_labels, each = nrow(variant_dates)), variant_dates$variant, sep = "; ")
+  }
+  
   # derive fup_split for fup time split by variant era
-  if (variant == "split") {
+  if (variant_option == "split") {
     
-    variants_fup_split <-
-      data %>%
-      select(new_id, trial_date) %>%
-      uncount(weights = nrow(variant_dates), .id="variant_id") %>%
-      mutate(
-        variant = variant_dates$variant[variant_id],
-        variantstart_date = variant_dates$start_date[variant_id],
-        variantend_date = variant_dates$end_date[variant_id],
-        variantstart_day = as.integer(variantstart_date-trial_date),
-        variantend_day = as.integer(variantend_date-trial_date)
-      ) %>%
-      # earliest variantstart_day is zero 
-      mutate(across(variantstart_day, ~pmax(0, .x))) %>%
-      # latest variantend_day is trial_date + maxfup
-      mutate(across(variantend_day, ~pmin(maxfup, .x))) %>%
-      # filter nonsense rows after cleaning
-      filter(
-        # remove rows where variantend_date < trial_date
-        variantend_day >= 0,
-        # remove rows where cleaned variantend_day < variantstart_day
-        variantend_day >= variantstart_day
-      ) %>%
-      select(
-        new_id, variant_id, variant, variantstart_day, variantend_day
-      )
+    # variants_fup_split <-
+    #   data %>%
+    #   select(new_id, trial_date) %>%
+    #   uncount(weights = nrow(variant_dates), .id="variant_id") %>%
+    #   mutate(
+    #     variant = variant_dates$variant[variant_id],
+    #     variantstart_date = variant_dates$start_date[variant_id],
+    #     variantend_date = variant_dates$end_date[variant_id],
+    #     variantstart_day = as.integer(variantstart_date-trial_date),
+    #     variantend_day = as.integer(variantend_date-trial_date)
+    #   ) %>%
+    #   # earliest variantstart_day is zero 
+    #   mutate(across(variantstart_day, ~pmax(0, .x))) %>%
+    #   # latest variantend_day is trial_date + maxfup
+    #   mutate(across(variantend_day, ~pmin(maxfup, .x))) %>%
+    #   # filter nonsense rows after cleaning
+    #   filter(
+    #     # remove rows where variantend_date < trial_date
+    #     variantend_day >= 0,
+    #     # remove rows where cleaned variantend_day < variantstart_day
+    #     variantend_day >= variantstart_day
+    #   ) %>%
+    #   select(
+    #     new_id, variant_id, variant, variantstart_day, variantend_day
+    #   )
     
     
     fup_split <- fup_split %>%
       left_join(
-        variants_fup_split, by = "new_id"
+        fup_split_variant, by = "new_id"
       ) %>%
       mutate(across(period_id, 
                     ~factor(
                       str_c(as.character(.x), variant, sep = "; "),
-                      levels = str_c(
-                        rep(fup_period_labels, each = nrow(variant_dates)),
-                        variant_dates$variant, 
-                        sep = "; "
-                        )
+                      levels = fup_period_labels
                       )
                     )) %>%
       # update fupstart_time and fupend_time to be within variant periods

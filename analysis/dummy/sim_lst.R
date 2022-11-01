@@ -148,7 +148,7 @@ sim_list_demographic <- lst(
   
   rural_urban = bn_node(
     ~rfactor(n=..n, levels = 1:9, p = rep(1/9, 9)),
-    missing_rate = ~0 # is it possible for rural_urban to be missing when IMD non-missing?
+    missing_rate = ~0 # is it possible for rural_urban to be missing when IMD non-missing? i.e. do we need to account for missing data?
   ),
   
   
@@ -322,64 +322,64 @@ sim_list_outcome = lst(
   
   # ## post-baseline events (outcomes)
   dereg_day = bn_node(
-    ~ as.integer(runif(n = ..n, index_day, index_day + 120)),
+    ~ as.integer(runif(n = ..n, index_day, index_day + maxfup)),
     missing_rate = ~0.99
   ),
   # primary_care_covid_case_day = bn_node(
-  #   ~ as.integer(runif(n = ..n, index_day, index_day + 100)),
+  #   ~ as.integer(runif(n = ..n, index_day, index_day + maxfup)),
   #   missing_rate = ~0.7
   # ),
   # covid_test_day = bn_node(
-  #   ~ as.integer(runif(n = ..n, index_day, index_day + 100)),
+  #   ~ as.integer(runif(n = ..n, index_day, index_day + maxfup)),
   #   missing_rate = ~0.7
   # ),
   postest_day = bn_node(
-    ~ as.integer(runif(n = ..n, index_day, index_day + 100)),
+    ~ as.integer(runif(n = ..n, index_day, index_day + maxfup)),
     missing_rate = ~0.7
   ),
   emergency_day = bn_node(
-    ~ as.integer(runif(n = ..n, index_day, index_day + 200)),
+    ~ as.integer(runif(n = ..n, index_day, index_day + maxfup)),
     missing_rate = ~0.8
   ),
   emergencyhosp_day = bn_node(
-    ~ as.integer(runif(n = ..n, index_day, index_day + 200)),
+    ~ as.integer(runif(n = ..n, index_day, index_day + maxfup)),
     missing_rate = ~0.85
   ),
   covidemergency_day = bn_node(
-    ~ as.integer(runif(n = ..n, index_day, index_day + 200)),
+    ~ as.integer(runif(n = ..n, index_day, index_day + maxfup)),
     missing_rate = ~0.8
   ),
   covidemergencyhosp_day = bn_node(
-    ~ as.integer(runif(n = ..n, index_day, index_day + 200)),
+    ~ as.integer(runif(n = ..n, index_day, index_day + maxfup)),
     missing_rate = ~0.85
   ),
   
   # respemergency_day = bn_node(
-  #   ~as.integer(runif(n=..n, index_day, index_day+100)),
+  #   ~as.integer(runif(n=..n, index_day, index_day+maxfup)),
   #   missing_rate = ~0.95
   # ),
   #
   # respemergencyhosp_day = bn_node(
-  #   ~as.integer(runif(n=..n, index_day, index_day+100)),
+  #   ~as.integer(runif(n=..n, index_day, index_day+maxfup)),
   #   missing_rate = ~0.95
   # ),
   
   covidadmitted_day = bn_node(
-    ~ as.integer(runif(n = ..n, index_day, index_day + 100)),
+    ~ as.integer(runif(n = ..n, index_day, index_day + maxfup)),
     missing_rate = ~0.7
   ),
   
   # placeholder for single criticalcare variable ---
   covidcritcare_day = bn_node(
-    ~ as.integer(runif(n = ..n, index_day, index_day + 100)),
+    ~ as.integer(runif(n = ..n, index_day, index_day + maxfup)),
     missing_rate = ~0.8
   ),
   # admitted_unplanned_day = bn_node(
-  #   ~ as.integer(runif(n = ..n, index_day, index_day + 100)),
+  #   ~ as.integer(runif(n = ..n, index_day, index_day + maxfup)),
   #   missing_rate = ~0.7
   # ),
   # admitted_planned_day = bn_node(
-  #   ~as.integer(runif(n=..n, index_day, index_day+100)),
+  #   ~as.integer(runif(n=..n, index_day, index_day+maxfup)),
   #   missing_rate = ~0.7
   # ),
   
@@ -389,7 +389,7 @@ sim_list_outcome = lst(
     needs = "death_day"
   ),
   death_day = bn_node(
-    ~ as.integer(runif(n = ..n, index_day, index_day + 100)),
+    ~ as.integer(runif(n = ..n, index_day, index_day + maxfup)),
     missing_rate = ~0.90
   ),
   

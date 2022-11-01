@@ -1,6 +1,6 @@
 
 # # # # # # # # # # # # # # # # # # # # #
-# Purpose: Get cumulative incidence(kaplan meier) estimates for specified outcome, and derive risk differences
+# Purpose: 
 #  - import matched data
 #  - adds outcome variable and restricts follow-up
 #  - gets KM estimates, with covid and non covid death as competing risks
@@ -9,6 +9,7 @@
 #    `cohort` - pfizer or moderna
 #    `subgroup` - prior_covid_infection, vax12_type, cev, age65plus
 #    `outcome` - the dependent variable
+#    `variant_option` - ignore (ignore variant era), split (split fup according to variant era), restrict (restrict fup to each variant era)
 
 # # # # # # # # # # # # # # # # # # # # #
 
@@ -38,14 +39,14 @@ if(length(args)==0){
   # use for interactive testing
   cohort <- "mrna"
   subgroup <- "all"
-  outcome <- "postest"
   variant_option <- "split" # ignore, split, restrict (delta, transition, omicron)
+  outcome <- "postest"
   
 } else {
   cohort <- args[[1]]
   subgroup <- args[[2]]
-  outcome <- args[[3]]
-  variant_option <- args[[4]]
+  variant_option <- args[[3]]
+  outcome <- args[[4]]
 }
 
 if (subgroup!="all" & variant_option != "ignore") 
@@ -275,7 +276,9 @@ km_process <- function(.data, round_by){
 
     n.event = diff(c(0, cml.event)),
     n.censor = diff(c(0, cml.censor)),
-    n.risk = roundmid_any(N, round_by) - lag(cml.eventcensor, 1, 0), #TODO this won't work when variant_option="split"
+    # n.risk = roundmid_any(N, round_by) - lag(cml.eventcensor, 1, 0), # this won't work when variant_option="split", 
+    # ok to use the following?
+    n.risk = roundmid_any(n.risk, round_by),
 
     # KM estimate for event of interest, combining censored and competing events as censored
     summand = (1/(n.risk-n.event)) - (1/n.risk), # = n.event / ((n.risk - n.event) * n.risk) but re-written to prevent integer overflow
@@ -305,8 +308,8 @@ km_process <- function(.data, round_by){
     n.risk, n.event, n.censor,
     surv, surv.se, surv.ll, surv.ul,
     risk, risk.se, risk.ll, risk.ul
-  ) %>%
-    ungroup()
+  ) 
+  
  }
  
  
@@ -323,7 +326,6 @@ km_plot <- function(.data) {
   if (subgroup == "all") facet_sym <- sym("variant") else facet_sym <- subgroup_sym 
   
   .data %>%
-    # group_by(treated, !!subgroup_sym, variant) %>%
     group_modify(
       ~add_row(
         .x,
@@ -596,6 +598,7 @@ coxcontrast <- function(data, adj = FALSE, cuts=NULL){
         # only keep rows where fup start and end times make sense
         fupstart_time <= fupend_time
       ) %>%
+      mutate(variant = variant_dates$variant[variant_id]) %>%
       select(new_id, variant, period_id, fupstart_time, fupend_time)
     
   } else if (variant_option == "restrict") {

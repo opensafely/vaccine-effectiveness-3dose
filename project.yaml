@@ -232,6 +232,7 @@ actions:
 
   ## # # # # # # # # # # # # # # # # # # # 
   ## Model 
+  ## # # # # # # # # # # # # # # # # # # # 
 
   cinc_dose4_mrna:
     run: r:latest analysis/model/cinc_dose4.R mrna
@@ -242,295 +243,475 @@ actions:
         csv: output/mrna/models/cinc_dose4/*.csv
         png: output/mrna/models/cinc_dose4/*.png
 
-  ## # # # # # # # # # # # # # # # # # # # 
-  ## cohort: mrna; subgroup: all 
-  ## # # # # # # # # # # # # # # # # # # # 
+  ## # # # # # # # # # # # # # # # # # # # # # # # # # # #  
+  ## cohort: mrna; subgroup: all; variant option: ignore 
+  ## # # # # # # # # # # # # # # # # # # # # # # # # # # #  
 
-  km_mrna_all_postest:
-    run: r:latest analysis/model/km.R mrna all postest
+  km_mrna_all_postest_ignore:
+    run: r:latest analysis/model/km.R mrna all postest ignore
     needs:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/all/postest/*.rds
-        png: output/mrna/models/km/all/postest/*.png
+        rds: output/mrna/models/km/all/ignore/postest/*.rds
+        png: output/mrna/models/km/all/ignore/postest/*.png
 
-  km_mrna_all_covidadmitted:
-    run: r:latest analysis/model/km.R mrna all covidadmitted
+  km_mrna_all_covidadmitted_ignore:
+    run: r:latest analysis/model/km.R mrna all covidadmitted ignore
     needs:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/all/covidadmitted/*.rds
-        png: output/mrna/models/km/all/covidadmitted/*.png
+        rds: output/mrna/models/km/all/ignore/covidadmitted/*.rds
+        png: output/mrna/models/km/all/ignore/covidadmitted/*.png
 
-  km_mrna_all_covidcritcareordeath:
-    run: r:latest analysis/model/km.R mrna all covidcritcareordeath
+  km_mrna_all_covidcritcareordeath_ignore:
+    run: r:latest analysis/model/km.R mrna all covidcritcareordeath ignore
     needs:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/all/covidcritcareordeath/*.rds
-        png: output/mrna/models/km/all/covidcritcareordeath/*.png
+        rds: output/mrna/models/km/all/ignore/covidcritcareordeath/*.rds
+        png: output/mrna/models/km/all/ignore/covidcritcareordeath/*.png
 
-  km_mrna_all_emergency:
-    run: r:latest analysis/model/km.R mrna all emergency
+  km_mrna_all_coviddeath_ignore:
+    run: r:latest analysis/model/km.R mrna all coviddeath ignore
     needs:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/all/emergency/*.rds
-        png: output/mrna/models/km/all/emergency/*.png
+        rds: output/mrna/models/km/all/ignore/coviddeath/*.rds
+        png: output/mrna/models/km/all/ignore/coviddeath/*.png
 
-  km_mrna_all_covidemergency:
-    run: r:latest analysis/model/km.R mrna all covidemergency
+  km_mrna_all_emergency_ignore:
+    run: r:latest analysis/model/km.R mrna all emergency ignore
     needs:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/all/covidemergency/*.rds
-        png: output/mrna/models/km/all/covidemergency/*.png
+        rds: output/mrna/models/km/all/ignore/emergency/*.rds
+        png: output/mrna/models/km/all/ignore/emergency/*.png
 
-  km_mrna_all_noncoviddeath:
-    run: r:latest analysis/model/km.R mrna all noncoviddeath
+  km_mrna_all_covidemergency_ignore:
+    run: r:latest analysis/model/km.R mrna all covidemergency ignore
     needs:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/all/noncoviddeath/*.rds
-        png: output/mrna/models/km/all/noncoviddeath/*.png
+        rds: output/mrna/models/km/all/ignore/covidemergency/*.rds
+        png: output/mrna/models/km/all/ignore/covidemergency/*.png
 
-  ## # # # # # # # # # # # # # # # # # # # 
-  ## cohort: mrna; subgroup: vax3_type 
-  ## # # # # # # # # # # # # # # # # # # # 
-
-  km_mrna_vax3_type_postest:
-    run: r:latest analysis/model/km.R mrna vax3_type postest
+  km_mrna_all_noncoviddeath_ignore:
+    run: r:latest analysis/model/km.R mrna all noncoviddeath ignore
     needs:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/vax3_type/postest/*.rds
-        png: output/mrna/models/km/vax3_type/postest/*.png
+        rds: output/mrna/models/km/all/ignore/noncoviddeath/*.rds
+        png: output/mrna/models/km/all/ignore/noncoviddeath/*.png
 
-  km_mrna_vax3_type_covidadmitted:
-    run: r:latest analysis/model/km.R mrna vax3_type covidadmitted
+  ## # # # # # # # # # # # # # # # # # # # # # # # # # # #  
+  ## cohort: mrna; subgroup: all; variant option: split 
+  ## # # # # # # # # # # # # # # # # # # # # # # # # # # #  
+
+  km_mrna_all_postest_split:
+    run: r:latest analysis/model/km.R mrna all postest split
     needs:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/vax3_type/covidadmitted/*.rds
-        png: output/mrna/models/km/vax3_type/covidadmitted/*.png
+        rds: output/mrna/models/km/all/split/postest/*.rds
+        png: output/mrna/models/km/all/split/postest/*.png
 
-  km_mrna_vax3_type_covidcritcareordeath:
-    run: r:latest analysis/model/km.R mrna vax3_type covidcritcareordeath
+  km_mrna_all_covidadmitted_split:
+    run: r:latest analysis/model/km.R mrna all covidadmitted split
     needs:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/vax3_type/covidcritcareordeath/*.rds
-        png: output/mrna/models/km/vax3_type/covidcritcareordeath/*.png
+        rds: output/mrna/models/km/all/split/covidadmitted/*.rds
+        png: output/mrna/models/km/all/split/covidadmitted/*.png
 
-  km_mrna_vax3_type_emergency:
-    run: r:latest analysis/model/km.R mrna vax3_type emergency
+  km_mrna_all_covidcritcareordeath_split:
+    run: r:latest analysis/model/km.R mrna all covidcritcareordeath split
     needs:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/vax3_type/emergency/*.rds
-        png: output/mrna/models/km/vax3_type/emergency/*.png
+        rds: output/mrna/models/km/all/split/covidcritcareordeath/*.rds
+        png: output/mrna/models/km/all/split/covidcritcareordeath/*.png
 
-  km_mrna_vax3_type_covidemergency:
-    run: r:latest analysis/model/km.R mrna vax3_type covidemergency
+  km_mrna_all_coviddeath_split:
+    run: r:latest analysis/model/km.R mrna all coviddeath split
     needs:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/vax3_type/covidemergency/*.rds
-        png: output/mrna/models/km/vax3_type/covidemergency/*.png
+        rds: output/mrna/models/km/all/split/coviddeath/*.rds
+        png: output/mrna/models/km/all/split/coviddeath/*.png
 
-  km_mrna_vax3_type_noncoviddeath:
-    run: r:latest analysis/model/km.R mrna vax3_type noncoviddeath
+  km_mrna_all_emergency_split:
+    run: r:latest analysis/model/km.R mrna all emergency split
     needs:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/vax3_type/noncoviddeath/*.rds
-        png: output/mrna/models/km/vax3_type/noncoviddeath/*.png
+        rds: output/mrna/models/km/all/split/emergency/*.rds
+        png: output/mrna/models/km/all/split/emergency/*.png
 
-  ## # # # # # # # # # # # # # # # # # # # 
-  ## cohort: mrna; subgroup: prior_covid_infection 
-  ## # # # # # # # # # # # # # # # # # # # 
-
-  km_mrna_prior_covid_infection_postest:
-    run: r:latest analysis/model/km.R mrna prior_covid_infection postest
+  km_mrna_all_covidemergency_split:
+    run: r:latest analysis/model/km.R mrna all covidemergency split
     needs:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/prior_covid_infection/postest/*.rds
-        png: output/mrna/models/km/prior_covid_infection/postest/*.png
+        rds: output/mrna/models/km/all/split/covidemergency/*.rds
+        png: output/mrna/models/km/all/split/covidemergency/*.png
 
-  km_mrna_prior_covid_infection_covidadmitted:
-    run: r:latest analysis/model/km.R mrna prior_covid_infection covidadmitted
+  km_mrna_all_noncoviddeath_split:
+    run: r:latest analysis/model/km.R mrna all noncoviddeath split
     needs:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/prior_covid_infection/covidadmitted/*.rds
-        png: output/mrna/models/km/prior_covid_infection/covidadmitted/*.png
+        rds: output/mrna/models/km/all/split/noncoviddeath/*.rds
+        png: output/mrna/models/km/all/split/noncoviddeath/*.png
 
-  km_mrna_prior_covid_infection_covidcritcareordeath:
+  ## # # # # # # # # # # # # # # # # # # # # # # # # # # #  
+  ## cohort: mrna; subgroup: all; variant option: restrict 
+  ## # # # # # # # # # # # # # # # # # # # # # # # # # # #  
+
+  km_mrna_all_postest_restrict:
+    run: r:latest analysis/model/km.R mrna all postest restrict
+    needs:
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        rds: output/mrna/models/km/all/restrict/postest/*.rds
+        png: output/mrna/models/km/all/restrict/postest/*.png
+
+  km_mrna_all_covidadmitted_restrict:
+    run: r:latest analysis/model/km.R mrna all covidadmitted restrict
+    needs:
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        rds: output/mrna/models/km/all/restrict/covidadmitted/*.rds
+        png: output/mrna/models/km/all/restrict/covidadmitted/*.png
+
+  km_mrna_all_covidcritcareordeath_restrict:
+    run: r:latest analysis/model/km.R mrna all covidcritcareordeath restrict
+    needs:
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        rds: output/mrna/models/km/all/restrict/covidcritcareordeath/*.rds
+        png: output/mrna/models/km/all/restrict/covidcritcareordeath/*.png
+
+  km_mrna_all_coviddeath_restrict:
+    run: r:latest analysis/model/km.R mrna all coviddeath restrict
+    needs:
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        rds: output/mrna/models/km/all/restrict/coviddeath/*.rds
+        png: output/mrna/models/km/all/restrict/coviddeath/*.png
+
+  km_mrna_all_emergency_restrict:
+    run: r:latest analysis/model/km.R mrna all emergency restrict
+    needs:
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        rds: output/mrna/models/km/all/restrict/emergency/*.rds
+        png: output/mrna/models/km/all/restrict/emergency/*.png
+
+  km_mrna_all_covidemergency_restrict:
+    run: r:latest analysis/model/km.R mrna all covidemergency restrict
+    needs:
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        rds: output/mrna/models/km/all/restrict/covidemergency/*.rds
+        png: output/mrna/models/km/all/restrict/covidemergency/*.png
+
+  km_mrna_all_noncoviddeath_restrict:
+    run: r:latest analysis/model/km.R mrna all noncoviddeath restrict
+    needs:
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        rds: output/mrna/models/km/all/restrict/noncoviddeath/*.rds
+        png: output/mrna/models/km/all/restrict/noncoviddeath/*.png
+
+  ## # # # # # # # # # # # # # # # # # # # # # # # # # # #  
+  ## cohort: mrna; subgroup: vax3_type; variant option: ignore 
+  ## # # # # # # # # # # # # # # # # # # # # # # # # # # #  
+
+  km_mrna_vax3_type_postest_ignore:
+    run: r:latest analysis/model/km.R mrna vax3_type postest ignore
+    needs:
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        rds: output/mrna/models/km/vax3_type/ignore/postest/*.rds
+        png: output/mrna/models/km/vax3_type/ignore/postest/*.png
+
+  km_mrna_vax3_type_covidadmitted_ignore:
+    run: r:latest analysis/model/km.R mrna vax3_type covidadmitted ignore
+    needs:
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        rds: output/mrna/models/km/vax3_type/ignore/covidadmitted/*.rds
+        png: output/mrna/models/km/vax3_type/ignore/covidadmitted/*.png
+
+  km_mrna_vax3_type_covidcritcareordeath_ignore:
+    run: r:latest analysis/model/km.R mrna vax3_type covidcritcareordeath ignore
+    needs:
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        rds: output/mrna/models/km/vax3_type/ignore/covidcritcareordeath/*.rds
+        png: output/mrna/models/km/vax3_type/ignore/covidcritcareordeath/*.png
+
+  km_mrna_vax3_type_coviddeath_ignore:
+    run: r:latest analysis/model/km.R mrna vax3_type coviddeath ignore
+    needs:
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        rds: output/mrna/models/km/vax3_type/ignore/coviddeath/*.rds
+        png: output/mrna/models/km/vax3_type/ignore/coviddeath/*.png
+
+  km_mrna_vax3_type_emergency_ignore:
+    run: r:latest analysis/model/km.R mrna vax3_type emergency ignore
+    needs:
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        rds: output/mrna/models/km/vax3_type/ignore/emergency/*.rds
+        png: output/mrna/models/km/vax3_type/ignore/emergency/*.png
+
+  km_mrna_vax3_type_covidemergency_ignore:
+    run: r:latest analysis/model/km.R mrna vax3_type covidemergency ignore
+    needs:
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        rds: output/mrna/models/km/vax3_type/ignore/covidemergency/*.rds
+        png: output/mrna/models/km/vax3_type/ignore/covidemergency/*.png
+
+  km_mrna_vax3_type_noncoviddeath_ignore:
+    run: r:latest analysis/model/km.R mrna vax3_type noncoviddeath ignore
+    needs:
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        rds: output/mrna/models/km/vax3_type/ignore/noncoviddeath/*.rds
+        png: output/mrna/models/km/vax3_type/ignore/noncoviddeath/*.png
+
+  ## # # # # # # # # # # # # # # # # # # # # # # # # # # #  
+  ## cohort: mrna; subgroup: prior_covid_infection; variant option: ignore 
+  ## # # # # # # # # # # # # # # # # # # # # # # # # # # #  
+
+  km_mrna_prior_covid_infection_postest_ignore:
+    run: r:latest analysis/model/km.R mrna prior_covid_infection postest ignore
+    needs:
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        rds: output/mrna/models/km/prior_covid_infection/ignore/postest/*.rds
+        png: output/mrna/models/km/prior_covid_infection/ignore/postest/*.png
+
+  km_mrna_prior_covid_infection_covidadmitted_ignore:
+    run: r:latest analysis/model/km.R mrna prior_covid_infection covidadmitted ignore
+    needs:
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        rds: output/mrna/models/km/prior_covid_infection/ignore/covidadmitted/*.rds
+        png: output/mrna/models/km/prior_covid_infection/ignore/covidadmitted/*.png
+
+  km_mrna_prior_covid_infection_covidcritcareordeath_ignore:
     run: r:latest analysis/model/km.R mrna prior_covid_infection covidcritcareordeath
+      ignore
     needs:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/prior_covid_infection/covidcritcareordeath/*.rds
-        png: output/mrna/models/km/prior_covid_infection/covidcritcareordeath/*.png
+        rds: output/mrna/models/km/prior_covid_infection/ignore/covidcritcareordeath/*.rds
+        png: output/mrna/models/km/prior_covid_infection/ignore/covidcritcareordeath/*.png
 
-  km_mrna_prior_covid_infection_emergency:
-    run: r:latest analysis/model/km.R mrna prior_covid_infection emergency
+  km_mrna_prior_covid_infection_coviddeath_ignore:
+    run: r:latest analysis/model/km.R mrna prior_covid_infection coviddeath ignore
     needs:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/prior_covid_infection/emergency/*.rds
-        png: output/mrna/models/km/prior_covid_infection/emergency/*.png
+        rds: output/mrna/models/km/prior_covid_infection/ignore/coviddeath/*.rds
+        png: output/mrna/models/km/prior_covid_infection/ignore/coviddeath/*.png
 
-  km_mrna_prior_covid_infection_covidemergency:
-    run: r:latest analysis/model/km.R mrna prior_covid_infection covidemergency
+  km_mrna_prior_covid_infection_emergency_ignore:
+    run: r:latest analysis/model/km.R mrna prior_covid_infection emergency ignore
     needs:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/prior_covid_infection/covidemergency/*.rds
-        png: output/mrna/models/km/prior_covid_infection/covidemergency/*.png
+        rds: output/mrna/models/km/prior_covid_infection/ignore/emergency/*.rds
+        png: output/mrna/models/km/prior_covid_infection/ignore/emergency/*.png
 
-  km_mrna_prior_covid_infection_noncoviddeath:
-    run: r:latest analysis/model/km.R mrna prior_covid_infection noncoviddeath
+  km_mrna_prior_covid_infection_covidemergency_ignore:
+    run: r:latest analysis/model/km.R mrna prior_covid_infection covidemergency ignore
     needs:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/prior_covid_infection/noncoviddeath/*.rds
-        png: output/mrna/models/km/prior_covid_infection/noncoviddeath/*.png
+        rds: output/mrna/models/km/prior_covid_infection/ignore/covidemergency/*.rds
+        png: output/mrna/models/km/prior_covid_infection/ignore/covidemergency/*.png
 
-  ## # # # # # # # # # # # # # # # # # # # 
-  ## cohort: mrna; subgroup: vax12_type 
-  ## # # # # # # # # # # # # # # # # # # # 
-
-  km_mrna_vax12_type_postest:
-    run: r:latest analysis/model/km.R mrna vax12_type postest
+  km_mrna_prior_covid_infection_noncoviddeath_ignore:
+    run: r:latest analysis/model/km.R mrna prior_covid_infection noncoviddeath ignore
     needs:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/vax12_type/postest/*.rds
-        png: output/mrna/models/km/vax12_type/postest/*.png
+        rds: output/mrna/models/km/prior_covid_infection/ignore/noncoviddeath/*.rds
+        png: output/mrna/models/km/prior_covid_infection/ignore/noncoviddeath/*.png
 
-  km_mrna_vax12_type_covidadmitted:
-    run: r:latest analysis/model/km.R mrna vax12_type covidadmitted
+  ## # # # # # # # # # # # # # # # # # # # # # # # # # # #  
+  ## cohort: mrna; subgroup: vax12_type; variant option: ignore 
+  ## # # # # # # # # # # # # # # # # # # # # # # # # # # #  
+
+  km_mrna_vax12_type_postest_ignore:
+    run: r:latest analysis/model/km.R mrna vax12_type postest ignore
     needs:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/vax12_type/covidadmitted/*.rds
-        png: output/mrna/models/km/vax12_type/covidadmitted/*.png
+        rds: output/mrna/models/km/vax12_type/ignore/postest/*.rds
+        png: output/mrna/models/km/vax12_type/ignore/postest/*.png
 
-  km_mrna_vax12_type_covidcritcareordeath:
-    run: r:latest analysis/model/km.R mrna vax12_type covidcritcareordeath
+  km_mrna_vax12_type_covidadmitted_ignore:
+    run: r:latest analysis/model/km.R mrna vax12_type covidadmitted ignore
     needs:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/vax12_type/covidcritcareordeath/*.rds
-        png: output/mrna/models/km/vax12_type/covidcritcareordeath/*.png
+        rds: output/mrna/models/km/vax12_type/ignore/covidadmitted/*.rds
+        png: output/mrna/models/km/vax12_type/ignore/covidadmitted/*.png
 
-  km_mrna_vax12_type_emergency:
-    run: r:latest analysis/model/km.R mrna vax12_type emergency
+  km_mrna_vax12_type_covidcritcareordeath_ignore:
+    run: r:latest analysis/model/km.R mrna vax12_type covidcritcareordeath ignore
     needs:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/vax12_type/emergency/*.rds
-        png: output/mrna/models/km/vax12_type/emergency/*.png
+        rds: output/mrna/models/km/vax12_type/ignore/covidcritcareordeath/*.rds
+        png: output/mrna/models/km/vax12_type/ignore/covidcritcareordeath/*.png
 
-  km_mrna_vax12_type_covidemergency:
-    run: r:latest analysis/model/km.R mrna vax12_type covidemergency
+  km_mrna_vax12_type_coviddeath_ignore:
+    run: r:latest analysis/model/km.R mrna vax12_type coviddeath ignore
     needs:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/vax12_type/covidemergency/*.rds
-        png: output/mrna/models/km/vax12_type/covidemergency/*.png
+        rds: output/mrna/models/km/vax12_type/ignore/coviddeath/*.rds
+        png: output/mrna/models/km/vax12_type/ignore/coviddeath/*.png
 
-  km_mrna_vax12_type_noncoviddeath:
-    run: r:latest analysis/model/km.R mrna vax12_type noncoviddeath
+  km_mrna_vax12_type_emergency_ignore:
+    run: r:latest analysis/model/km.R mrna vax12_type emergency ignore
     needs:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/vax12_type/noncoviddeath/*.rds
-        png: output/mrna/models/km/vax12_type/noncoviddeath/*.png
+        rds: output/mrna/models/km/vax12_type/ignore/emergency/*.rds
+        png: output/mrna/models/km/vax12_type/ignore/emergency/*.png
 
-  ## # # # # # # # # # # # # # # # # # # # 
-  ## cohort: mrna; subgroup: ageband 
-  ## # # # # # # # # # # # # # # # # # # # 
-
-  km_mrna_ageband_postest:
-    run: r:latest analysis/model/km.R mrna ageband postest
+  km_mrna_vax12_type_covidemergency_ignore:
+    run: r:latest analysis/model/km.R mrna vax12_type covidemergency ignore
     needs:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/ageband/postest/*.rds
-        png: output/mrna/models/km/ageband/postest/*.png
+        rds: output/mrna/models/km/vax12_type/ignore/covidemergency/*.rds
+        png: output/mrna/models/km/vax12_type/ignore/covidemergency/*.png
 
-  km_mrna_ageband_covidadmitted:
-    run: r:latest analysis/model/km.R mrna ageband covidadmitted
+  km_mrna_vax12_type_noncoviddeath_ignore:
+    run: r:latest analysis/model/km.R mrna vax12_type noncoviddeath ignore
     needs:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/ageband/covidadmitted/*.rds
-        png: output/mrna/models/km/ageband/covidadmitted/*.png
+        rds: output/mrna/models/km/vax12_type/ignore/noncoviddeath/*.rds
+        png: output/mrna/models/km/vax12_type/ignore/noncoviddeath/*.png
 
-  km_mrna_ageband_covidcritcareordeath:
-    run: r:latest analysis/model/km.R mrna ageband covidcritcareordeath
+  ## # # # # # # # # # # # # # # # # # # # # # # # # # # #  
+  ## cohort: mrna; subgroup: ageband; variant option: ignore 
+  ## # # # # # # # # # # # # # # # # # # # # # # # # # # #  
+
+  km_mrna_ageband_postest_ignore:
+    run: r:latest analysis/model/km.R mrna ageband postest ignore
     needs:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/ageband/covidcritcareordeath/*.rds
-        png: output/mrna/models/km/ageband/covidcritcareordeath/*.png
+        rds: output/mrna/models/km/ageband/ignore/postest/*.rds
+        png: output/mrna/models/km/ageband/ignore/postest/*.png
 
-  km_mrna_ageband_emergency:
-    run: r:latest analysis/model/km.R mrna ageband emergency
+  km_mrna_ageband_covidadmitted_ignore:
+    run: r:latest analysis/model/km.R mrna ageband covidadmitted ignore
     needs:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/ageband/emergency/*.rds
-        png: output/mrna/models/km/ageband/emergency/*.png
+        rds: output/mrna/models/km/ageband/ignore/covidadmitted/*.rds
+        png: output/mrna/models/km/ageband/ignore/covidadmitted/*.png
 
-  km_mrna_ageband_covidemergency:
-    run: r:latest analysis/model/km.R mrna ageband covidemergency
+  km_mrna_ageband_covidcritcareordeath_ignore:
+    run: r:latest analysis/model/km.R mrna ageband covidcritcareordeath ignore
     needs:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/ageband/covidemergency/*.rds
-        png: output/mrna/models/km/ageband/covidemergency/*.png
+        rds: output/mrna/models/km/ageband/ignore/covidcritcareordeath/*.rds
+        png: output/mrna/models/km/ageband/ignore/covidcritcareordeath/*.png
 
-  km_mrna_ageband_noncoviddeath:
-    run: r:latest analysis/model/km.R mrna ageband noncoviddeath
+  km_mrna_ageband_coviddeath_ignore:
+    run: r:latest analysis/model/km.R mrna ageband coviddeath ignore
     needs:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/ageband/noncoviddeath/*.rds
-        png: output/mrna/models/km/ageband/noncoviddeath/*.png
+        rds: output/mrna/models/km/ageband/ignore/coviddeath/*.rds
+        png: output/mrna/models/km/ageband/ignore/coviddeath/*.png
+
+  km_mrna_ageband_emergency_ignore:
+    run: r:latest analysis/model/km.R mrna ageband emergency ignore
+    needs:
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        rds: output/mrna/models/km/ageband/ignore/emergency/*.rds
+        png: output/mrna/models/km/ageband/ignore/emergency/*.png
+
+  km_mrna_ageband_covidemergency_ignore:
+    run: r:latest analysis/model/km.R mrna ageband covidemergency ignore
+    needs:
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        rds: output/mrna/models/km/ageband/ignore/covidemergency/*.rds
+        png: output/mrna/models/km/ageband/ignore/covidemergency/*.png
+
+  km_mrna_ageband_noncoviddeath_ignore:
+    run: r:latest analysis/model/km.R mrna ageband noncoviddeath ignore
+    needs:
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        rds: output/mrna/models/km/ageband/ignore/noncoviddeath/*.rds
+        png: output/mrna/models/km/ageband/ignore/noncoviddeath/*.png
 
   ## # # # # # # # # # # # # # # # # # # # 
   ## combine all outputs for mrna cohort 
@@ -539,36 +720,55 @@ actions:
   combine_km_mrna:
     run: r:latest analysis/model/km_combine.R mrna
     needs:
-    - km_mrna_all_postest
-    - km_mrna_all_covidadmitted
-    - km_mrna_all_covidcritcareordeath
-    - km_mrna_all_emergency
-    - km_mrna_all_covidemergency
-    - km_mrna_all_noncoviddeath
-    - km_mrna_vax3_type_postest
-    - km_mrna_vax3_type_covidadmitted
-    - km_mrna_vax3_type_covidcritcareordeath
-    - km_mrna_vax3_type_emergency
-    - km_mrna_vax3_type_covidemergency
-    - km_mrna_vax3_type_noncoviddeath
-    - km_mrna_prior_covid_infection_postest
-    - km_mrna_prior_covid_infection_covidadmitted
-    - km_mrna_prior_covid_infection_covidcritcareordeath
-    - km_mrna_prior_covid_infection_emergency
-    - km_mrna_prior_covid_infection_covidemergency
-    - km_mrna_prior_covid_infection_noncoviddeath
-    - km_mrna_vax12_type_postest
-    - km_mrna_vax12_type_covidadmitted
-    - km_mrna_vax12_type_covidcritcareordeath
-    - km_mrna_vax12_type_emergency
-    - km_mrna_vax12_type_covidemergency
-    - km_mrna_vax12_type_noncoviddeath
-    - km_mrna_ageband_postest
-    - km_mrna_ageband_covidadmitted
-    - km_mrna_ageband_covidcritcareordeath
-    - km_mrna_ageband_emergency
-    - km_mrna_ageband_covidemergency
-    - km_mrna_ageband_noncoviddeath
+    - km_mrna_all_postest_ignore
+    - km_mrna_all_postest_split
+    - km_mrna_all_postest_restrict
+    - km_mrna_all_covidadmitted_ignore
+    - km_mrna_all_covidadmitted_split
+    - km_mrna_all_covidadmitted_restrict
+    - km_mrna_all_covidcritcareordeath_ignore
+    - km_mrna_all_covidcritcareordeath_split
+    - km_mrna_all_covidcritcareordeath_restrict
+    - km_mrna_all_coviddeath_ignore
+    - km_mrna_all_coviddeath_split
+    - km_mrna_all_coviddeath_restrict
+    - km_mrna_all_emergency_ignore
+    - km_mrna_all_emergency_split
+    - km_mrna_all_emergency_restrict
+    - km_mrna_all_covidemergency_ignore
+    - km_mrna_all_covidemergency_split
+    - km_mrna_all_covidemergency_restrict
+    - km_mrna_all_noncoviddeath_ignore
+    - km_mrna_all_noncoviddeath_split
+    - km_mrna_all_noncoviddeath_restrict
+    - km_mrna_vax3_type_postest_ignore
+    - km_mrna_vax3_type_covidadmitted_ignore
+    - km_mrna_vax3_type_covidcritcareordeath_ignore
+    - km_mrna_vax3_type_coviddeath_ignore
+    - km_mrna_vax3_type_emergency_ignore
+    - km_mrna_vax3_type_covidemergency_ignore
+    - km_mrna_vax3_type_noncoviddeath_ignore
+    - km_mrna_prior_covid_infection_postest_ignore
+    - km_mrna_prior_covid_infection_covidadmitted_ignore
+    - km_mrna_prior_covid_infection_covidcritcareordeath_ignore
+    - km_mrna_prior_covid_infection_coviddeath_ignore
+    - km_mrna_prior_covid_infection_emergency_ignore
+    - km_mrna_prior_covid_infection_covidemergency_ignore
+    - km_mrna_prior_covid_infection_noncoviddeath_ignore
+    - km_mrna_vax12_type_postest_ignore
+    - km_mrna_vax12_type_covidadmitted_ignore
+    - km_mrna_vax12_type_covidcritcareordeath_ignore
+    - km_mrna_vax12_type_coviddeath_ignore
+    - km_mrna_vax12_type_emergency_ignore
+    - km_mrna_vax12_type_covidemergency_ignore
+    - km_mrna_vax12_type_noncoviddeath_ignore
+    - km_mrna_ageband_postest_ignore
+    - km_mrna_ageband_covidadmitted_ignore
+    - km_mrna_ageband_covidcritcareordeath_ignore
+    - km_mrna_ageband_coviddeath_ignore
+    - km_mrna_ageband_emergency_ignore
+    - km_mrna_ageband_covidemergency_ignore
+    - km_mrna_ageband_noncoviddeath_ignore
     outputs:
       moderately_sensitive:
         rds: output/mrna/models/km/combined/*.csv

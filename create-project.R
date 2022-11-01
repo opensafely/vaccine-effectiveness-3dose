@@ -253,19 +253,33 @@ action_extract_and_match <- function(cohort){
 # test action
 # action_extract_and_match("pfizer", 2)
 
+km_args <- expand_grid(
+  subgroup=subgroups,
+  outcome=outcomes,
+) %>%
+  left_join(
+    expand_grid(
+      subgroup="all",
+      outcome=outcomes,
+      variant_option = variant_options
+    ),
+    by = c("subgroup", "outcome")
+  ) %>%
+  mutate(across(variant_option, replace_na, "ignore"))
 
-action_km <- function(cohort, subgroup, outcome){
+
+action_km <- function(cohort, subgroup, outcome, variant_option){
   action(
-    name = glue("km_{cohort}_{subgroup}_{outcome}"),
+    name = glue("km_{cohort}_{subgroup}_{outcome}_{variant_option}"),
     run = glue("r:latest analysis/model/km.R"),
-    arguments = c(cohort, subgroup, outcome),
+    arguments = c(cohort, subgroup, outcome, variant_option),
     needs = namelesslst(
       glue("process_controlfinal_{cohort}"),
     ),
     moderately_sensitive= lst(
       #csv= glue("output/{cohort}/models/km/{subgroup}/{outcome}/*.csv"),
-      rds= glue("output/{cohort}/models/km/{subgroup}/{outcome}/*.rds"),
-      png= glue("output/{cohort}/models/km/{subgroup}/{outcome}/*.png"),
+      rds= glue("output/{cohort}/models/km/{subgroup}/{variant_option}/{outcome}/*.rds"),
+      png= glue("output/{cohort}/models/km/{subgroup}/{variant_option}/{outcome}/*.png"),
     )
   )
 }
@@ -282,11 +296,8 @@ action_km_combine <- function(
     needs = splice(
       as.list(
         glue_data(
-          .x=expand_grid(
-            subgroup=subgroups,
-            outcome=outcomes,
-          ),
-          "km_{cohort}_{subgroup}_{outcome}"
+          .x=km_args,
+          "km_{cohort}_{subgroup}_{outcome}_{variant_option}"
         )
       )
     ),
@@ -438,14 +449,19 @@ actions_list <- splice(
         lapply_actions(
           subgroups,
           function(y) {
-            c(
-              comment("# # # # # # # # # # # # # # # # # # #",
-                      glue("cohort: {x}; subgroup: {y}"),
-                      "# # # # # # # # # # # # # # # # # # #"),
-              lapply_actions(
-                outcomes,
-                function(z) action_km(x,y,z)
-              )
+            lapply_actions(
+              km_args %>% filter(subgroup==y) %>% distinct(variant_option) %>% unlist() %>% unname(),
+              function(v) {
+                c(
+                  comment("# # # # # # # # # # # # # # # # # # # # # # # # # # # ",
+                          glue("cohort: {x}; subgroup: {y}; variant option: {v}"),
+                          "# # # # # # # # # # # # # # # # # # # # # # # # # # # "),
+                  lapply_actions(
+                    outcomes,
+                    function(z) action_km(x,y,z,v)
+                  )
+                )
+              }
             )
           }
         ),

@@ -43,7 +43,8 @@ firstmoderna_day <- as.integer(firstmoderna_date - index_date)
 
 known_variables <- c(
   "index_date", "pfizerstart_date", "modernastart_date", "firstpfizer_date", "firstaz_date", "firstmoderna_date",
-  "index_day", "pfizerstart_day", "modernastart_day", "firstpfizer_day", "firstaz_day", "firstmoderna_day"
+  "index_day", "pfizerstart_day", "modernastart_day", "firstpfizer_day", "firstaz_day", "firstmoderna_day",
+  "maxfup"
 )
 
 sim_list <- splice(

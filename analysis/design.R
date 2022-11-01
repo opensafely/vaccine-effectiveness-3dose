@@ -215,3 +215,5 @@ covariates <- c(covariates_model, covariates_summarise)
 # other variables -----
 # keep all variables starting with these strings
 other_variables <- c("trial", "treated", "control", "match", "vax", "jcvi")
+
+variant_options <- c("ignore", "split", "restrict")

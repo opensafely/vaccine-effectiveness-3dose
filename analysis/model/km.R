@@ -38,7 +38,7 @@ args <- commandArgs(trailingOnly=TRUE)
 if(length(args)==0){
   # use for interactive testing
   cohort <- "mrna"
-  subgroup <- "agegroup"
+  subgroup <- "all"
   variant_option <- "split" # ignore, split, restrict (delta, transition, omicron)
   outcome <- "postest"
   
@@ -79,6 +79,20 @@ if (variant_option == "restrict") {
       variant_id = 1L, # here variant_id is just constant
       variant = factor(variant_option)
       )
+  
+}
+
+if (subgroup == "vax3_type") {
+  
+  # when subgroup is vax3_type, matched pairs take the vax3_type of the treated person
+  data_matched <- data_matched %>%
+    group_by(trial_date, match_id, matching_round) %>%
+    mutate(uniquematch_id = cur_group_id()) %>% 
+    ungroup() %>%
+    group_by(uniquematch_id) %>%
+    mutate(across(vax3_type, ~.x[treated==1])) %>%
+    ungroup() %>%
+    select(-uniquematch_id)
   
 }
 
@@ -141,6 +155,7 @@ data_matched <- data_matched %>%
     
   )
 
+
 # check one row per new_id
 cat("check for duplicate new_id:\n")
 data_matched %>% group_by(new_id) %>% count() %>% filter(n>1) %>% nrow() %>% print()
@@ -173,7 +188,7 @@ if (variant_option == "split") {
     mutate(
       variant = variant_dates$variant[variant_id],
       variantstart_date = variant_dates$start_date[variant_id],
-      variantend_date = variant_dates$end_date[variant_id] - 1,
+      variantend_date = variant_dates$end_date[variant_id],# - 1,
       variantstart_day = as.integer(variantstart_date - trial_date),
       variantend_day = as.integer(variantend_date - trial_date)
     ) %>%
@@ -181,13 +196,13 @@ if (variant_option == "split") {
     # earliest variantstart_day is zero 
     mutate(across(variantstart_day, ~pmax(0, .x))) %>%
     # latest variantend_day is trial_date + maxfup
-    mutate(across(variantend_day, ~pmin(maxfup, .x))) %>%
+    mutate(across(variantend_day, ~pmin(maxfup, .x))) %>% 
     # filter nonsense rows after cleaning
     filter(
       # remove rows where variantend_date < trial_date
       variantend_day >= 0,
       # remove rows where cleaned variantend_day < variantstart_day
-      variantend_day >= variantstart_day
+      variantend_day > variantstart_day
     ) %>%
     select(
       new_id, variant_id, variantstart_day, variantend_day
@@ -299,7 +314,10 @@ km_process <- function(.data, round_by){
     n.risk, n.event, n.censor,
     surv, surv.se, surv.ll, surv.ul,
     risk, risk.se, risk.ll, risk.ul
-  ) 
+  ) %>%
+    mutate(time_max = max(if_else(is.na(surv), NA_real_, time), na.rm = TRUE)) %>%
+    filter(time <= time_max) %>%
+    select(-time_max)
   
  }
  

@@ -82,7 +82,7 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("")) {
     ethnicity ~ "Ethnicity",
     imd_Q5 ~ "Deprivation",
     region ~ "Region",
-    rural_urban_group ~ "Rurality",
+    # rural_urban_group ~ "Rurality",
     
     bmi ~ "Body mass index",
     
@@ -100,6 +100,7 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("")) {
     
     vax3_type_descr ~ "Third dose vaccine type",
     vax12_type_descr ~ "Primary course vaccine type",
+    vax12_gap ~ "Days between first and second dose",
     dayssincevax2 ~ "Days since second dose",
     
     prior_test_cat ~ "Number of SARS-CoV-2 tests during unvaccinated period",

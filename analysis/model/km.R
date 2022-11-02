@@ -38,8 +38,8 @@ args <- commandArgs(trailingOnly=TRUE)
 if(length(args)==0){
   # use for interactive testing
   cohort <- "mrna"
-  subgroup <- "all"
-  variant_option <- "split" # ignore, split, restrict (delta, transition, omicron)
+  subgroup <- "agegroup"
+  variant_option <- "ignore" # ignore, split, restrict (delta, transition, omicron)
   outcome <- "postest"
   
 } else {
@@ -64,15 +64,6 @@ fs::dir_create(output_dir)
 
 
 data_matched <- read_rds(ghere("output", cohort, "match", "data_matched.rds"))
-
-# define variant dates ----
-variant_dates <- tribble(
-  ~variant, ~start_date, 
-  "delta", study_dates$mrna$start_date, 
-  "transition", as.Date("2021-12-01"), 
-  "omicron", as.Date("2022-01-01"),
-) %>% 
-  mutate(end_date = lead(start_date, default = study_dates$studyend_date))
 
 if (variant_option == "restrict") {
   
@@ -545,15 +536,14 @@ kmcontrasts <- function(data, cuts=NULL){
 # variant = "delta"/"transition"/"omicron": restrict to a variant era
 coxcontrast <- function(data, adj = FALSE, cuts=NULL){
   
-  cox_formula <- formula(Surv(tstart, tstop, ind_outcome) ~ treated)
+  cox_formula <- formula(Surv(tstart, tstop, ind_outcome) ~ treated:strata(period_id))
+  # period_id is cuts when variant_option=ignore
+  # preiod_id is cuts:variant otherwise
   
   if (is.null(cuts)) {
     stop("Specify `cuts`.")
   } else if (length(cuts) < 2) {
     stop("`cuts` must specify a start and an end date")
-  } else if (length(cuts) > 2) {
-    # stratify by fup_period if more than one follow-up period
-    cox_formula <- cox_formula %>% update(as.formula(". ~ .:strata(period_id)"))
   } 
   
   # add covariates if fitting adjusted model

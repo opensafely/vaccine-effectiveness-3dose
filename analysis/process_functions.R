@@ -103,6 +103,13 @@ process_demo <- function(.data) {
       
       age65plus=age>=65,
       
+      agegroup = cut(
+        age, 
+        breaks=c(-Inf, 18, 50, 65, 80, Inf),
+        labels=c("under 18", "18-49", "50-64", "65-79", "80+"),
+        right=FALSE
+      ),
+      
       ageband = cut(
         age,
         breaks=c(-Inf, 18, 40, 50, 60, 70, 80, 90, Inf),
@@ -276,10 +283,7 @@ process_vax <- function(.data, stage) {
       vax2_type = covid_vax_2_type,
       vax3_type = covid_vax_3_type,
       
-      
       vax12_type = paste0(vax1_type, "-", vax2_type),
-      
-      
       
       vax1_type_descr = fct_case_when(
         vax1_type == "pfizer" ~ "BNT162b2",
@@ -300,12 +304,14 @@ process_vax <- function(.data, stage) {
         TRUE ~ NA_character_
       ),
       
-      
       vax12_type_descr = paste0(vax1_type_descr, "-", vax2_type_descr),
       
       vax1_date = covid_vax_1_date,
       vax2_date = covid_vax_2_date,
       vax3_date = covid_vax_3_date,
+      
+      vax12_gap = as.integer(vax2_date - vax1_date), 
+      # vax12_gap is a covariate in the model - do we want to keep it continuous, add a quadratic term, categorise it?
       
       # day of second dose relative to start of vaccination rollout (used in matching)
       vax2_day = as.integer(floor((vax2_date - as.Date("2020-12-08")))),
@@ -335,6 +341,8 @@ process_outcome <- function(.data) {
         !is.na(death_date) ~ "not covid-related",
         TRUE ~ NA_character_
       ),
+      
+      covidcritcareordeath_date = pmin(covidcritcare_date, coviddeath_date, na.rm=TRUE)
       
     )
 }

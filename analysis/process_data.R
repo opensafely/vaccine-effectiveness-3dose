@@ -286,7 +286,7 @@ if (stage == "final") {
     select(
       ends_with("_id"),
       starts_with(other_variables),
-      any_of(c(matching_variables, covariates, events_lookup$event_var))
+      any_of(c(matching_variables, covariates, events_lookup$event_var, subgroups))
     )
   
   write_rds(data_matched, here("output", cohort, "match", "data_matched.rds"), compress="gz")
@@ -548,7 +548,7 @@ data_eligible <- data_criteria %>%
               select(
                 ends_with("_id"),
                 starts_with(other_variables),
-                any_of(c(matching_variables, covariates, events_lookup$event_var))
+                any_of(c(matching_variables, covariates, events_lookup$event_var, subgroups))
                 ), 
             by="patient_id") %>%
   droplevels()

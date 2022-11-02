@@ -646,71 +646,71 @@ actions:
         png: output/mrna/models/km/vax12_type/ignore/noncoviddeath/*.png
 
   ## # # # # # # # # # # # # # # # # # # # # # # # # # # #  
-  ## cohort: mrna; subgroup: ageband; variant option: ignore 
+  ## cohort: mrna; subgroup: agegroup; variant option: ignore 
   ## # # # # # # # # # # # # # # # # # # # # # # # # # # #  
 
-  km_mrna_ageband_ignore_postest:
-    run: r:latest analysis/model/km.R mrna ageband ignore postest
+  km_mrna_agegroup_ignore_postest:
+    run: r:latest analysis/model/km.R mrna agegroup ignore postest
     needs:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/ageband/ignore/postest/*.rds
-        png: output/mrna/models/km/ageband/ignore/postest/*.png
+        rds: output/mrna/models/km/agegroup/ignore/postest/*.rds
+        png: output/mrna/models/km/agegroup/ignore/postest/*.png
 
-  km_mrna_ageband_ignore_covidadmitted:
-    run: r:latest analysis/model/km.R mrna ageband ignore covidadmitted
+  km_mrna_agegroup_ignore_covidadmitted:
+    run: r:latest analysis/model/km.R mrna agegroup ignore covidadmitted
     needs:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/ageband/ignore/covidadmitted/*.rds
-        png: output/mrna/models/km/ageband/ignore/covidadmitted/*.png
+        rds: output/mrna/models/km/agegroup/ignore/covidadmitted/*.rds
+        png: output/mrna/models/km/agegroup/ignore/covidadmitted/*.png
 
-  km_mrna_ageband_ignore_covidcritcareordeath:
-    run: r:latest analysis/model/km.R mrna ageband ignore covidcritcareordeath
+  km_mrna_agegroup_ignore_covidcritcareordeath:
+    run: r:latest analysis/model/km.R mrna agegroup ignore covidcritcareordeath
     needs:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/ageband/ignore/covidcritcareordeath/*.rds
-        png: output/mrna/models/km/ageband/ignore/covidcritcareordeath/*.png
+        rds: output/mrna/models/km/agegroup/ignore/covidcritcareordeath/*.rds
+        png: output/mrna/models/km/agegroup/ignore/covidcritcareordeath/*.png
 
-  km_mrna_ageband_ignore_coviddeath:
-    run: r:latest analysis/model/km.R mrna ageband ignore coviddeath
+  km_mrna_agegroup_ignore_coviddeath:
+    run: r:latest analysis/model/km.R mrna agegroup ignore coviddeath
     needs:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/ageband/ignore/coviddeath/*.rds
-        png: output/mrna/models/km/ageband/ignore/coviddeath/*.png
+        rds: output/mrna/models/km/agegroup/ignore/coviddeath/*.rds
+        png: output/mrna/models/km/agegroup/ignore/coviddeath/*.png
 
-  km_mrna_ageband_ignore_emergency:
-    run: r:latest analysis/model/km.R mrna ageband ignore emergency
+  km_mrna_agegroup_ignore_emergency:
+    run: r:latest analysis/model/km.R mrna agegroup ignore emergency
     needs:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/ageband/ignore/emergency/*.rds
-        png: output/mrna/models/km/ageband/ignore/emergency/*.png
+        rds: output/mrna/models/km/agegroup/ignore/emergency/*.rds
+        png: output/mrna/models/km/agegroup/ignore/emergency/*.png
 
-  km_mrna_ageband_ignore_covidemergency:
-    run: r:latest analysis/model/km.R mrna ageband ignore covidemergency
+  km_mrna_agegroup_ignore_covidemergency:
+    run: r:latest analysis/model/km.R mrna agegroup ignore covidemergency
     needs:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/ageband/ignore/covidemergency/*.rds
-        png: output/mrna/models/km/ageband/ignore/covidemergency/*.png
+        rds: output/mrna/models/km/agegroup/ignore/covidemergency/*.rds
+        png: output/mrna/models/km/agegroup/ignore/covidemergency/*.png
 
-  km_mrna_ageband_ignore_noncoviddeath:
-    run: r:latest analysis/model/km.R mrna ageband ignore noncoviddeath
+  km_mrna_agegroup_ignore_noncoviddeath:
+    run: r:latest analysis/model/km.R mrna agegroup ignore noncoviddeath
     needs:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/ageband/ignore/noncoviddeath/*.rds
-        png: output/mrna/models/km/ageband/ignore/noncoviddeath/*.png
+        rds: output/mrna/models/km/agegroup/ignore/noncoviddeath/*.rds
+        png: output/mrna/models/km/agegroup/ignore/noncoviddeath/*.png
 
   ## # # # # # # # # # # # # # # # # # # # 
   ## combine all outputs for mrna cohort 
@@ -761,13 +761,13 @@ actions:
     - km_mrna_vax12_type_ignore_emergency
     - km_mrna_vax12_type_ignore_covidemergency
     - km_mrna_vax12_type_ignore_noncoviddeath
-    - km_mrna_ageband_ignore_postest
-    - km_mrna_ageband_ignore_covidadmitted
-    - km_mrna_ageband_ignore_covidcritcareordeath
-    - km_mrna_ageband_ignore_coviddeath
-    - km_mrna_ageband_ignore_emergency
-    - km_mrna_ageband_ignore_covidemergency
-    - km_mrna_ageband_ignore_noncoviddeath
+    - km_mrna_agegroup_ignore_postest
+    - km_mrna_agegroup_ignore_covidadmitted
+    - km_mrna_agegroup_ignore_covidcritcareordeath
+    - km_mrna_agegroup_ignore_coviddeath
+    - km_mrna_agegroup_ignore_emergency
+    - km_mrna_agegroup_ignore_covidemergency
+    - km_mrna_agegroup_ignore_noncoviddeath
     outputs:
       moderately_sensitive:
         rds: output/mrna/models/km/combined/*.csv

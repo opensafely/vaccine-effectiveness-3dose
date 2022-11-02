@@ -253,26 +253,11 @@ action_extract_and_match <- function(cohort){
 # test action
 # action_extract_and_match("pfizer", 2)
 
-km_args <- expand_grid(
-  subgroup=subgroups,
-  outcome=outcomes,
-) %>%
-  left_join(
-    expand_grid(
-      subgroup="all",
-      outcome=outcomes,
-      variant_option = variant_options
-    ),
-    by = c("subgroup", "outcome")
-  ) %>%
-  mutate(across(variant_option, replace_na, "ignore"))
-
-
-action_km <- function(cohort, subgroup, outcome, variant_option){
+action_km <- function(cohort, subgroup, variant_option, outcome){
   action(
-    name = glue("km_{cohort}_{subgroup}_{outcome}_{variant_option}"),
+    name = glue("km_{cohort}_{subgroup}_{variant_option}_{outcome}"),
     run = glue("r:latest analysis/model/km.R"),
-    arguments = c(cohort, subgroup, outcome, variant_option),
+    arguments = c(cohort, subgroup, variant_option, outcome),
     needs = namelesslst(
       glue("process_controlfinal_{cohort}"),
     ),
@@ -297,7 +282,7 @@ action_km_combine <- function(
       as.list(
         glue_data(
           .x=km_args,
-          "km_{cohort}_{subgroup}_{outcome}_{variant_option}"
+          "km_{cohort}_{subgroup}_{variant_option}_{outcome}"
         )
       )
     ),
@@ -458,7 +443,7 @@ actions_list <- splice(
                           "# # # # # # # # # # # # # # # # # # # # # # # # # # # "),
                   lapply_actions(
                     outcomes,
-                    function(z) action_km(x,y,z,v)
+                    function(z) action_km(cohort=x, subgroup=y, variant_option=v, outcome=z)
                   )
                 )
               }

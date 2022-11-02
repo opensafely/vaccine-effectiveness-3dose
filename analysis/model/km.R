@@ -39,7 +39,7 @@ if(length(args)==0){
   # use for interactive testing
   cohort <- "mrna"
   subgroup <- "agegroup"
-  variant_option <- "ignore" # ignore, split, restrict (delta, transition, omicron)
+  variant_option <- "split" # ignore, split, restrict (delta, transition, omicron)
   outcome <- "postest"
   
 } else {
@@ -536,14 +536,17 @@ kmcontrasts <- function(data, cuts=NULL){
 # variant = "delta"/"transition"/"omicron": restrict to a variant era
 coxcontrast <- function(data, adj = FALSE, cuts=NULL){
   
-  cox_formula <- formula(Surv(tstart, tstop, ind_outcome) ~ treated:strata(period_id))
-  # period_id is cuts when variant_option=ignore
-  # preiod_id is cuts:variant otherwise
+  cox_formula <- formula(Surv(tstart, tstop, ind_outcome) ~ treated)
   
   if (is.null(cuts)) {
     stop("Specify `cuts`.")
   } else if (length(cuts) < 2) {
     stop("`cuts` must specify a start and an end date")
+  } 
+  
+  if (length(cuts) > 2 | variant_option != "ignore") {
+    # stratify by fup_period if more than one follow-up period
+    cox_formula <- cox_formula %>% update(as.formula(". ~ .:strata(period_id)"))
   } 
   
   # add covariates if fitting adjusted model

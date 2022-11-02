@@ -121,7 +121,7 @@ recoder <-
       `Third dose brand` = "vax3_type",
       `Prior SARS-CoV-2 infection` = "prior_covid_infection",
       `Primary course vaccine brand` = "vax12_type",
-      `Age` = "ageband"
+      `Age` = "agegroup"
     ),
     status = c(
       `Unmatched`= "unmatched",
@@ -132,7 +132,7 @@ recoder <-
       `Three doses` = "1"
     ),
     outcome = set_names(events_lookup$event, events_lookup$event_descr),
-    all = c(` ` = "all"),
+    all = c(`Main` = "all"),
     prior_covid_infection = c(
       `No prior SARS-CoV-2 infection` = "FALSE",
       `Prior SARS-CoV-2 infection` = "TRUE"
@@ -145,15 +145,15 @@ recoder <-
       `BNT162b2` = "pfizer",
       `mRNA-1273` = "moderna"
     ),
-    ageband = c(
-      `18-39 years` = "18-39",
-      `40-64 years` = "40-64",
+    agegroup = c(
+      `18-49 years` = "18-49",
+      `50-64 years` = "50-64",
       `65-79 years` = "65-79",
-      `80+ years` = "85+"
+      `80+ years` = "80+"
     )
   )
 
-subgroups <- c("all", "vax3_type", "prior_covid_infection", "vax12_type", "ageband")
+subgroups <- c("all", "vax3_type", "prior_covid_infection", "vax12_type", "agegroup")
 
 
 ## follow-up time ----
@@ -200,6 +200,7 @@ covariates_model <- c(
   "immunosuppressed",
   "multimorb",
   "pregnancy",
+  "vax12_gap",
   "time_since_infection",
   "prior_test_cat",
   "flu_vaccine"
@@ -217,3 +218,27 @@ covariates <- c(covariates_model, covariates_summarise)
 other_variables <- c("trial", "treated", "control", "match", "vax", "jcvi")
 
 variant_options <- c("ignore", "split", "restrict")
+
+# define variant dates ----
+variant_dates <- tribble(
+  ~variant, ~start_date, 
+  "delta", study_dates$mrna$start_date, 
+  "transition", as.Date("2021-12-01"), 
+  "omicron", as.Date("2022-01-01"),
+) %>% 
+  mutate(end_date = lead(start_date, default = study_dates$studyend_date))
+
+# analysis table 
+km_args <- expand_grid(
+  subgroup=subgroups,
+  outcome=outcomes,
+) %>%
+  left_join(
+    expand_grid(
+      subgroup="all",
+      outcome=outcomes,
+      variant_option = variant_options
+    ),
+    by = c("subgroup", "outcome")
+  ) %>%
+  mutate(across(variant_option, replace_na, "ignore"))

@@ -39,7 +39,7 @@ if(length(args)==0){
   # use for interactive testing
   cohort <- "mrna"
   subgroup <- "all"
-  variant_option <- "split" # ignore, split, restrict (delta, transition, omicron)
+  variant_option <- "ignore" # ignore, split, restrict (delta, transition, omicron)
   outcome <- "postest"
   
 } else {
@@ -144,7 +144,7 @@ data_matched <- data_matched %>%
       # vax4_date-1, # -1 because we assume vax occurs at the start of the day
       death_date,
       variantend_date,
-      trial_date + maxfup,
+      trial_date -1 + maxfup, # I think the "-1" term is needed here, because time 0 is trial_date-1, and if the -1 is not included time goes up to maxfup+1, which results in an NA row in the contrasts output
       na.rm=TRUE
     ),
     
@@ -201,7 +201,7 @@ if (variant_option == "split") {
     filter(
       # remove rows where variantend_date < trial_date
       variantend_day >= 0,
-      # remove rows where cleaned variantend_day < variantstart_day
+      # remove rows where cleaned variantend_day <= variantstart_day
       variantend_day > variantstart_day
     ) %>%
     select(

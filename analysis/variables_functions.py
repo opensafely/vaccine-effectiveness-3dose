@@ -3,7 +3,17 @@ from codelists import *
 import codelists
 
 ####################################################################################################
+## function to add days to a string date
+from datetime import datetime, timedelta
+def days(datestring, days):
+  
+  dt = datetime.strptime(datestring, "%Y-%m-%d").date()
+  dt_add = dt + timedelta(days)
+  datestring_add = datetime.strftime(dt_add, "%Y-%m-%d")
 
+  return datestring_add
+
+####################################################################################################
 def vaccination_date_X(name, index_date, n, product_name_matches=None, target_disease_matches=None):
   # vaccination date, given product_name
   def var_signature(
@@ -34,23 +44,54 @@ def vaccination_date_X(name, index_date, n, product_name_matches=None, target_di
   return variables
 
 ####################################################################################################
-def covid_test_date_X(name, index_date, n, test_result):
+# number of covid tests in n intervals of a given length
+def covid_test_n_X(name, index_date, n, length, test_result):
   # covid test date (result can be "any", "positive", or "negative")
-  def var_signature(name, on_or_after, test_result):
+  def var_signature(name, index_date):
+    return {
+      name: patients.with_test_result_in_sgss(
+        pathogen="SARS-CoV-2",
+        test_result=test_result,
+        between=[index_date, f"{index_date} + {length-1} days"],
+        find_first_match_in_period=True,
+        restrict_to_earliest_specimen_date=False,
+        returning="number_of_matches_in_period",
+        date_format="YYYY-MM-DD",
+      ),
+    }
+  variables = var_signature(f"{name}_1_n", index_date)
+  for i in range(2, n+1):
+    variables.update(var_signature(f"{name}_{i}_n", f"{index_date} + {(i-1)*(length)} days"))
+  return variables
+
+####################################################################################################
+def covid_test_date_X(
+  name, date_name, index_date, n, test_result, 
+  # find_first_match_in_period, 
+  restrict_to_earliest_specimen_date, 
+  returning,
+  return_expectations=None
+  ):
+  # covid test date (result can be "any", "positive", or "negative")
+  def var_signature(name, on_or_after):
     return {
       name: patients.with_test_result_in_sgss(
         pathogen="SARS-CoV-2",
         test_result=test_result,
         on_or_after=on_or_after,
-        find_first_match_in_period=True,
-        restrict_to_earliest_specimen_date=False,
-        returning="date",
-        date_format="YYYY-MM-DD"
+        # find_first_match_in_period=find_first_match_in_period,
+        restrict_to_earliest_specimen_date=restrict_to_earliest_specimen_date,
+        returning=returning,
+        date_format="YYYY-MM-DD",
+        return_expectations=return_expectations
       ),
     }
-  variables = var_signature(f"{name}_1_date", index_date, test_result)
+  variables = var_signature(f"{name}_1_{returning}", index_date)
   for i in range(2, n+1):
-    variables.update(var_signature(f"{name}_{i}_date", f"{name}_{i-1}_date + 1 day", test_result))
+    variables.update(var_signature(
+      f"{name}_{i}_{returning}", 
+      f"{date_name}_{i-1}_date + 1 day"
+      ))
   return variables
 
 ####################################################################################################

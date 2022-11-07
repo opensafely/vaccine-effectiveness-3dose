@@ -55,7 +55,8 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
     case_category <- c("LFT_Only"=0.4, "PCR_Only"=0.5, "LFT_WithPCR"=0.1)
     symptomatic <- c("N"=0.4, "Y"=0.6)
     
-    data_tests <- read_csv(here("output", cohort, "match", "data_matched.csv.gz")) 
+    data_tests <- read_rds(here("output", cohort, "match", "data_matched.rds")) %>%
+      select(patient_id, trial_date)
     
     # add number of tests variables
     data_tests <- data_tests %>%
@@ -142,11 +143,11 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
     as.data.frame() %>% rownames_to_column()
   
   
-  # if(nrow(unmatched_types)>0) stop(
-  #   #unmatched_types
-  #   "inconsistent typing in studydef : dummy dataset\n",
-  #   apply(unmatched_types, 1, function(row) paste(paste(row, collapse=" : "), "\n"))
-  # )
+  if(nrow(unmatched_types)>0) stop(
+    #unmatched_types
+    "inconsistent typing in studydef : dummy dataset\n",
+    apply(unmatched_types, 1, function(row) paste(paste(row, collapse=" : "), "\n"))
+  )
   
   data_extract <- data_custom_dummy 
   
@@ -159,7 +160,32 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
 
 # summarise and save data_extract
 my_skim(data_extract, path = file.path(outdir, "input_treated_skim.txt"))
-write_rds(data_extract, file.path(outdir, "data_extract.rds"), compress = "gz")
+
+# reshape data
+data_anytest_long <- data_extract %>%
+  select(patient_id, trial_date, matches("anytest_\\d+_\\w+")) %>%
+  # mutate(across(matches("anytest_\\d+_date"))) %>%
+  pivot_longer(
+    cols = matches("anytest_\\d+_\\w+"),
+    names_to = c("index", ".value"),
+    names_pattern = "anytest_(.*)_(.*)",
+    values_drop_na = TRUE
+  ) %>%
+  select(-index) %>% rename(anytest_date=date) %>%
+  arrange(patient_id, trial_date, anytest_date) %>%
+  mutate(anytest_cut = cut(
+    as.integer(anytest_date-trial_date),
+    breaks = c(seq(-3*28, 0, 28), seq(14, 14+6*28, 28)),
+    right=FALSE
+  )) %>%
+  mutate(
+    name = factor(
+      as.integer(anytest_cut), 
+      labels = c(str_c("pre_", 1:3), str_c("post_", 0:6)))
+  ) %>%
+  filter(!is.na(anytest_cut))
+
+# TODO from here
 
 # check that the sums of the anytest_*_date variables match the anytest*_*_n variables
 # rerun study definition with larger n if not
@@ -198,6 +224,7 @@ check_n <- data_extract %>%
   ) %>%
   mutate(percent = 100*n/value) 
 
+
 # print:
 cat ("summarise number of tests missing per period:\n")
 check_n %>%
@@ -216,3 +243,9 @@ p <- check_n %>%
 ggsave(filename = file.path(outdir, "check_anytest.png"),
        plot = p, width = 20, height = 15, units = "cm")
   
+
+
+
+
+
+write_rds(data_extract, file.path(outdir, "data_extract.rds"), compress = "gz")

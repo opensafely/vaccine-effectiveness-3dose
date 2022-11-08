@@ -254,7 +254,11 @@ data_surv <- data_surv %>%
           time = seq_len(maxfup), # fill in 1 row for each day of follow up
           fill = list(n.event = 0, n.censor = 0) # fill in zero events on those days
         ) %>%
-        fill(n.risk, .direction = c("up")) # fill in n.risk on each zero-event day
+        fill(n.risk, .direction = c("up")) %>% # fill in n.risk on each zero-event day
+        mutate(
+          # calculate new entries to risk set (people with delayed entry)
+          n.entry = n.risk - lag(n.risk-n.event-n.censor,1,0)
+        )
     }), # return survival table for each day of follow up
   ) %>%
   select(!!subgroup_sym, variant, treated, surv_obj_tidy) %>%
@@ -276,15 +280,16 @@ km_process <- function(.data, round_by){
     N = max(n.risk, na.rm=TRUE),
     
     # rounded to `round_by - (round_by/2)`
+    cml.entry = roundmid_any(cumsum(n.entry), round_by),
     cml.eventcensor = roundmid_any(cumsum(n.event+n.censor), round_by),
     cml.event = roundmid_any(cumsum(n.event), round_by),
     cml.censor = cml.eventcensor - cml.event,
 
     n.event = diff(c(0, cml.event)),
     n.censor = diff(c(0, cml.censor)),
-    # n.risk = roundmid_any(N, round_by) - lag(cml.eventcensor, 1, 0), # this won't work when variant_option="split", 
-    # ok to use the following?
-    n.risk = roundmid_any(n.risk, round_by),
+    # n.risk = roundmid_any(N, round_by) - lag(cml.eventcensor, 1, 0), # this won't work when variant_option="split", need to incorporate delayed entries
+    n.risk = cml.entry - lag(cml.eventcensor, 1, 0), # (sum of new entries) minus (sum of people no longer under follow-up)
+    n.entry = diff(c(0, cml.entry)),
 
     # KM estimate for event of interest, combining censored and competing events as censored
     summand = (1/(n.risk-n.event)) - (1/n.risk), # = n.event / ((n.risk - n.event) * n.risk) but re-written to prevent integer overflow
@@ -311,7 +316,7 @@ km_process <- function(.data, round_by){
   ) %>% select(
     !!subgroup_sym, variant, treated, time, lagtime, leadtime, interval,
     cml.event, cml.censor,
-    n.risk, n.event, n.censor,
+    n.entry, n.risk, n.event, n.censor,
     surv, surv.se, surv.ll, surv.ul,
     risk, risk.se, risk.ll, risk.ul
   ) %>%

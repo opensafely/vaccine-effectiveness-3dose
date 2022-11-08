@@ -1,7 +1,12 @@
 ######################################
 
 # This script:
-
+# reads in testing data
+# processes testing data
+# sense checks the processed data
+# checks that fup-params n_any and n_pos were used in the study definition were appropriate
+# plots the distribution of the testing behaviour variables
+# saves the data
 ######################################
 
 # Preliminaries ----
@@ -135,7 +140,7 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
           !! sym(glue("anytest_{i}_day")) := if_else(
             rbernoulli(n = nrow(data_tests), p=0.3),
             NA_integer_,
-            !! sym(glue("anytest_{i-1}_day")) + as.integer(runif(n=nrow(data_tests), 0, 50))
+            !! sym(glue("anytest_{i-1}_day")) + as.integer(runif(n=nrow(data_tests), 1, 50))
           ),
           !! sym(glue("anytest_{i}_symptomatic")) := if_else(
             is.na(!! sym(glue("anytest_{i}_day"))),
@@ -293,64 +298,85 @@ data_anytest_long <- data_extract %>%
   ) %>%
   select(-index) %>% 
   left_join(
+    data_extract %>% select(patient_id, trial_date, starts_with("firstpostest")), 
+    # joining on  "postest_date" = "firstpostest_date" here means that firstpostest_category only joined if postest if the individual's first postest ever
+    by = c("patient_id", "trial_date", "postest_date" = "firstpostest_date")
+  ) %>%
+  left_join(
     data_split %>%
       distinct(patient_id, trial_date, treated, censor_date), 
     by = c("patient_id", "trial_date")
     ) %>%
-  # duplicate variables for transforming
+  # duplicate dates for censoring
   mutate(
     anytestcensor_date=anytest_date,
     postestcensor_date=postest_date,
-    anytest_cut=anytest_date,
-    postest_cut=postest_date,
   ) %>%
-  # create censored versions of anytest_date and postest_date
+  # censor
   mutate(across(
-    c(anytestcensor_date, postestcensor_date),
+    matches("\\w+testcensor_date"),
     ~if_else(
       .x <= censor_date,
       .x,
       as.Date(NA_character_)
     )
-    )) %>%
-  # replace symptomatic with NA when it corresponds to to censored date
-  mutate(across(
-    anytest_symptomatic,
-    ~if_else(
-      is.na(anytestcensor_date),
-      NA_character_,
-      as.character(anytest_symptomatic)
-    )
   )) %>%
-  # create binned versions of anytest_date and postest_date
+  # these dates will be cut
+  mutate(
+    # uncesnored
+    anytest_cut=anytest_date,
+    postest_cut=postest_date,
+    # censored
+    anytestcensor_cut=anytestcensor_date,
+    postestcensor_cut=postestcensor_date,
+  ) %>%
+  # bin dates
   mutate(across(
-    c(anytest_cut, postest_cut),
+    matches("\\w+_cut"),
     ~ cut(
       as.integer(.x-trial_date),
-      breaks = c(seq(-3*28, 0, 28), seq(14, 14+6*28, 28)),
+      breaks = c(seq(-prebaselineperiods*postbaselinedays, -postbaselinedays, postbaselinedays), postbaselinecuts),
       right=FALSE
     )
   )) %>%
-  arrange(patient_id, trial_date, anytest_date) %>%
+  # remove unbinned dates
+  select(-matches(c("\\w+test_date", "\\w+testcensor_date"))) %>%
+  # replace symptomatic and category with NA when it corresponds to to censored date
+  mutate(across(
+    c(anytest_symptomatic, firstpostest_category),
+    ~if_else(
+      is.na(anytestcensor_cut),
+      NA_character_,
+      as.character(.x)
+    )
+  )) %>%
+  # remove any that are outside the time periods of interest (if this is the case for anytest_cut, it will be the case for all)
+  filter(!is.na(anytest_cut)) %>%
+  arrange(patient_id, trial_date, anytest_cut) %>%
   mutate(
-    # create a variable with same labelling as the \\w+test\\w+_n variables for joining
+    # create a variable with same labeling as the \\w+test\\w+_n variables for joining
     name = factor(
       as.integer(anytest_cut), 
-      labels = c(str_c("pre_", 1:3), str_c("post_", 0:6)))
+      labels = c(str_c("pre_", 1:prebaselineperiods), str_c("post_", 0:postbaselineperiods)))
   ) %>%
-  # remove any that are outside the time periods of interest
-  filter(!is.na(anytest_cut)) %>%
   # sum the number of tests per period
   group_by(patient_id, trial_date, treated, anytest_cut, name) %>%
   summarise(
     # sum all dates (this is just used to check value of n in study definition if correct)
-    sum_anytest=n(), 
-    sum_postest=n(), 
+    sum_anytest_uncensored=sum(!is.na(anytest_cut)),  
+    sum_postest_uncensored=sum(!is.na(anytest_cut)),  
+    # all variables below in this summarise() are derived from censored dates:
     # sum censored dates (this will be used to calculate testing rates)
-    sum_anytestcensor=sum(!is.na(anytestcensor_date)),  
-    sum_postestcensor=sum(!is.na(anytestcensor_date)),  
+    sum_anytest=sum(!is.na(anytestcensor_cut)),  
+    sum_postest=sum(!is.na(anytestcensor_cut)),  
     # number of symtpomatic tests
-    sum_symptomaticcensor=sum(anytest_symptomatic=="Y", na.rm = TRUE),
+    sum_symptomatic=sum(anytest_symptomatic=="Y", na.rm = TRUE),
+    # number of firstpostest
+    sum_firstpostest=sum(!is.na(firstpostest_category)),
+    # number of each firstpostest type
+    sum_lftonly=sum(firstpostest_category=="LFT_Only", na.rm = TRUE),
+    sum_pcronly=sum(firstpostest_category=="PCR_Only", na.rm = TRUE),
+    sum_both=sum(firstpostest_category=="LFT_WithPCR", na.rm = TRUE),
     .groups="keep"
     ) %>%
   ungroup() %>%
@@ -380,19 +406,32 @@ data_anytest_long <- data_extract %>%
       persondays
     )))
 
+
 # checks ----
 
 # sense check
 cat("-----------------")
 cat("Sense checks ----\n")
+
+cat("Maximum counts derived from firstpostest  = 1")
+data_anytest_long %>%
+  # sum all events within each patient_id, trial_date
+  group_by(patient_id, trial_date) %>%
+  summarise(across(c(sum_firstpostest, sum_lftonly, sum_pcronly, sum_both), sum)) %>%
+  ungroup() %>%
+  # max across all patient_id, trial_date
+  summarise(across(c(sum_firstpostest, sum_lftonly, sum_pcronly, sum_both), max)) 
+
 cat("When persondays=NA, check sum_*testcensor=0:\n")
 data_anytest_long %>%
   filter(is.na(persondays)) %>%
-  group_by(anytest_cut) %>%
+  group_by(persondays) %>%
   summarise(across(
-    ends_with("censor"),
+    c(sum_anytest, sum_postest, sum_symptomatic, sum_firstpostest, sum_lftonly, sum_pcronly, sum_both),
     list(min=min, max=max)
-  ))
+  )) %>%
+  ungroup() %>%
+  pivot_longer(cols=-persondays)
 
 # check that the sums of the anytest_*_date variables match the anytest*_*_n variables
 # if not, it's a flag that we need to increase n in the study definition
@@ -402,8 +441,8 @@ cat("Check `n_any` and `n_pos` appropriate ----\n")
 cat ("Summarise number of tests missing per person per period when summing dates:\n")
 data_anytest_long %>%
   mutate(
-    n_missing_anytest = anytest - sum_anytest,
-    n_missing_postest = postest - sum_postest
+    n_missing_anytest = anytest - sum_anytest_uncensored,
+    n_missing_postest = postest - sum_postest_uncensored
     ) %>%
   group_by(anytest_cut, name) %>%
   summarise(across(
@@ -426,7 +465,7 @@ plot_function <- function(result) {
   cat(glue("see {plotpath} for sum({result}_*_date) as a percent of {result}_*_n per period"), "\n")
   
   p <- data_anytest_long %>%
-    mutate(percent = 100*!!sym(glue("sum_{result}"))/!!sym(result)) %>%
+    mutate(percent = 100*!!sym(glue("sum_{result}_uncensored"))/!!sym(result)) %>%
     ggplot(aes(x=percent)) +
     geom_freqpoly(binwidth=1) +
     facet_wrap(~anytest_cut, scales = "free_y", nrow=2) +
@@ -444,11 +483,16 @@ cat("Check distribution of event counts ----\n")
 plotpath <- file.path(outdir, "checks", "check_n_{result}.png")
 cat(glue("see {plotpath} for distribution of event counts"), "\n")
 data_anytest_long %>%
-  select(patient_id, trial_date, treated, anytest_cut, ends_with("censor")) %>%
+  select(-ends_with("uncensored")) %>%
+  select(patient_id, trial_date, treated, anytest_cut, starts_with("sum_")) %>%
   pivot_longer(
-    cols = ends_with("censor")
+    cols = starts_with("sum")
   ) %>%
-  mutate(across(name, ~str_remove_all(.x, "sum_|censor"))) %>%
+  mutate(across(name, 
+                ~factor(
+                  str_remove_all(.x, "sum_"),
+                  levels = c("anytest", "symptomatic", "postest", "firstpostest", "lftonly", "pcronly", "both"))
+                )) %>%
   ggplot(aes(x = value, y = ..density.., colour = treated)) +
   geom_freqpoly(binwidth = 1) +
   facet_grid(anytest_cut~name) +
@@ -459,45 +503,11 @@ ggsave(
 )
 
 
-# save datasets ----
-
-# save firstpostest variables 
-data_firstpostest <- data_extract %>%
-  select(patient_id, trial_date, starts_with("firstpostest")) %>%
-  filter(!is.na(firstpostest_date)) %>%
-  left_join(
-    data_split %>%
-      distinct(patient_id, trial_date, treated, censor_date), 
-    by = c("patient_id", "trial_date")
-  ) %>%
-  # censor events occuring after censor date
-  mutate(across(
-    firstpostest_date, 
-    ~if_else(
-      .x <= censor_date,
-      .x,
-      as.Date(NA_character_)
-    ))) %>%
-  # replace firstpostest_category if firstpostest_date censored
-  mutate(across(
-    firstpostest_category,
-    ~if_else(
-      is.na(firstpostest_date),
-      NA_character_,
-      as.character(.x)
-    )
-  )) %>%
-  filter(!is.na(firstpostest_date)) %>%
-  select(patient_id, trial_date, treated, starts_with("firstpostest"))
-# %>%
-#   write_rds(file.path(outdir, "process", "data_firstpostest.rds"), compress = "gz")
-
-
-# save long variables
+# save dataset ----
 data_anytest_long %>%
   filter(!is.na(persondays)) %>%
   # keep only sum_*censor
-  select(patient_id, trial_date, treated, anytest_cut, ends_with("censor"), persondays) %>%
-  left_join(data_firstpostest)
+  select(-ends_with("uncensored")) %>%
+  select(patient_id, trial_date, treated, anytest_cut, persondays, starts_with("sum_")) %>%
   write_rds(file.path(outdir, "process", "data_anytest_long.rds"), compress = "gz")
 

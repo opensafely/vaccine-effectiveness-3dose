@@ -158,14 +158,32 @@ subgroups <- c("all", "vax3_type", "prior_covid_infection", "vax12_type", "agegr
 
 ## follow-up time ----
 
-# period width
-postbaselinedays <- 28
+fup_params <- lst(
+  # length of baseline period
+  baselinedays = 14,
+  # length of follow-up period
+  postbaselinedays = 28,
+  # number of follow-up periods
+  postbaselineperiods = 6,
+  # where to split follow-up time after recruitment
+  postbaselinecuts = c(0, baselinedays, baselinedays + (1:postbaselineperiods)*postbaselinedays),
+  # maximum follow-up
+  maxfup = max(postbaselinecuts), 
+  # the following params are for covidtests only
+  # number of prebaseline periods to summarise test behaviour
+  prebaselineperiods = 3,
+  # number of recurring events for the covidtests study definition
+  n_any = 10,
+  n_pos = 5
+)
 
-# where to split follow-up time after recruitment
-postbaselinecuts <- c(0, 14, 14 + (1:6)*postbaselinedays)
+jsonlite::write_json(fup_params, path = here("lib", "design", "fup-params.json"), auto_unbox=TRUE, pretty =TRUE)
 
-# maximum follow-up
-maxfup <- max(postbaselinecuts)
+# split into named objects until scripts updated
+for(i in 1:length(fup_params)){
+  assign(names(fup_params)[i],fup_params[[i]])
+}
+
 
 # matching variables ----
 
@@ -241,3 +259,4 @@ km_args <- expand_grid(
     by = c("subgroup", "outcome")
   ) %>%
   mutate(across(variant_option, replace_na, "ignore"))
+

@@ -15,7 +15,6 @@ from cohortextractor import (
 )
 
 cohort = params["cohort"]
-n_matching_rounds = 2
 
 ############################################################
 ## tests

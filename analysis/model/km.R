@@ -671,7 +671,7 @@ coxcontrast <- function(data, adj = FALSE, cuts=NULL){
     transmute(
       !!subgroup_sym,
       term,
-      coxhazr = exp(estimate),
+      coxhr = exp(estimate),
       coxhr.se = robust.se,
       coxhr.ll = exp(estimate + qnorm(0.025)*robust.se),
       coxhr.ul = exp(estimate + qnorm(0.975)*robust.se),

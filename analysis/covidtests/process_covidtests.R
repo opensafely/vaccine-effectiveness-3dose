@@ -18,6 +18,7 @@ library('glue')
 source(here("analysis", "design.R"))
 
 source(here("lib", "functions", "utility.R"))
+source(here("lib", "functions", "survival.R"))
 
 ## import command-line arguments ----
 
@@ -62,46 +63,96 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
     data_tests <- data_tests %>%
       bind_cols(
         map_dfc(
-          .x = 1:3,
-          .f = ~tibble(!! sym(str_c("anytestpre_", .x, "_n")) := rpois(n=nrow(data_tests), lambda = 2))
+          .x = 1:prebaselineperiods,
+          .f = ~tibble(
+            !! sym(str_c("anytestpre_", .x, "_n")) := rpois(n=nrow(data_tests), lambda = 2),
+            !! sym(str_c("postestpre_", .x, "_n")) := as.integer(max(
+              !! sym(str_c("anytestpre_", .x, "_n")) - rpois(n=nrow(data_tests), lambda = 1),
+              0
+              ))
+            )
         ),
         map_dfc(
-          .x = 0:6,
-          .f = ~tibble(!! sym(str_c("anytestpost_", .x, "_n")) := rpois(n=nrow(data_tests), lambda = 2))
+          .x = 0:postbaselineperiods,
+          .f = ~tibble(
+            !! sym(str_c("anytestpost_", .x, "_n")) := rpois(n=nrow(data_tests), lambda = 2),
+            !! sym(str_c("postestpost_", .x, "_n")) := as.integer(max(
+              !! sym(str_c("anytestpost_", .x, "_n")) - rpois(n=nrow(data_tests), lambda = 1),
+              0
+              ))
+            )
         )
       )
     
     data_tests <- data_tests %>%
       mutate(
-        anytest_missing = rbernoulli(n = nrow(data_tests), p=0.3),
-        anytest_1_day = as.integer(runif(n=nrow(data_tests), -3*28, 14+6*28)),
-        anytest_1_symptomatic = as.integer(rbernoulli(n=nrow(data_tests), p=symptomatic[["Y"]]))
-      ) %>%
-      mutate(across(c(anytest_1_day, anytest_1_symptomatic), ~if_else(anytest_missing, NA_integer_, .x))) %>%
-      mutate(
-        firstpostestmissing = anytest_missing | rbernoulli(n = nrow(data_tests), p=0.3),
-        firstpostest_day = if_else(firstpostestmissing, NA_integer_, anytest_1_day),
+        # first anytest during the period
+        anytest_1_day = if_else(
+          rbernoulli(n = nrow(data_tests), p=0.3),
+          NA_integer_,
+          as.integer(runif(
+            n=nrow(data_tests),
+            -prebaselineperiods*postbaselinedays, 
+            baselinedays+postbaselineperiods*postbaselinedays
+          ))
+        ),
+        # symptom category of anytest_1_day
+        anytest_1_symptomatic = if_else(
+          is.na(anytest_1_day),
+          NA_integer_,
+          as.integer(rbernoulli(n=nrow(data_tests), p=symptomatic[["Y"]]))
+          ),
+        # first positive test in the period (anytest_1_day with added missingness for negative tests)
+        postest_1_day = if_else(
+          rbernoulli(n = nrow(data_tests), p=0.5),
+          NA_integer_,
+          anytest_1_day
+        ),
+        # first positive test in the period and ever (postest_1_day with added missingness for those that have had a positive test before the period)
+        firstpostest_day = if_else(
+          is.na(postest_1_day) | rbernoulli(n = nrow(data_tests), p=0.3),
+          NA_integer_, 
+          postest_1_day
+        ),
+        # type of test on firstpostest_day
         firstpostest_category = factor(
           if_else(
-            firstpostestmissing,
+            is.na(firstpostest_day),
             NA_character_, 
             sample(x=names(case_category), size = nrow(data_tests), prob = unname(case_category), replace=TRUE)
           ),
           levels = names(case_category)
         )
-      ) %>%
-      select(-anytest_missing, -firstpostestmissing)
+      ) 
     
-    for (i in 2:10) {
+    for (i in 2:n_any) {
       
+      # derive subsequent anytest_*_day and anytest_*_symptomatic
       data_tests <- data_tests %>%
         mutate(
-          anytest_missing = rbernoulli(n = nrow(data_tests), p=0.3),
-          !! sym(glue("anytest_{i}_day")) := !! sym(glue("anytest_{i-1}_day")) + as.integer(runif(n=nrow(data_tests), 0, 50)),
-          !! sym(glue("anytest_{i}_symptomatic")) := as.integer(rbernoulli(n=nrow(data_tests), p=symptomatic[["Y"]]))
-        ) %>%
-        mutate(across(c(glue("anytest_{i}_day"), glue("anytest_{i}_symptomatic")), ~if_else(anytest_missing, NA_integer_, .x))) %>%
-        select(-anytest_missing)
+          !! sym(glue("anytest_{i}_day")) := if_else(
+            rbernoulli(n = nrow(data_tests), p=0.3),
+            NA_integer_,
+            !! sym(glue("anytest_{i-1}_day")) + as.integer(runif(n=nrow(data_tests), 0, 50))
+          ),
+          !! sym(glue("anytest_{i}_symptomatic")) := if_else(
+            is.na(!! sym(glue("anytest_{i}_day"))),
+            NA_integer_,
+            as.integer(rbernoulli(n=nrow(data_tests), p=symptomatic[["Y"]]))
+          )
+        )
+      
+      # derive subsequent postest_*_day
+      if (i <= n_pos) {
+        data_tests <- data_tests %>%
+          mutate(
+            !! sym(glue("postest_{i}_day")) := if_else(
+              rbernoulli(n = nrow(data_tests), p=0.5),
+              NA_integer_,
+              !! sym(glue("anytest_{i}_day"))
+            )
+          ) 
+      }
       
     }
     
@@ -161,91 +212,230 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
 # summarise and save data_extract
 my_skim(data_extract, path = file.path(outdir, "input_treated_skim.txt"))
 
-# reshape data
-data_anytest_long <- data_extract %>%
-  select(patient_id, trial_date, matches("anytest_\\d+_\\w+")) %>%
-  # mutate(across(matches("anytest_\\d+_date"))) %>%
-  pivot_longer(
-    cols = matches("anytest_\\d+_\\w+"),
-    names_to = c("index", ".value"),
-    names_pattern = "anytest_(.*)_(.*)",
-    values_drop_na = TRUE
-  ) %>%
-  select(-index) %>% rename(anytest_date=date) %>%
-  arrange(patient_id, trial_date, anytest_date) %>%
-  mutate(anytest_cut = cut(
-    as.integer(anytest_date-trial_date),
-    breaks = c(seq(-3*28, 0, 28), seq(14, 14+6*28, 28)),
-    right=FALSE
-  )) %>%
-  mutate(
-    name = factor(
-      as.integer(anytest_cut), 
-      labels = c(str_c("pre_", 1:3), str_c("post_", 0:6)))
-  ) %>%
-  filter(!is.na(anytest_cut))
-
-# TODO from here
-
-# check that the sums of the anytest_*_date variables match the anytest*_*_n variables
-# rerun study definition with larger n if not
-check_n <- data_extract %>%
-  select(patient_id, trial_date, matches("anytest_\\d+_date")) %>%
-  # mutate(across(matches("anytest_\\d+_date"))) %>%
-  pivot_longer(
-    cols = matches("anytest_\\d+_date"),
-    values_drop_na = TRUE
+data_split <- local({
+  
+  # derive censor date
+  data_matched <- read_rds(here("output", cohort, "match", "data_matched.rds")) %>%
+    select(patient_id, trial_date, death_date, dereg_date, controlistreated_date) %>%
+    mutate(
+      censor_date = pmin(
+        dereg_date,
+        death_date,
+        study_dates$testend_date,
+        trial_date - 1 + maxfup,
+        controlistreated_date - 1,
+        na.rm = TRUE
+      ),
+      tte_censor = as.integer(censor_date-(trial_date-1)),
+      ind_outcome = 0
+      # censor_date = trial_date + maxfup # use this to overwrite above definition until issue with `patients.minimum_of()` and date arithmetic is fixed
     ) %>%
-  select(-name) %>%
-  arrange(patient_id, trial_date, value) %>%
-  mutate(anytest_cut = cut(
-    as.integer(value-trial_date),
-    breaks = c(seq(-3*28, 0, 28), seq(14, 14+6*28, 28)),
-    right=FALSE
+    select(patient_id, trial_date, censor_date, tte_censor) %>%
+    group_by(patient_id, trial_date) %>%
+    mutate(new_id = cur_group_id()) %>% 
+    ungroup()
+  
+  # derive fup_split (extra processing required when variant_option %in% c("split", "restrict"))
+  fup_split <-
+    data_matched %>%
+    select(new_id) %>%
+    uncount(weights = length(postbaselinecuts)-1, .id="period_id") %>%
+    mutate(
+      fupstart_time = postbaselinecuts[period_id]#,
+      # fupend_time = postbaselinecuts[period_id+1]-1,
+    ) %>%
+    droplevels() %>%
+    select(
+      new_id, period_id, fupstart_time#, fupend_time
+    ) 
+  
+  data_split <-
+    tmerge(
+      data1 = data_matched,
+      data2 = data_matched,
+      id = new_id,
+      tstart = 0,
+      tstop = tte_censor
+    ) %>%
+    # add post-treatment periods
+    tmerge(
+      data1 = .,
+      data2 = fup_split,
+      id = new_id,
+      period_id = tdc(fupstart_time, period_id)
+    ) %>%
+    mutate(
+      fup_cut = cut(
+        tstart,
+        breaks = c(seq(-3*28, 0, 28), seq(14, 14+6*28, 28)),
+        right=FALSE
+      )
+    ) %>%
+    transmute(
+      patient_id, trial_date, censor_date, fup_cut,
+      persondays = as.integer(tstop-tstart)
     )
+  
+  return(as_tibble(data_split))
+  
+})
+
+
+# reshape data_extract
+data_anytest_long <- data_extract %>%
+  select(patient_id, trial_date, matches("\\w+test_\\d+_\\w+")) %>%
+  # rename to make it easier to reshape
+  rename_with(
+    .fn = ~str_c(str_extract(.x, "\\d+_"), str_remove(.x, "\\d+_")), 
+    .cols = matches("\\w+test_\\d+_\\w+")
+    ) %>%
+  pivot_longer(
+    cols = matches("\\d+_\\w+test_\\w+"),
+    names_to = c("index", ".value"),
+    names_pattern = "(.*)_(.*_.*)",
+    values_drop_na = TRUE
   ) %>%
+  select(-index) %>% 
+  left_join(
+    data_split %>%
+      distinct(patient_id, trial_date, censor_date), 
+    by = c("patient_id", "trial_date")
+    ) %>%
+  # duplicate variables for transforming
   mutate(
+    anytestcensor_date=anytest_date,
+    postestcensor_date=postest_date,
+    anytest_cut=anytest_date,
+    postest_cut=postest_date,
+  ) %>%
+  # create censored versions of anytest_date and postest_date
+  mutate(across(
+    c(anytestcensor_date, postestcensor_date),
+    ~if_else(
+      .x <= censor_date,
+      .x,
+      as.Date(NA_character_)
+    )
+    )) %>%
+  # create binned versions of anytest_date and postest_date
+  mutate(across(
+    c(anytest_cut, postest_cut),
+    ~ cut(
+      as.integer(.x-trial_date),
+      breaks = c(seq(-3*28, 0, 28), seq(14, 14+6*28, 28)),
+      right=FALSE
+    )
+  )) %>%
+  arrange(patient_id, trial_date, anytest_date) %>%
+  mutate(
+    # create a variable with same labelling as the \\w+test\\w+_n variables for joining
     name = factor(
       as.integer(anytest_cut), 
       labels = c(str_c("pre_", 1:3), str_c("post_", 0:6)))
-    ) %>%
+  ) %>%
+  # remove any that are outside the time periods of interest
   filter(!is.na(anytest_cut)) %>%
-  group_by(patient_id, anytest_cut, name) %>%
-  count() %>%
+  # sum the number of tests per period
+  group_by(patient_id, trial_date, anytest_cut, name) %>%
+  summarise(
+    # sum all dates (this is just used to check value of n in study definition if correct)
+    sum_anytest=n(), 
+    sum_postest=n(), 
+    # sum censored dates (this will be used to calculate testing rates)
+    sum_anytestcensor=sum(!is.na(anytestcensor_date)),  
+    sum_postestcensor=sum(!is.na(anytestcensor_date)),  
+    .groups="keep"
+    ) %>%
   ungroup() %>%
+  # join the total number of tests per period with returning=xxx in study definition
   left_join(
     data_extract %>%
-      select(patient_id, matches("anytest\\w+_n")) %>%
+      select(patient_id, trial_date, matches("\\w+test\\w+_n")) %>%
       pivot_longer(
-        cols = -patient_id
-      ) %>%
-      mutate(across(name, ~str_extract(.x, "p\\w+_\\d+"))),
-    by = c("patient_id", "name")
+        cols = matches("\\w+test\\w+_n"),
+        names_pattern = "(.*test)(.*)_n",
+        names_to = c(".value", "name")
+      ),
+    by = c("patient_id", "trial_date", "name")
   ) %>%
-  mutate(percent = 100*n/value) 
+  # join data_split for persondays of follow-up
+  left_join(
+    data_split %>% select(-censor_date),
+    by = c("patient_id", "trial_date", "anytest_cut" = "fup_cut")
+  ) %>%
+  # fill in persondays for prebaseline periods 
+  # (must be postbaselinedays, otherwise they would have been censored before trialdate)
+  mutate(across(
+    persondays,
+    ~if_else(
+      str_detect(name, "^pre"),
+      as.integer(postbaselinedays),
+      persondays
+    )))
 
+# save firstpostest variables 
+data_extract %>%
+  select(patient_id, trial_date, starts_with("firstpostest")) %>%
+  filter(!is.na(firstpostest_date)) %>%
+  write_rds(file.path(outdir, "data_firstpostest.rds"), compress = "gz")
+# save long variables
+data_anytest_long %>%
+  write_rds(file.path(outdir, "data_anytest_long.rds"), compress = "gz")
 
-# print:
-cat ("summarise number of tests missing per period:\n")
-check_n %>%
-  mutate(n_missing = value - n) %>%
+# checks ----
+
+# sense check
+cat("-----------------")
+cat("Sense checks ----\n")
+cat("When persondays=NA, check sum_*testcensor=0:\n")
+data_anytest_long %>%
+  filter(is.na(persondays)) %>%
+  group_by(anytest_cut) %>%
+  summarise(across(
+    ends_with("censor"),
+    list(min=min, max=max)
+  ))
+
+# check that the sums of the anytest_*_date variables match the anytest*_*_n variables
+# if not, it's a flag that we need to increase n in the study definition
+cat("------------------------------------------")
+cat("Check `n_any` and `n_pos` appropriate ----\n")
+
+cat ("Summarise number of tests missing per person per period when summing dates:\n")
+data_anytest_long %>%
+  mutate(
+    n_missing_anytest = anytest - sum_anytest,
+    n_missing_postest = postest - sum_postest
+    ) %>%
   group_by(anytest_cut, name) %>%
-  summarise(across(n_missing, list(min=min, max=max, mean=mean, median=median))) %>%
+  summarise(across(
+    starts_with("n_missing"), 
+    list(min=min, max=max, mean=mean, median=median)
+    ), .groups = "keep") %>%
   ungroup() %>%
-  print(n=Inf)
+  pivot_longer(
+    cols = starts_with("n_missing"),
+    names_pattern = "n_missing_(.*)_(.*)",
+    names_to = c("result", ".value")
+  ) %>%
+  arrange(result, anytest_cut) %>%
+  group_split(result) %>% as.list() 
 
-# plot distribution of sum anytest*_date as a percent of anytest_*_n per period
-p <- check_n %>%
-  ggplot(aes(x=percent)) +
-  geom_freqpoly(binwidth=1) +
-  facet_wrap(~anytest_cut, scales = "free_y", nrow=2) +
-  theme_bw()
-ggsave(filename = file.path(outdir, "check_anytest.png"),
-       plot = p, width = 20, height = 15, units = "cm")
-  
+cat(glue("see {file.path(outdir, \"check_*.png\")} for distribution of sum *test*_date as a percent of *test_*_n per period"), "\n")
+
+plot_function <- function(result) {
+  p <- data_anytest_long %>%
+    mutate(percent = 100*!!sym(glue("sum_{result}"))/!!sym(result)) %>%
+    ggplot(aes(x=percent)) +
+    geom_freqpoly(binwidth=1) +
+    facet_wrap(~anytest_cut, scales = "free_y", nrow=2) +
+    theme_bw()
+  ggsave(filename = file.path(outdir, glue("check_{result}.png")),
+         plot = p, width = 20, height = 15, units = "cm")
+  return(p)
+}
+
+plot_function("anytest")
+plot_function("postest")
 
 
-
-
-
-write_rds(data_extract, file.path(outdir, "data_extract.rds"), compress = "gz")

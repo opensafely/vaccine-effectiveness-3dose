@@ -31,12 +31,14 @@ if (length(args) == 0) {
 } 
 
 ## create output directory ----
-outdir <- ghere("output", cohort, "covidtests", "extract")
-fs::dir_create(outdir)
+outdir <- ghere("output", cohort, "covidtests")
+fs::dir_create(file.path(outdir, "extract"))
+fs::dir_create(file.path(outdir, "process"))
+fs::dir_create(file.path(outdir, "checks"))
 
 # import data ----
 
-studydef_path <- file.path(outdir, "input_covidtests.feather")
+studydef_path <- file.path(outdir, "extract", "input_covidtests.feather")
 data_studydef_dummy <- read_feather(studydef_path) %>%
   # because date types are not returned consistently by cohort extractor
   mutate(across(ends_with("_date"), ~ as.Date(.))) %>%
@@ -201,6 +203,7 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
   )
   
   data_extract <- data_custom_dummy 
+  rm(data_studydef_dummy, data_custom_dummy)
   
 } else {
   
@@ -210,13 +213,12 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
 }
 
 # summarise and save data_extract
-my_skim(data_extract, path = file.path(outdir, "input_treated_skim.txt"))
+my_skim(data_extract, path = file.path(outdir, "extract", "input_treated_skim.txt"))
 
 data_split <- local({
   
   # derive censor date
   data_matched <- read_rds(here("output", cohort, "match", "data_matched.rds")) %>%
-    select(patient_id, trial_date, death_date, dereg_date, controlistreated_date) %>%
     mutate(
       censor_date = pmin(
         dereg_date,
@@ -230,24 +232,18 @@ data_split <- local({
       ind_outcome = 0
       # censor_date = trial_date + maxfup # use this to overwrite above definition until issue with `patients.minimum_of()` and date arithmetic is fixed
     ) %>%
-    select(patient_id, trial_date, censor_date, tte_censor) %>%
+    select(patient_id, trial_date, treated, censor_date, tte_censor) %>%
     group_by(patient_id, trial_date) %>%
     mutate(new_id = cur_group_id()) %>% 
     ungroup()
   
   # derive fup_split (extra processing required when variant_option %in% c("split", "restrict"))
-  fup_split <-
-    data_matched %>%
+  fup_split <- data_matched %>%
     select(new_id) %>%
     uncount(weights = length(postbaselinecuts)-1, .id="period_id") %>%
-    mutate(
-      fupstart_time = postbaselinecuts[period_id]#,
-      # fupend_time = postbaselinecuts[period_id+1]-1,
-    ) %>%
+    mutate(fupstart_time = postbaselinecuts[period_id]) %>%
     droplevels() %>%
-    select(
-      new_id, period_id, fupstart_time#, fupend_time
-    ) 
+    select(new_id, period_id, fupstart_time) 
   
   data_split <-
     tmerge(
@@ -272,7 +268,7 @@ data_split <- local({
       )
     ) %>%
     transmute(
-      patient_id, trial_date, censor_date, fup_cut,
+      patient_id, trial_date, treated, censor_date, fup_cut,
       persondays = as.integer(tstop-tstart)
     )
   
@@ -298,7 +294,7 @@ data_anytest_long <- data_extract %>%
   select(-index) %>% 
   left_join(
     data_split %>%
-      distinct(patient_id, trial_date, censor_date), 
+      distinct(patient_id, trial_date, treated, censor_date), 
     by = c("patient_id", "trial_date")
     ) %>%
   # duplicate variables for transforming
@@ -317,6 +313,15 @@ data_anytest_long <- data_extract %>%
       as.Date(NA_character_)
     )
     )) %>%
+  # replace symptomatic with NA when it corresponds to to censored date
+  mutate(across(
+    anytest_symptomatic,
+    ~if_else(
+      is.na(anytestcensor_date),
+      NA_character_,
+      as.character(anytest_symptomatic)
+    )
+  )) %>%
   # create binned versions of anytest_date and postest_date
   mutate(across(
     c(anytest_cut, postest_cut),
@@ -336,7 +341,7 @@ data_anytest_long <- data_extract %>%
   # remove any that are outside the time periods of interest
   filter(!is.na(anytest_cut)) %>%
   # sum the number of tests per period
-  group_by(patient_id, trial_date, anytest_cut, name) %>%
+  group_by(patient_id, trial_date, treated, anytest_cut, name) %>%
   summarise(
     # sum all dates (this is just used to check value of n in study definition if correct)
     sum_anytest=n(), 
@@ -344,6 +349,8 @@ data_anytest_long <- data_extract %>%
     # sum censored dates (this will be used to calculate testing rates)
     sum_anytestcensor=sum(!is.na(anytestcensor_date)),  
     sum_postestcensor=sum(!is.na(anytestcensor_date)),  
+    # number of symtpomatic tests
+    sum_symptomaticcensor=sum(anytest_symptomatic=="Y", na.rm = TRUE),
     .groups="keep"
     ) %>%
   ungroup() %>%
@@ -360,7 +367,7 @@ data_anytest_long <- data_extract %>%
   ) %>%
   # join data_split for persondays of follow-up
   left_join(
-    data_split %>% select(-censor_date),
+    data_split %>% select(patient_id, trial_date, fup_cut, persondays),
     by = c("patient_id", "trial_date", "anytest_cut" = "fup_cut")
   ) %>%
   # fill in persondays for prebaseline periods 
@@ -372,15 +379,6 @@ data_anytest_long <- data_extract %>%
       as.integer(postbaselinedays),
       persondays
     )))
-
-# save firstpostest variables 
-data_extract %>%
-  select(patient_id, trial_date, starts_with("firstpostest")) %>%
-  filter(!is.na(firstpostest_date)) %>%
-  write_rds(file.path(outdir, "data_firstpostest.rds"), compress = "gz")
-# save long variables
-data_anytest_long %>%
-  write_rds(file.path(outdir, "data_anytest_long.rds"), compress = "gz")
 
 # checks ----
 
@@ -421,21 +419,85 @@ data_anytest_long %>%
   arrange(result, anytest_cut) %>%
   group_split(result) %>% as.list() 
 
-cat(glue("see {file.path(outdir, \"check_*.png\")} for distribution of sum *test*_date as a percent of *test_*_n per period"), "\n")
 
 plot_function <- function(result) {
+  
+  plotpath <- file.path(outdir, "checks", glue("check_n_{result}.png"))
+  cat(glue("see {plotpath} for sum({result}_*_date) as a percent of {result}_*_n per period"), "\n")
+  
   p <- data_anytest_long %>%
     mutate(percent = 100*!!sym(glue("sum_{result}"))/!!sym(result)) %>%
     ggplot(aes(x=percent)) +
     geom_freqpoly(binwidth=1) +
     facet_wrap(~anytest_cut, scales = "free_y", nrow=2) +
     theme_bw()
-  ggsave(filename = file.path(outdir, glue("check_{result}.png")),
-         plot = p, width = 20, height = 15, units = "cm")
+  ggsave(filename = plotpath, plot = p, width = 20, height = 15, units = "cm")
   return(p)
+  
 }
 
 plot_function("anytest")
 plot_function("postest")
 
+cat("------------------------------------------")
+cat("Check distribution of event counts ----\n")
+plotpath <- file.path(outdir, "checks", "check_n_{result}.png")
+cat(glue("see {plotpath} for distribution of event counts"), "\n")
+data_anytest_long %>%
+  select(patient_id, trial_date, treated, anytest_cut, ends_with("censor")) %>%
+  pivot_longer(
+    cols = ends_with("censor")
+  ) %>%
+  mutate(across(name, ~str_remove_all(.x, "sum_|censor"))) %>%
+  ggplot(aes(x = value, y = ..density.., colour = treated)) +
+  geom_freqpoly(binwidth = 1) +
+  facet_grid(anytest_cut~name) +
+  theme_bw() 
+ggsave(
+  filename = file.path(outdir, glue("check_counts_dist.png")),
+  width = 15, height = 20, units = "cm"
+)
+
+
+# save datasets ----
+
+# save firstpostest variables 
+data_firstpostest <- data_extract %>%
+  select(patient_id, trial_date, starts_with("firstpostest")) %>%
+  filter(!is.na(firstpostest_date)) %>%
+  left_join(
+    data_split %>%
+      distinct(patient_id, trial_date, treated, censor_date), 
+    by = c("patient_id", "trial_date")
+  ) %>%
+  # censor events occuring after censor date
+  mutate(across(
+    firstpostest_date, 
+    ~if_else(
+      .x <= censor_date,
+      .x,
+      as.Date(NA_character_)
+    ))) %>%
+  # replace firstpostest_category if firstpostest_date censored
+  mutate(across(
+    firstpostest_category,
+    ~if_else(
+      is.na(firstpostest_date),
+      NA_character_,
+      as.character(.x)
+    )
+  )) %>%
+  filter(!is.na(firstpostest_date)) %>%
+  select(patient_id, trial_date, treated, starts_with("firstpostest"))
+# %>%
+#   write_rds(file.path(outdir, "process", "data_firstpostest.rds"), compress = "gz")
+
+
+# save long variables
+data_anytest_long %>%
+  filter(!is.na(persondays)) %>%
+  # keep only sum_*censor
+  select(patient_id, trial_date, treated, anytest_cut, ends_with("censor"), persondays) %>%
+  left_join(data_firstpostest)
+  write_rds(file.path(outdir, "process", "data_anytest_long.rds"), compress = "gz")
 

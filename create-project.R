@@ -457,11 +457,11 @@ actions_list <- splice(
             glue("extract_covidtests_{x}")
           ),
           highly_sensitive = lst(
-            extract = "output/mrna/covidtests/extract/*.rds",
+            extract = "output/mrna/covidtests/process/*.rds",
           ),
           moderately_sensitive = lst(
             skim = "output/mrna/covidtests/extract/*.txt",
-            png = "output/mrna/covidtests/extract/*.png"
+            png = "output/mrna/covidtests/checks/*.png"
           )
         ),
         

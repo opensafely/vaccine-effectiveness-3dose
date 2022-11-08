@@ -208,6 +208,7 @@ actions:
     outputs:
       highly_sensitive:
         extract: output/mrna/match/*.rds
+        ids: output/mrna/match/*.csv.gz
       moderately_sensitive:
         input_controlfinal_skim: output/mrna/extract/*.txt
         data_matched_skim: output/mrna/match/*.txt
@@ -229,6 +230,33 @@ actions:
       moderately_sensitive:
         csv: output/mrna/match/coverage/*.csv
         png: output/mrna/match/coverage/*.png
+
+  ## # # # # # # # # # # # # # # # # # # # 
+  ## Covid tests data 
+  ## # # # # # # # # # # # # # # # # # # # 
+
+  extract_covidtests_mrna:
+    run: cohortextractor:latest generate_cohort --study-definition study_definition_covidtests
+      --output-file output/mrna/covidtests/extract/input_covidtests.feather --param
+      cohort=mrna
+    needs:
+    - design
+    - process_controlfinal_mrna
+    outputs:
+      highly_sensitive:
+        extract: output/mrna/covidtests/extract/input_covidtests.feather
+
+  process_covidtests_mrna:
+    run: r:latest analysis/covidtests/process_covidtests.R mrna
+    needs:
+    - process_controlfinal_mrna
+    - extract_covidtests_mrna
+    outputs:
+      highly_sensitive:
+        extract: output/mrna/covidtests/process/*.rds
+      moderately_sensitive:
+        skim: output/mrna/covidtests/extract/*.txt
+        png: output/mrna/covidtests/checks/*.png
 
   ## # # # # # # # # # # # # # # # # # # # 
   ## Model 

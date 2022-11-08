@@ -22,10 +22,15 @@ if (length(args) == 0) {
 
 
 ## import data ---
-data_covidtests <- read_rds(ghere("output", cohort, "covidtests", "extract", "data_extract.rds"))
+data_firstpostest <- read_rds(here("output", cohort, "covidtests", "extract", "data_firstpostest.rds"))
+data_anytest_long <- read_rds(here("output", cohort, "covidtests", "extract", "data_anytest_long.rds"))
 
-data_matched <- read_rds(here("output", cohort, "match", "data_matched.rds")) %>%
-  select(patient_id, trial_date, death_date, dereg_date, controlistreated_date)
+
+# TODO
+# NA symptom when date censored
+# censor firstpos dates
+
+
 
 ## import baseline data, restrict to matched individuals and derive time-to-event variables
 data_covidtests <- data_matched %>%

@@ -6,7 +6,7 @@
 # outputs matching summary
 #
 # The script must be accompanied by two arguments:
-# `agegroup` - over12s or under12s
+# `cohort` 
 # `matching_round` - the matching round (1,2,3,...)
 
 # # # # # # # # # # # # # # # # # # # # #
@@ -35,25 +35,17 @@ args <- commandArgs(trailingOnly=TRUE)
 
 if(length(args)==0){
   # use for interactive testing
-  removeobjects <- FALSE
-  cohort <- "pfizer"
+  cohort <- "mrna"
   matching_round <- as.integer("1")
 } else {
   #FIXME replace with actual eventual action variables
-  removeobjects <- TRUE
   cohort <- args[[1]]
   matching_round <- as.integer(args[[2]])
 }
 
 
 ## get cohort-specific parameters study dates and parameters ----
-
-dates <- map(study_dates[[cohort]], as.Date)
-
-
-matching_round_date <- dates$control_extract_dates[matching_round]
-
-
+matching_round_date <- study_dates[[cohort]]$control_extract_dates[matching_round]
 
 ## create output directory ----
 fs::dir_create(ghere("output", cohort, "matchround{matching_round}", "potential"))
@@ -61,7 +53,16 @@ fs::dir_create(ghere("output", cohort, "matchround{matching_round}", "potential"
 # Import datasets ----
 
 ## import treated populations ----
-data_alltreated <- read_rds(ghere("output", cohort, "treated", "data_treatedeligible.rds")) %>% mutate(treated=1L)
+if (cohort=="mrna") {
+  data_alltreated <- bind_rows(
+    read_rds(ghere("output", "pfizer", "treated", "data_treatedeligible.rds")),
+    read_rds(ghere("output", "moderna", "treated", "data_treatedeligible.rds"))
+  ) %>%
+    mutate(treated=1L)
+} else {
+  data_alltreated <- read_rds(ghere("output", cohort, "treated", "data_treatedeligible.rds")) %>% mutate(treated=1L)
+}
+
 
 ## import control populations ----
 data_control <- read_rds(ghere("output", cohort, "matchround{matching_round}", "process", "data_controlpotential.rds")) %>% mutate(treated=0L)
@@ -113,7 +114,7 @@ local({
   # time index is relative to "start date"
   # trial index start at one, not zero. i.e., study start date is "day 1" (but the _time_ at the start of study start date is zero)
   start_trial_time <- 0
-  end_trial_time <- as.integer(dates$end_date + 1 - dates$start_date)
+  end_trial_time <- as.integer(study_dates$recruitmentend_date + 1 - study_dates[[cohort]]$start_date)
   trials <- seq(start_trial_time+1, end_trial_time, 1) 
   
   # initialise list of candidate controls
@@ -128,7 +129,7 @@ local({
 
     cat("matching trial ", trial, "\n")
     trial_time <- trial-1
-    trial_date <- dates$start_date + trial_time
+    trial_date <- study_dates[[cohort]]$start_date + trial_time
 
     
     # set of people vaccinated on trial day

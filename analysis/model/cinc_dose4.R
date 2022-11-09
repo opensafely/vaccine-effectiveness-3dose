@@ -26,7 +26,7 @@ args <- commandArgs(trailingOnly=TRUE)
 
 if(length(args)==0){
   # use for interactive testing
-  cohort <- "pfizer"
+  cohort <- "mrna"
   
 } else {
   cohort <- args[[1]]
@@ -36,10 +36,6 @@ if(length(args)==0){
 
 output_dir <- ghere("output", cohort, "models", "cinc_dose4")
 fs::dir_create(output_dir)
-
-## redaction threshold ----
-
-threshold <- 6
 
 ## read and process data ----
 data_dose4 <- read_rds(here("output", cohort, "match", "data_matched.rds")) %>%

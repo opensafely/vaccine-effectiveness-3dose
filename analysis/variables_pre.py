@@ -12,16 +12,16 @@ def generate_pre_variables(index_date):
   ## Pre-study event dates
   ################################################################################################
 
-  # any covid test 
-  covid_test_0_date=patients.with_test_result_in_sgss(
-    pathogen="SARS-CoV-2",
-    test_result="any",
-    on_or_before=f"{index_date} - 1 day",
-    returning="date",
-    date_format="YYYY-MM-DD",
-    find_last_match_in_period=True,
-    restrict_to_earliest_specimen_date=False,
-  ),
+  # # any covid test 
+  # covid_test_0_date=patients.with_test_result_in_sgss(
+  #   pathogen="SARS-CoV-2",
+  #   test_result="any",
+  #   on_or_before=f"{index_date} - 1 day",
+  #   returning="date",
+  #   date_format="YYYY-MM-DD",
+  #   find_last_match_in_period=True,
+  #   restrict_to_earliest_specimen_date=False,
+  # ),
 
   # positive covid test
   positive_test_0_date=patients.with_test_result_in_sgss(
@@ -110,16 +110,6 @@ def generate_pre_variables(index_date):
     on_or_before=f"{index_date} - 1 day",
     find_last_match_in_period=True,
   ),
-
-    # test frequency in six months prior to earliest start date in cohort
-    prior_covid_test_frequency=patients.with_test_result_in_sgss(
-      pathogen="SARS-CoV-2",
-      test_result="any",
-      between=[f"{index_date} - 182 days", f"{index_date} - 1 day"], # 182 days = 26 weeks
-      returning="number_of_matches_in_period", 
-      date_format="YYYY-MM-DD",
-      restrict_to_earliest_specimen_date=False,
-    ),
   
   )
   return pre_variables

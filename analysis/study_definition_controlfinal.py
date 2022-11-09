@@ -18,6 +18,10 @@ cohort = params["cohort"]
 n_matching_rounds = params["n_matching_rounds"]
 
 ############################################################
+## covariates
+from variables_covs import generate_covs_variables 
+covs_variables = generate_covs_variables(index_date="trial_date")
+############################################################
 ## outcome variables
 from variables_outcome import generate_outcome_variables 
 outcome_variables = generate_outcome_variables(index_date="trial_date")
@@ -43,6 +47,10 @@ study = StudyDefinition(
   
   match_id = patients.with_value_from_file(f_path=f"output/{cohort}/matchround{n_matching_rounds}/actual/cumulative_matchedcontrols.csv.gz", returning="match_id", returning_type="int"),
 
+  ###############################################################################
+  # covariates
+  ##############################################################################
+  **covs_variables,  
   
   ###############################################################################
   # post variables

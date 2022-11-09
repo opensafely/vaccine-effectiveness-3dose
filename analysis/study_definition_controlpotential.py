@@ -17,7 +17,6 @@ from cohortextractor import (
 # define params
 cohort = params["cohort"]
 matching_round = params["matching_round"]
-previousmatching_round = int(matching_round)-1
 index_date = params["index_date"]
 
 

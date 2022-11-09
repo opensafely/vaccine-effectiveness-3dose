@@ -7,7 +7,6 @@ library("glue")
 ## import local functions and parameters ---
 source(here("analysis", "design.R"))
 
-
 # create action functions ----
 
 ## create comment function ----
@@ -82,7 +81,7 @@ namelesslst <- function(...){
 
 action_1matchround <- function(cohort, matching_round){
   
-  control_extract_date <- study_dates[[cohort]][[glue("control_extract_dates")]][matching_round]
+  control_extract_date <- study_dates[[cohort]][["control_extract_dates"]][matching_round]
   
   splice(
     action(
@@ -184,7 +183,9 @@ action_1matchround <- function(cohort, matching_round){
 #action_1matchround("pfizer", 2)
 
 # create all necessary actions for n matching rounds
-action_extract_and_match <- function(cohort, n_matching_rounds){
+action_extract_and_match <- function(cohort){
+  
+  n_matching_rounds <- n_matching_rounds_list[[cohort]]
   
   allrounds <- map(seq_len(n_matching_rounds), ~action_1matchround(cohort, .x)) %>% flatten
   
@@ -252,19 +253,18 @@ action_extract_and_match <- function(cohort, n_matching_rounds){
 # test action
 # action_extract_and_match("pfizer", 2)
 
-
-action_km <- function(cohort, subgroup, outcome){
+action_km <- function(cohort, subgroup, variant_option, outcome){
   action(
-    name = glue("km_{cohort}_{subgroup}_{outcome}"),
+    name = glue("km_{cohort}_{subgroup}_{variant_option}_{outcome}"),
     run = glue("r:latest analysis/model/km.R"),
-    arguments = c(cohort, subgroup, outcome),
+    arguments = c(cohort, subgroup, variant_option, outcome),
     needs = namelesslst(
       glue("process_controlfinal_{cohort}"),
     ),
     moderately_sensitive= lst(
       #csv= glue("output/{cohort}/models/km/{subgroup}/{outcome}/*.csv"),
-      rds= glue("output/{cohort}/models/km/{subgroup}/{outcome}/*.rds"),
-      png= glue("output/{cohort}/models/km/{subgroup}/{outcome}/*.png"),
+      rds= glue("output/{cohort}/models/km/{subgroup}/{variant_option}/{outcome}/*.rds"),
+      png= glue("output/{cohort}/models/km/{subgroup}/{variant_option}/{outcome}/*.png"),
     )
   )
 }
@@ -281,11 +281,8 @@ action_km_combine <- function(
     needs = splice(
       as.list(
         glue_data(
-          .x=expand_grid(
-            subgroup=c("all", "prior_covid_infection", "vax12_type", "age65plus"),
-            outcome=c("postest", "emergency", "covidemergency", "covidadmitted", "covidcritcare", "coviddeath", "noncoviddeath"),
-          ),
-          "km_{cohort}_{subgroup}_{outcome}"
+          .x=km_args,
+          "km_{cohort}_{subgroup}_{variant_option}_{outcome}"
         )
       )
     ),
@@ -306,7 +303,22 @@ action_table1 <- function(cohort){
     ),
     moderately_sensitive= lst(
       csv= glue("output/{cohort}/table1/*.csv"),
-      png= glue("output/{cohort}/table1/*.png")
+      html= glue("output/{cohort}/table1/*.html")
+    )
+  )
+}
+
+action_coverage <- function(cohort){
+  action(
+    name = glue("coverage_{cohort}"),
+    run = glue("r:latest analysis/matching/coverage.R"),
+    arguments = c(cohort),
+    needs = namelesslst(
+      glue("process_controlfinal_{cohort}"),
+    ),
+    moderately_sensitive= lst(
+      csv= glue("output/{cohort}/match/coverage/*.csv"),
+      png= glue("output/{cohort}/match/coverage/*.png"),
     )
   )
 }
@@ -397,7 +409,7 @@ actions_list <- splice(
   ),
 
   lapply_actions(
-    c("pfizer", "moderna"),
+    "mrna",
     function(x) {
       c(
         comment("# # # # # # # # # # # # # # # # # # #",
@@ -407,26 +419,34 @@ actions_list <- splice(
         comment("# # # # # # # # # # # # # # # # # # #",
                 "Extract and match"),
         
-        action_extract_and_match(x, n_matching_rounds),
+        action_extract_and_match(x),
         
         action_table1(x),
         
-        action_cinc_dose4(x),
+        action_coverage(x),
         
         comment("# # # # # # # # # # # # # # # # # # #",
-                "Model"),
+                "Model",
+                "# # # # # # # # # # # # # # # # # # #"),
+        
+        action_cinc_dose4(x),
         
         lapply_actions(
-          c("all", "prior_covid_infection", "vax12_type", "age65plus"),
+          subgroups,
           function(y) {
-            c(
-              comment("# # # # # # # # # # # # # # # # # # #",
-                      glue("cohort: {x}; subgroup: {y}"),
-                      "# # # # # # # # # # # # # # # # # # #"),
-              lapply_actions(
-                c("postest", "emergency", "covidemergency", "covidadmitted", "covidcritcare", "coviddeath", "noncoviddeath"),
-                function(z) action_km(x,y,z)
-              )
+            lapply_actions(
+              km_args %>% filter(subgroup==y) %>% distinct(variant_option) %>% unlist() %>% unname(),
+              function(v) {
+                c(
+                  comment("# # # # # # # # # # # # # # # # # # # # # # # # # # # ",
+                          glue("cohort: {x}; subgroup: {y}; variant option: {v}"),
+                          "# # # # # # # # # # # # # # # # # # # # # # # # # # # "),
+                  lapply_actions(
+                    outcomes,
+                    function(z) action_km(cohort=x, subgroup=y, variant_option=v, outcome=z)
+                  )
+                )
+              }
             )
           }
         ),

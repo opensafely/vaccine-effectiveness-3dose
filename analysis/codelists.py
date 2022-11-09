@@ -455,3 +455,32 @@ discharged_to_hospital = codelist(
     ["306706006", "1066331000000109", "1066391000000105"],
     system="snomed",
 )
+
+# Pregnancy codes 
+preg_primis = codelist_from_csv(
+    "codelists/primis-covid19-vacc-uptake-preg.csv",
+    system="snomed",
+    column="code",
+)
+
+# Pregnancy or Delivery codes
+pregdel_primis = codelist_from_csv(
+    "codelists/primis-covid19-vacc-uptake-pregdel.csv",
+    system="snomed",
+    column="code",
+)
+flu_med_codes = codelist_from_csv(
+    "codelists/opensafely-influenza-vaccination.csv",  
+    system="snomed",  
+    column="snomed_id",
+)
+flu_clinical_given_codes = codelist_from_csv(
+    "codelists/opensafely-influenza-vaccination-clinical-codes-given.csv",  
+    system="ctv3", 
+    column="CTV3ID",
+)
+flu_clinical_not_given_codes = codelist_from_csv(
+    "codelists/opensafely-influenza-vaccination-clinical-codes-not-given.csv",  
+    system="ctv3", 
+    column="CTV3ID",
+)

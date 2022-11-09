@@ -51,1240 +51,727 @@ actions:
         data_eligible_skim: output/treated/eligible/*.txt
 
   ## # # # # # # # # # # # # # # # # # # # 
-  ## pfizer cohort 
+  ## mrna cohort 
   ## # # # # # # # # # # # # # # # # # # # 
   ## # # # # # # # # # # # # # # # # # # # 
   ## Extract and match 
 
-  extract_controlpotential_pfizer_1:
+  extract_controlpotential_mrna_1:
     run: cohortextractor:latest generate_cohort --study-definition study_definition_controlpotential
-      --output-file output/pfizer/matchround1/extract/input_controlpotential.feather
-      --param cohort=pfizer --param matching_round=1 --param index_date=2021-09-16
+      --output-file output/mrna/matchround1/extract/input_controlpotential.feather
+      --param cohort=mrna --param matching_round=1 --param index_date=2021-09-16
     needs:
     - design
     outputs:
       highly_sensitive:
-        cohort: output/pfizer/matchround1/extract/input_controlpotential.feather
+        cohort: output/mrna/matchround1/extract/input_controlpotential.feather
 
-  process_controlpotential_pfizer_1:
-    run: r:latest analysis/process_data.R potential pfizer 1
+  process_controlpotential_mrna_1:
+    run: r:latest analysis/process_data.R potential mrna 1
     needs:
-    - extract_controlpotential_pfizer_1
+    - extract_controlpotential_mrna_1
     outputs:
       highly_sensitive:
-        rds: output/pfizer/matchround1/process/*.rds
+        rds: output/mrna/matchround1/process/*.rds
       moderately_sensitive:
-        input_controlpotential_skim: output/pfizer/matchround1/extract/potential/*.txt
-        data_processed_skim: output/pfizer/matchround1/potential/*.txt
-        data_controlpotential_skim: output/pfizer/matchround1/process/*.txt
+        input_controlpotential_skim: output/mrna/matchround1/extract/potential/*.txt
+        data_processed_skim: output/mrna/matchround1/potential/*.txt
+        data_controlpotential_skim: output/mrna/matchround1/process/*.txt
 
-  match_potential_pfizer_1:
-    run: r:latest analysis/matching/match_potential.R pfizer 1
+  match_potential_mrna_1:
+    run: r:latest analysis/matching/match_potential.R mrna 1
     needs:
     - process_treated
-    - process_controlpotential_pfizer_1
+    - process_controlpotential_mrna_1
     outputs:
       highly_sensitive:
-        rds: output/pfizer/matchround1/potential/*.rds
-        csv: output/pfizer/matchround1/potential/*.csv.gz
+        rds: output/mrna/matchround1/potential/*.rds
+        csv: output/mrna/matchround1/potential/*.csv.gz
 
-  extract_controlactual_pfizer_1:
+  extract_controlactual_mrna_1:
     run: cohortextractor:latest generate_cohort --study-definition study_definition_controlactual
-      --output-file output/pfizer/matchround1/extract/input_controlactual.feather
-      --param cohort=pfizer --param matching_round=1
+      --output-file output/mrna/matchround1/extract/input_controlactual.feather --param
+      cohort=mrna --param matching_round=1
     needs:
     - design
-    - match_potential_pfizer_1
+    - match_potential_mrna_1
     outputs:
       highly_sensitive:
-        cohort: output/pfizer/matchround1/extract/input_controlactual.feather
+        cohort: output/mrna/matchround1/extract/input_controlactual.feather
 
-  process_controlactual_pfizer_1:
-    run: r:latest analysis/process_data.R actual pfizer 1
+  process_controlactual_mrna_1:
+    run: r:latest analysis/process_data.R actual mrna 1
     needs:
     - process_treated
-    - match_potential_pfizer_1
-    - extract_controlpotential_pfizer_1
-    - process_controlpotential_pfizer_1
-    - extract_controlactual_pfizer_1
+    - match_potential_mrna_1
+    - extract_controlpotential_mrna_1
+    - process_controlpotential_mrna_1
+    - extract_controlactual_mrna_1
     outputs:
       highly_sensitive:
-        rds: output/pfizer/matchround1/actual/*.rds
-        csv: output/pfizer/matchround1/actual/*.csv.gz
+        rds: output/mrna/matchround1/actual/*.rds
+        csv: output/mrna/matchround1/actual/*.csv.gz
       moderately_sensitive:
-        input_controlactual_skim: output/pfizer/matchround1/extract/actual/*.txt
-        data_actual_skim: output/pfizer/matchround1/actual/*.txt
+        input_controlactual_skim: output/mrna/matchround1/extract/actual/*.txt
+        data_actual_skim: output/mrna/matchround1/actual/*.txt
 
-  extract_controlpotential_pfizer_2:
+  extract_controlpotential_mrna_2:
     run: cohortextractor:latest generate_cohort --study-definition study_definition_controlpotential
-      --output-file output/pfizer/matchround2/extract/input_controlpotential.feather
-      --param cohort=pfizer --param matching_round=2 --param index_date=2021-09-30
+      --output-file output/mrna/matchround2/extract/input_controlpotential.feather
+      --param cohort=mrna --param matching_round=2 --param index_date=2021-09-30
     needs:
     - design
-    - process_controlactual_pfizer_1
+    - process_controlactual_mrna_1
     outputs:
       highly_sensitive:
-        cohort: output/pfizer/matchround2/extract/input_controlpotential.feather
+        cohort: output/mrna/matchround2/extract/input_controlpotential.feather
 
-  process_controlpotential_pfizer_2:
-    run: r:latest analysis/process_data.R potential pfizer 2
+  process_controlpotential_mrna_2:
+    run: r:latest analysis/process_data.R potential mrna 2
     needs:
-    - extract_controlpotential_pfizer_2
+    - extract_controlpotential_mrna_2
     outputs:
       highly_sensitive:
-        rds: output/pfizer/matchround2/process/*.rds
+        rds: output/mrna/matchround2/process/*.rds
       moderately_sensitive:
-        input_controlpotential_skim: output/pfizer/matchround2/extract/potential/*.txt
-        data_processed_skim: output/pfizer/matchround2/potential/*.txt
-        data_controlpotential_skim: output/pfizer/matchround2/process/*.txt
+        input_controlpotential_skim: output/mrna/matchround2/extract/potential/*.txt
+        data_processed_skim: output/mrna/matchround2/potential/*.txt
+        data_controlpotential_skim: output/mrna/matchround2/process/*.txt
 
-  match_potential_pfizer_2:
-    run: r:latest analysis/matching/match_potential.R pfizer 2
+  match_potential_mrna_2:
+    run: r:latest analysis/matching/match_potential.R mrna 2
     needs:
     - process_treated
-    - process_controlpotential_pfizer_2
-    - process_controlactual_pfizer_1
+    - process_controlpotential_mrna_2
+    - process_controlactual_mrna_1
     outputs:
       highly_sensitive:
-        rds: output/pfizer/matchround2/potential/*.rds
-        csv: output/pfizer/matchround2/potential/*.csv.gz
+        rds: output/mrna/matchround2/potential/*.rds
+        csv: output/mrna/matchround2/potential/*.csv.gz
 
-  extract_controlactual_pfizer_2:
+  extract_controlactual_mrna_2:
     run: cohortextractor:latest generate_cohort --study-definition study_definition_controlactual
-      --output-file output/pfizer/matchround2/extract/input_controlactual.feather
-      --param cohort=pfizer --param matching_round=2
+      --output-file output/mrna/matchround2/extract/input_controlactual.feather --param
+      cohort=mrna --param matching_round=2
     needs:
     - design
-    - match_potential_pfizer_2
+    - match_potential_mrna_2
     outputs:
       highly_sensitive:
-        cohort: output/pfizer/matchround2/extract/input_controlactual.feather
+        cohort: output/mrna/matchround2/extract/input_controlactual.feather
 
-  process_controlactual_pfizer_2:
-    run: r:latest analysis/process_data.R actual pfizer 2
+  process_controlactual_mrna_2:
+    run: r:latest analysis/process_data.R actual mrna 2
     needs:
     - process_treated
-    - match_potential_pfizer_2
-    - extract_controlpotential_pfizer_2
-    - process_controlpotential_pfizer_2
-    - extract_controlactual_pfizer_2
-    - process_controlactual_pfizer_1
+    - match_potential_mrna_2
+    - extract_controlpotential_mrna_2
+    - process_controlpotential_mrna_2
+    - extract_controlactual_mrna_2
+    - process_controlactual_mrna_1
     outputs:
       highly_sensitive:
-        rds: output/pfizer/matchround2/actual/*.rds
-        csv: output/pfizer/matchround2/actual/*.csv.gz
+        rds: output/mrna/matchround2/actual/*.rds
+        csv: output/mrna/matchround2/actual/*.csv.gz
       moderately_sensitive:
-        input_controlactual_skim: output/pfizer/matchround2/extract/actual/*.txt
-        data_actual_skim: output/pfizer/matchround2/actual/*.txt
+        input_controlactual_skim: output/mrna/matchround2/extract/actual/*.txt
+        data_actual_skim: output/mrna/matchround2/actual/*.txt
 
-  extract_controlpotential_pfizer_3:
-    run: cohortextractor:latest generate_cohort --study-definition study_definition_controlpotential
-      --output-file output/pfizer/matchround3/extract/input_controlpotential.feather
-      --param cohort=pfizer --param matching_round=3 --param index_date=2021-10-14
-    needs:
-    - design
-    - process_controlactual_pfizer_2
-    outputs:
-      highly_sensitive:
-        cohort: output/pfizer/matchround3/extract/input_controlpotential.feather
-
-  process_controlpotential_pfizer_3:
-    run: r:latest analysis/process_data.R potential pfizer 3
-    needs:
-    - extract_controlpotential_pfizer_3
-    outputs:
-      highly_sensitive:
-        rds: output/pfizer/matchround3/process/*.rds
-      moderately_sensitive:
-        input_controlpotential_skim: output/pfizer/matchround3/extract/potential/*.txt
-        data_processed_skim: output/pfizer/matchround3/potential/*.txt
-        data_controlpotential_skim: output/pfizer/matchround3/process/*.txt
-
-  match_potential_pfizer_3:
-    run: r:latest analysis/matching/match_potential.R pfizer 3
-    needs:
-    - process_treated
-    - process_controlpotential_pfizer_3
-    - process_controlactual_pfizer_2
-    outputs:
-      highly_sensitive:
-        rds: output/pfizer/matchround3/potential/*.rds
-        csv: output/pfizer/matchround3/potential/*.csv.gz
-
-  extract_controlactual_pfizer_3:
-    run: cohortextractor:latest generate_cohort --study-definition study_definition_controlactual
-      --output-file output/pfizer/matchround3/extract/input_controlactual.feather
-      --param cohort=pfizer --param matching_round=3
-    needs:
-    - design
-    - match_potential_pfizer_3
-    outputs:
-      highly_sensitive:
-        cohort: output/pfizer/matchround3/extract/input_controlactual.feather
-
-  process_controlactual_pfizer_3:
-    run: r:latest analysis/process_data.R actual pfizer 3
-    needs:
-    - process_treated
-    - match_potential_pfizer_3
-    - extract_controlpotential_pfizer_3
-    - process_controlpotential_pfizer_3
-    - extract_controlactual_pfizer_3
-    - process_controlactual_pfizer_2
-    outputs:
-      highly_sensitive:
-        rds: output/pfizer/matchround3/actual/*.rds
-        csv: output/pfizer/matchround3/actual/*.csv.gz
-      moderately_sensitive:
-        input_controlactual_skim: output/pfizer/matchround3/extract/actual/*.txt
-        data_actual_skim: output/pfizer/matchround3/actual/*.txt
-
-  extract_controlpotential_pfizer_4:
-    run: cohortextractor:latest generate_cohort --study-definition study_definition_controlpotential
-      --output-file output/pfizer/matchround4/extract/input_controlpotential.feather
-      --param cohort=pfizer --param matching_round=4 --param index_date=2021-10-28
-    needs:
-    - design
-    - process_controlactual_pfizer_3
-    outputs:
-      highly_sensitive:
-        cohort: output/pfizer/matchround4/extract/input_controlpotential.feather
-
-  process_controlpotential_pfizer_4:
-    run: r:latest analysis/process_data.R potential pfizer 4
-    needs:
-    - extract_controlpotential_pfizer_4
-    outputs:
-      highly_sensitive:
-        rds: output/pfizer/matchround4/process/*.rds
-      moderately_sensitive:
-        input_controlpotential_skim: output/pfizer/matchround4/extract/potential/*.txt
-        data_processed_skim: output/pfizer/matchround4/potential/*.txt
-        data_controlpotential_skim: output/pfizer/matchround4/process/*.txt
-
-  match_potential_pfizer_4:
-    run: r:latest analysis/matching/match_potential.R pfizer 4
-    needs:
-    - process_treated
-    - process_controlpotential_pfizer_4
-    - process_controlactual_pfizer_3
-    outputs:
-      highly_sensitive:
-        rds: output/pfizer/matchround4/potential/*.rds
-        csv: output/pfizer/matchround4/potential/*.csv.gz
-
-  extract_controlactual_pfizer_4:
-    run: cohortextractor:latest generate_cohort --study-definition study_definition_controlactual
-      --output-file output/pfizer/matchround4/extract/input_controlactual.feather
-      --param cohort=pfizer --param matching_round=4
-    needs:
-    - design
-    - match_potential_pfizer_4
-    outputs:
-      highly_sensitive:
-        cohort: output/pfizer/matchround4/extract/input_controlactual.feather
-
-  process_controlactual_pfizer_4:
-    run: r:latest analysis/process_data.R actual pfizer 4
-    needs:
-    - process_treated
-    - match_potential_pfizer_4
-    - extract_controlpotential_pfizer_4
-    - process_controlpotential_pfizer_4
-    - extract_controlactual_pfizer_4
-    - process_controlactual_pfizer_3
-    outputs:
-      highly_sensitive:
-        rds: output/pfizer/matchround4/actual/*.rds
-        csv: output/pfizer/matchround4/actual/*.csv.gz
-      moderately_sensitive:
-        input_controlactual_skim: output/pfizer/matchround4/extract/actual/*.txt
-        data_actual_skim: output/pfizer/matchround4/actual/*.txt
-
-  extract_controlfinal_pfizer:
+  extract_controlfinal_mrna:
     run: cohortextractor:latest generate_cohort --study-definition study_definition_controlfinal
-      --output-file output/pfizer/extract/input_controlfinal.feather --param cohort=pfizer
-      --param n_matching_rounds=4
+      --output-file output/mrna/extract/input_controlfinal.feather --param cohort=mrna
+      --param n_matching_rounds=2
     needs:
     - design
-    - process_controlactual_pfizer_4
+    - process_controlactual_mrna_2
     outputs:
       highly_sensitive:
-        extract: output/pfizer/extract/input_controlfinal.feather
+        extract: output/mrna/extract/input_controlfinal.feather
 
-  dummydata_controlfinal_pfizer:
-    run: r:latest analysis/dummy/dummydata_controlfinal.R pfizer
+  dummydata_controlfinal_mrna:
+    run: r:latest analysis/dummy/dummydata_controlfinal.R mrna
     needs:
-    - process_controlactual_pfizer_1
-    - process_controlactual_pfizer_2
-    - process_controlactual_pfizer_3
-    - process_controlactual_pfizer_4
+    - process_controlactual_mrna_1
+    - process_controlactual_mrna_2
     outputs:
       highly_sensitive:
-        dummydata_controlfinal: output/pfizer/dummydata/dummy_control_final.feather
+        dummydata_controlfinal: output/mrna/dummydata/dummy_control_final.feather
 
-  process_controlfinal_pfizer:
-    run: r:latest analysis/process_data.R final pfizer
+  process_controlfinal_mrna:
+    run: r:latest analysis/process_data.R final mrna
     needs:
-    - process_controlactual_pfizer_1
-    - process_controlactual_pfizer_2
-    - process_controlactual_pfizer_3
-    - process_controlactual_pfizer_4
-    - extract_controlfinal_pfizer
+    - process_controlactual_mrna_1
+    - process_controlactual_mrna_2
+    - extract_controlfinal_mrna
     - process_treated
-    - dummydata_controlfinal_pfizer
+    - dummydata_controlfinal_mrna
     outputs:
       highly_sensitive:
-        extract: output/pfizer/match/*.rds
+        extract: output/mrna/match/*.rds
       moderately_sensitive:
-        input_controlfinal_skim: output/pfizer/extract/*.txt
-        data_matched_skim: output/pfizer/match/*.txt
+        input_controlfinal_skim: output/mrna/extract/*.txt
+        data_matched_skim: output/mrna/match/*.txt
 
-  table1_pfizer:
-    run: r:latest analysis/matching/table1.R pfizer
+  table1_mrna:
+    run: r:latest analysis/matching/table1.R mrna
     needs:
-    - process_controlfinal_pfizer
+    - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        csv: output/pfizer/table1/*.csv
-        png: output/pfizer/table1/*.png
+        csv: output/mrna/table1/*.csv
+        html: output/mrna/table1/*.html
 
-  cinc_dose4_pfizer:
-    run: r:latest analysis/model/cinc_dose4.R pfizer
+  coverage_mrna:
+    run: r:latest analysis/matching/coverage.R mrna
     needs:
-    - process_controlfinal_pfizer
+    - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        csv: output/pfizer/models/cinc_dose4/*.csv
-        png: output/pfizer/models/cinc_dose4/*.png
+        csv: output/mrna/match/coverage/*.csv
+        png: output/mrna/match/coverage/*.png
 
   ## # # # # # # # # # # # # # # # # # # # 
   ## Model 
   ## # # # # # # # # # # # # # # # # # # # 
-  ## cohort: pfizer; subgroup: all 
-  ## # # # # # # # # # # # # # # # # # # # 
 
-  km_pfizer_all_postest:
-    run: r:latest analysis/model/km.R pfizer all postest
+  cinc_dose4_mrna:
+    run: r:latest analysis/model/cinc_dose4.R mrna
     needs:
-    - process_controlfinal_pfizer
+    - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/pfizer/models/km/all/postest/*.rds
-        png: output/pfizer/models/km/all/postest/*.png
+        csv: output/mrna/models/cinc_dose4/*.csv
+        png: output/mrna/models/cinc_dose4/*.png
 
-  km_pfizer_all_emergency:
-    run: r:latest analysis/model/km.R pfizer all emergency
+  ## # # # # # # # # # # # # # # # # # # # # # # # # # # #  
+  ## cohort: mrna; subgroup: all; variant option: ignore 
+  ## # # # # # # # # # # # # # # # # # # # # # # # # # # #  
+
+  km_mrna_all_ignore_postest:
+    run: r:latest analysis/model/km.R mrna all ignore postest
     needs:
-    - process_controlfinal_pfizer
+    - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/pfizer/models/km/all/emergency/*.rds
-        png: output/pfizer/models/km/all/emergency/*.png
+        rds: output/mrna/models/km/all/ignore/postest/*.rds
+        png: output/mrna/models/km/all/ignore/postest/*.png
 
-  km_pfizer_all_covidemergency:
-    run: r:latest analysis/model/km.R pfizer all covidemergency
+  km_mrna_all_ignore_covidadmitted:
+    run: r:latest analysis/model/km.R mrna all ignore covidadmitted
     needs:
-    - process_controlfinal_pfizer
+    - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/pfizer/models/km/all/covidemergency/*.rds
-        png: output/pfizer/models/km/all/covidemergency/*.png
+        rds: output/mrna/models/km/all/ignore/covidadmitted/*.rds
+        png: output/mrna/models/km/all/ignore/covidadmitted/*.png
 
-  km_pfizer_all_covidadmitted:
-    run: r:latest analysis/model/km.R pfizer all covidadmitted
+  km_mrna_all_ignore_covidcritcareordeath:
+    run: r:latest analysis/model/km.R mrna all ignore covidcritcareordeath
     needs:
-    - process_controlfinal_pfizer
+    - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/pfizer/models/km/all/covidadmitted/*.rds
-        png: output/pfizer/models/km/all/covidadmitted/*.png
+        rds: output/mrna/models/km/all/ignore/covidcritcareordeath/*.rds
+        png: output/mrna/models/km/all/ignore/covidcritcareordeath/*.png
 
-  km_pfizer_all_covidcritcare:
-    run: r:latest analysis/model/km.R pfizer all covidcritcare
+  km_mrna_all_ignore_coviddeath:
+    run: r:latest analysis/model/km.R mrna all ignore coviddeath
     needs:
-    - process_controlfinal_pfizer
+    - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/pfizer/models/km/all/covidcritcare/*.rds
-        png: output/pfizer/models/km/all/covidcritcare/*.png
+        rds: output/mrna/models/km/all/ignore/coviddeath/*.rds
+        png: output/mrna/models/km/all/ignore/coviddeath/*.png
 
-  km_pfizer_all_coviddeath:
-    run: r:latest analysis/model/km.R pfizer all coviddeath
+  km_mrna_all_ignore_emergency:
+    run: r:latest analysis/model/km.R mrna all ignore emergency
     needs:
-    - process_controlfinal_pfizer
+    - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/pfizer/models/km/all/coviddeath/*.rds
-        png: output/pfizer/models/km/all/coviddeath/*.png
+        rds: output/mrna/models/km/all/ignore/emergency/*.rds
+        png: output/mrna/models/km/all/ignore/emergency/*.png
 
-  km_pfizer_all_noncoviddeath:
-    run: r:latest analysis/model/km.R pfizer all noncoviddeath
+  km_mrna_all_ignore_covidemergency:
+    run: r:latest analysis/model/km.R mrna all ignore covidemergency
     needs:
-    - process_controlfinal_pfizer
+    - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/pfizer/models/km/all/noncoviddeath/*.rds
-        png: output/pfizer/models/km/all/noncoviddeath/*.png
+        rds: output/mrna/models/km/all/ignore/covidemergency/*.rds
+        png: output/mrna/models/km/all/ignore/covidemergency/*.png
 
-  ## # # # # # # # # # # # # # # # # # # # 
-  ## cohort: pfizer; subgroup: prior_covid_infection 
-  ## # # # # # # # # # # # # # # # # # # # 
-
-  km_pfizer_prior_covid_infection_postest:
-    run: r:latest analysis/model/km.R pfizer prior_covid_infection postest
+  km_mrna_all_ignore_noncoviddeath:
+    run: r:latest analysis/model/km.R mrna all ignore noncoviddeath
     needs:
-    - process_controlfinal_pfizer
+    - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/pfizer/models/km/prior_covid_infection/postest/*.rds
-        png: output/pfizer/models/km/prior_covid_infection/postest/*.png
+        rds: output/mrna/models/km/all/ignore/noncoviddeath/*.rds
+        png: output/mrna/models/km/all/ignore/noncoviddeath/*.png
 
-  km_pfizer_prior_covid_infection_emergency:
-    run: r:latest analysis/model/km.R pfizer prior_covid_infection emergency
+  ## # # # # # # # # # # # # # # # # # # # # # # # # # # #  
+  ## cohort: mrna; subgroup: all; variant option: split 
+  ## # # # # # # # # # # # # # # # # # # # # # # # # # # #  
+
+  km_mrna_all_split_postest:
+    run: r:latest analysis/model/km.R mrna all split postest
     needs:
-    - process_controlfinal_pfizer
+    - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/pfizer/models/km/prior_covid_infection/emergency/*.rds
-        png: output/pfizer/models/km/prior_covid_infection/emergency/*.png
+        rds: output/mrna/models/km/all/split/postest/*.rds
+        png: output/mrna/models/km/all/split/postest/*.png
 
-  km_pfizer_prior_covid_infection_covidemergency:
-    run: r:latest analysis/model/km.R pfizer prior_covid_infection covidemergency
+  km_mrna_all_split_covidadmitted:
+    run: r:latest analysis/model/km.R mrna all split covidadmitted
     needs:
-    - process_controlfinal_pfizer
+    - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/pfizer/models/km/prior_covid_infection/covidemergency/*.rds
-        png: output/pfizer/models/km/prior_covid_infection/covidemergency/*.png
+        rds: output/mrna/models/km/all/split/covidadmitted/*.rds
+        png: output/mrna/models/km/all/split/covidadmitted/*.png
 
-  km_pfizer_prior_covid_infection_covidadmitted:
-    run: r:latest analysis/model/km.R pfizer prior_covid_infection covidadmitted
+  km_mrna_all_split_covidcritcareordeath:
+    run: r:latest analysis/model/km.R mrna all split covidcritcareordeath
     needs:
-    - process_controlfinal_pfizer
+    - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/pfizer/models/km/prior_covid_infection/covidadmitted/*.rds
-        png: output/pfizer/models/km/prior_covid_infection/covidadmitted/*.png
+        rds: output/mrna/models/km/all/split/covidcritcareordeath/*.rds
+        png: output/mrna/models/km/all/split/covidcritcareordeath/*.png
 
-  km_pfizer_prior_covid_infection_covidcritcare:
-    run: r:latest analysis/model/km.R pfizer prior_covid_infection covidcritcare
+  km_mrna_all_split_coviddeath:
+    run: r:latest analysis/model/km.R mrna all split coviddeath
     needs:
-    - process_controlfinal_pfizer
+    - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/pfizer/models/km/prior_covid_infection/covidcritcare/*.rds
-        png: output/pfizer/models/km/prior_covid_infection/covidcritcare/*.png
+        rds: output/mrna/models/km/all/split/coviddeath/*.rds
+        png: output/mrna/models/km/all/split/coviddeath/*.png
 
-  km_pfizer_prior_covid_infection_coviddeath:
-    run: r:latest analysis/model/km.R pfizer prior_covid_infection coviddeath
+  km_mrna_all_split_emergency:
+    run: r:latest analysis/model/km.R mrna all split emergency
     needs:
-    - process_controlfinal_pfizer
+    - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/pfizer/models/km/prior_covid_infection/coviddeath/*.rds
-        png: output/pfizer/models/km/prior_covid_infection/coviddeath/*.png
+        rds: output/mrna/models/km/all/split/emergency/*.rds
+        png: output/mrna/models/km/all/split/emergency/*.png
 
-  km_pfizer_prior_covid_infection_noncoviddeath:
-    run: r:latest analysis/model/km.R pfizer prior_covid_infection noncoviddeath
+  km_mrna_all_split_covidemergency:
+    run: r:latest analysis/model/km.R mrna all split covidemergency
     needs:
-    - process_controlfinal_pfizer
+    - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/pfizer/models/km/prior_covid_infection/noncoviddeath/*.rds
-        png: output/pfizer/models/km/prior_covid_infection/noncoviddeath/*.png
+        rds: output/mrna/models/km/all/split/covidemergency/*.rds
+        png: output/mrna/models/km/all/split/covidemergency/*.png
 
-  ## # # # # # # # # # # # # # # # # # # # 
-  ## cohort: pfizer; subgroup: vax12_type 
-  ## # # # # # # # # # # # # # # # # # # # 
-
-  km_pfizer_vax12_type_postest:
-    run: r:latest analysis/model/km.R pfizer vax12_type postest
+  km_mrna_all_split_noncoviddeath:
+    run: r:latest analysis/model/km.R mrna all split noncoviddeath
     needs:
-    - process_controlfinal_pfizer
+    - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/pfizer/models/km/vax12_type/postest/*.rds
-        png: output/pfizer/models/km/vax12_type/postest/*.png
+        rds: output/mrna/models/km/all/split/noncoviddeath/*.rds
+        png: output/mrna/models/km/all/split/noncoviddeath/*.png
 
-  km_pfizer_vax12_type_emergency:
-    run: r:latest analysis/model/km.R pfizer vax12_type emergency
+  ## # # # # # # # # # # # # # # # # # # # # # # # # # # #  
+  ## cohort: mrna; subgroup: all; variant option: restrict 
+  ## # # # # # # # # # # # # # # # # # # # # # # # # # # #  
+
+  km_mrna_all_restrict_postest:
+    run: r:latest analysis/model/km.R mrna all restrict postest
     needs:
-    - process_controlfinal_pfizer
+    - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/pfizer/models/km/vax12_type/emergency/*.rds
-        png: output/pfizer/models/km/vax12_type/emergency/*.png
+        rds: output/mrna/models/km/all/restrict/postest/*.rds
+        png: output/mrna/models/km/all/restrict/postest/*.png
 
-  km_pfizer_vax12_type_covidemergency:
-    run: r:latest analysis/model/km.R pfizer vax12_type covidemergency
+  km_mrna_all_restrict_covidadmitted:
+    run: r:latest analysis/model/km.R mrna all restrict covidadmitted
     needs:
-    - process_controlfinal_pfizer
+    - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/pfizer/models/km/vax12_type/covidemergency/*.rds
-        png: output/pfizer/models/km/vax12_type/covidemergency/*.png
+        rds: output/mrna/models/km/all/restrict/covidadmitted/*.rds
+        png: output/mrna/models/km/all/restrict/covidadmitted/*.png
 
-  km_pfizer_vax12_type_covidadmitted:
-    run: r:latest analysis/model/km.R pfizer vax12_type covidadmitted
+  km_mrna_all_restrict_covidcritcareordeath:
+    run: r:latest analysis/model/km.R mrna all restrict covidcritcareordeath
     needs:
-    - process_controlfinal_pfizer
+    - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/pfizer/models/km/vax12_type/covidadmitted/*.rds
-        png: output/pfizer/models/km/vax12_type/covidadmitted/*.png
+        rds: output/mrna/models/km/all/restrict/covidcritcareordeath/*.rds
+        png: output/mrna/models/km/all/restrict/covidcritcareordeath/*.png
 
-  km_pfizer_vax12_type_covidcritcare:
-    run: r:latest analysis/model/km.R pfizer vax12_type covidcritcare
+  km_mrna_all_restrict_coviddeath:
+    run: r:latest analysis/model/km.R mrna all restrict coviddeath
     needs:
-    - process_controlfinal_pfizer
+    - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/pfizer/models/km/vax12_type/covidcritcare/*.rds
-        png: output/pfizer/models/km/vax12_type/covidcritcare/*.png
+        rds: output/mrna/models/km/all/restrict/coviddeath/*.rds
+        png: output/mrna/models/km/all/restrict/coviddeath/*.png
 
-  km_pfizer_vax12_type_coviddeath:
-    run: r:latest analysis/model/km.R pfizer vax12_type coviddeath
+  km_mrna_all_restrict_emergency:
+    run: r:latest analysis/model/km.R mrna all restrict emergency
     needs:
-    - process_controlfinal_pfizer
+    - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/pfizer/models/km/vax12_type/coviddeath/*.rds
-        png: output/pfizer/models/km/vax12_type/coviddeath/*.png
+        rds: output/mrna/models/km/all/restrict/emergency/*.rds
+        png: output/mrna/models/km/all/restrict/emergency/*.png
 
-  km_pfizer_vax12_type_noncoviddeath:
-    run: r:latest analysis/model/km.R pfizer vax12_type noncoviddeath
+  km_mrna_all_restrict_covidemergency:
+    run: r:latest analysis/model/km.R mrna all restrict covidemergency
     needs:
-    - process_controlfinal_pfizer
+    - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/pfizer/models/km/vax12_type/noncoviddeath/*.rds
-        png: output/pfizer/models/km/vax12_type/noncoviddeath/*.png
+        rds: output/mrna/models/km/all/restrict/covidemergency/*.rds
+        png: output/mrna/models/km/all/restrict/covidemergency/*.png
 
-  ## # # # # # # # # # # # # # # # # # # # 
-  ## cohort: pfizer; subgroup: age65plus 
-  ## # # # # # # # # # # # # # # # # # # # 
-
-  km_pfizer_age65plus_postest:
-    run: r:latest analysis/model/km.R pfizer age65plus postest
+  km_mrna_all_restrict_noncoviddeath:
+    run: r:latest analysis/model/km.R mrna all restrict noncoviddeath
     needs:
-    - process_controlfinal_pfizer
+    - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/pfizer/models/km/age65plus/postest/*.rds
-        png: output/pfizer/models/km/age65plus/postest/*.png
+        rds: output/mrna/models/km/all/restrict/noncoviddeath/*.rds
+        png: output/mrna/models/km/all/restrict/noncoviddeath/*.png
 
-  km_pfizer_age65plus_emergency:
-    run: r:latest analysis/model/km.R pfizer age65plus emergency
+  ## # # # # # # # # # # # # # # # # # # # # # # # # # # #  
+  ## cohort: mrna; subgroup: vax3_type; variant option: ignore 
+  ## # # # # # # # # # # # # # # # # # # # # # # # # # # #  
+
+  km_mrna_vax3_type_ignore_postest:
+    run: r:latest analysis/model/km.R mrna vax3_type ignore postest
     needs:
-    - process_controlfinal_pfizer
+    - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/pfizer/models/km/age65plus/emergency/*.rds
-        png: output/pfizer/models/km/age65plus/emergency/*.png
+        rds: output/mrna/models/km/vax3_type/ignore/postest/*.rds
+        png: output/mrna/models/km/vax3_type/ignore/postest/*.png
 
-  km_pfizer_age65plus_covidemergency:
-    run: r:latest analysis/model/km.R pfizer age65plus covidemergency
+  km_mrna_vax3_type_ignore_covidadmitted:
+    run: r:latest analysis/model/km.R mrna vax3_type ignore covidadmitted
     needs:
-    - process_controlfinal_pfizer
+    - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/pfizer/models/km/age65plus/covidemergency/*.rds
-        png: output/pfizer/models/km/age65plus/covidemergency/*.png
+        rds: output/mrna/models/km/vax3_type/ignore/covidadmitted/*.rds
+        png: output/mrna/models/km/vax3_type/ignore/covidadmitted/*.png
 
-  km_pfizer_age65plus_covidadmitted:
-    run: r:latest analysis/model/km.R pfizer age65plus covidadmitted
+  km_mrna_vax3_type_ignore_covidcritcareordeath:
+    run: r:latest analysis/model/km.R mrna vax3_type ignore covidcritcareordeath
     needs:
-    - process_controlfinal_pfizer
+    - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/pfizer/models/km/age65plus/covidadmitted/*.rds
-        png: output/pfizer/models/km/age65plus/covidadmitted/*.png
+        rds: output/mrna/models/km/vax3_type/ignore/covidcritcareordeath/*.rds
+        png: output/mrna/models/km/vax3_type/ignore/covidcritcareordeath/*.png
 
-  km_pfizer_age65plus_covidcritcare:
-    run: r:latest analysis/model/km.R pfizer age65plus covidcritcare
+  km_mrna_vax3_type_ignore_coviddeath:
+    run: r:latest analysis/model/km.R mrna vax3_type ignore coviddeath
     needs:
-    - process_controlfinal_pfizer
+    - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/pfizer/models/km/age65plus/covidcritcare/*.rds
-        png: output/pfizer/models/km/age65plus/covidcritcare/*.png
+        rds: output/mrna/models/km/vax3_type/ignore/coviddeath/*.rds
+        png: output/mrna/models/km/vax3_type/ignore/coviddeath/*.png
 
-  km_pfizer_age65plus_coviddeath:
-    run: r:latest analysis/model/km.R pfizer age65plus coviddeath
+  km_mrna_vax3_type_ignore_emergency:
+    run: r:latest analysis/model/km.R mrna vax3_type ignore emergency
     needs:
-    - process_controlfinal_pfizer
+    - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/pfizer/models/km/age65plus/coviddeath/*.rds
-        png: output/pfizer/models/km/age65plus/coviddeath/*.png
+        rds: output/mrna/models/km/vax3_type/ignore/emergency/*.rds
+        png: output/mrna/models/km/vax3_type/ignore/emergency/*.png
 
-  km_pfizer_age65plus_noncoviddeath:
-    run: r:latest analysis/model/km.R pfizer age65plus noncoviddeath
+  km_mrna_vax3_type_ignore_covidemergency:
+    run: r:latest analysis/model/km.R mrna vax3_type ignore covidemergency
     needs:
-    - process_controlfinal_pfizer
+    - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/pfizer/models/km/age65plus/noncoviddeath/*.rds
-        png: output/pfizer/models/km/age65plus/noncoviddeath/*.png
+        rds: output/mrna/models/km/vax3_type/ignore/covidemergency/*.rds
+        png: output/mrna/models/km/vax3_type/ignore/covidemergency/*.png
 
-  ## # # # # # # # # # # # # # # # # # # # 
-  ## combine all outputs for pfizer cohort 
-  ## # # # # # # # # # # # # # # # # # # # 
-
-  combine_km_pfizer:
-    run: r:latest analysis/model/km_combine.R pfizer
+  km_mrna_vax3_type_ignore_noncoviddeath:
+    run: r:latest analysis/model/km.R mrna vax3_type ignore noncoviddeath
     needs:
-    - km_pfizer_all_postest
-    - km_pfizer_all_emergency
-    - km_pfizer_all_covidemergency
-    - km_pfizer_all_covidadmitted
-    - km_pfizer_all_covidcritcare
-    - km_pfizer_all_coviddeath
-    - km_pfizer_all_noncoviddeath
-    - km_pfizer_prior_covid_infection_postest
-    - km_pfizer_prior_covid_infection_emergency
-    - km_pfizer_prior_covid_infection_covidemergency
-    - km_pfizer_prior_covid_infection_covidadmitted
-    - km_pfizer_prior_covid_infection_covidcritcare
-    - km_pfizer_prior_covid_infection_coviddeath
-    - km_pfizer_prior_covid_infection_noncoviddeath
-    - km_pfizer_vax12_type_postest
-    - km_pfizer_vax12_type_emergency
-    - km_pfizer_vax12_type_covidemergency
-    - km_pfizer_vax12_type_covidadmitted
-    - km_pfizer_vax12_type_covidcritcare
-    - km_pfizer_vax12_type_coviddeath
-    - km_pfizer_vax12_type_noncoviddeath
-    - km_pfizer_age65plus_postest
-    - km_pfizer_age65plus_emergency
-    - km_pfizer_age65plus_covidemergency
-    - km_pfizer_age65plus_covidadmitted
-    - km_pfizer_age65plus_covidcritcare
-    - km_pfizer_age65plus_coviddeath
-    - km_pfizer_age65plus_noncoviddeath
+    - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/pfizer/models/km/combined/*.csv
-        png: output/pfizer/models/km/combined/*.png
+        rds: output/mrna/models/km/vax3_type/ignore/noncoviddeath/*.rds
+        png: output/mrna/models/km/vax3_type/ignore/noncoviddeath/*.png
 
-  ## # # # # # # # # # # # # # # # # # # # 
-  ## moderna cohort 
-  ## # # # # # # # # # # # # # # # # # # # 
-  ## # # # # # # # # # # # # # # # # # # # 
-  ## Extract and match 
+  ## # # # # # # # # # # # # # # # # # # # # # # # # # # #  
+  ## cohort: mrna; subgroup: prior_covid_infection; variant option: ignore 
+  ## # # # # # # # # # # # # # # # # # # # # # # # # # # #  
 
-  extract_controlpotential_moderna_1:
-    run: cohortextractor:latest generate_cohort --study-definition study_definition_controlpotential
-      --output-file output/moderna/matchround1/extract/input_controlpotential.feather
-      --param cohort=moderna --param matching_round=1 --param index_date=2021-10-29
+  km_mrna_prior_covid_infection_ignore_postest:
+    run: r:latest analysis/model/km.R mrna prior_covid_infection ignore postest
     needs:
-    - design
-    outputs:
-      highly_sensitive:
-        cohort: output/moderna/matchround1/extract/input_controlpotential.feather
-
-  process_controlpotential_moderna_1:
-    run: r:latest analysis/process_data.R potential moderna 1
-    needs:
-    - extract_controlpotential_moderna_1
-    outputs:
-      highly_sensitive:
-        rds: output/moderna/matchround1/process/*.rds
-      moderately_sensitive:
-        input_controlpotential_skim: output/moderna/matchround1/extract/potential/*.txt
-        data_processed_skim: output/moderna/matchround1/potential/*.txt
-        data_controlpotential_skim: output/moderna/matchround1/process/*.txt
-
-  match_potential_moderna_1:
-    run: r:latest analysis/matching/match_potential.R moderna 1
-    needs:
-    - process_treated
-    - process_controlpotential_moderna_1
-    outputs:
-      highly_sensitive:
-        rds: output/moderna/matchround1/potential/*.rds
-        csv: output/moderna/matchround1/potential/*.csv.gz
-
-  extract_controlactual_moderna_1:
-    run: cohortextractor:latest generate_cohort --study-definition study_definition_controlactual
-      --output-file output/moderna/matchround1/extract/input_controlactual.feather
-      --param cohort=moderna --param matching_round=1
-    needs:
-    - design
-    - match_potential_moderna_1
-    outputs:
-      highly_sensitive:
-        cohort: output/moderna/matchround1/extract/input_controlactual.feather
-
-  process_controlactual_moderna_1:
-    run: r:latest analysis/process_data.R actual moderna 1
-    needs:
-    - process_treated
-    - match_potential_moderna_1
-    - extract_controlpotential_moderna_1
-    - process_controlpotential_moderna_1
-    - extract_controlactual_moderna_1
-    outputs:
-      highly_sensitive:
-        rds: output/moderna/matchround1/actual/*.rds
-        csv: output/moderna/matchround1/actual/*.csv.gz
-      moderately_sensitive:
-        input_controlactual_skim: output/moderna/matchround1/extract/actual/*.txt
-        data_actual_skim: output/moderna/matchround1/actual/*.txt
-
-  extract_controlpotential_moderna_2:
-    run: cohortextractor:latest generate_cohort --study-definition study_definition_controlpotential
-      --output-file output/moderna/matchround2/extract/input_controlpotential.feather
-      --param cohort=moderna --param matching_round=2 --param index_date=2021-11-12
-    needs:
-    - design
-    - process_controlactual_moderna_1
-    outputs:
-      highly_sensitive:
-        cohort: output/moderna/matchround2/extract/input_controlpotential.feather
-
-  process_controlpotential_moderna_2:
-    run: r:latest analysis/process_data.R potential moderna 2
-    needs:
-    - extract_controlpotential_moderna_2
-    outputs:
-      highly_sensitive:
-        rds: output/moderna/matchround2/process/*.rds
-      moderately_sensitive:
-        input_controlpotential_skim: output/moderna/matchround2/extract/potential/*.txt
-        data_processed_skim: output/moderna/matchround2/potential/*.txt
-        data_controlpotential_skim: output/moderna/matchround2/process/*.txt
-
-  match_potential_moderna_2:
-    run: r:latest analysis/matching/match_potential.R moderna 2
-    needs:
-    - process_treated
-    - process_controlpotential_moderna_2
-    - process_controlactual_moderna_1
-    outputs:
-      highly_sensitive:
-        rds: output/moderna/matchround2/potential/*.rds
-        csv: output/moderna/matchround2/potential/*.csv.gz
-
-  extract_controlactual_moderna_2:
-    run: cohortextractor:latest generate_cohort --study-definition study_definition_controlactual
-      --output-file output/moderna/matchround2/extract/input_controlactual.feather
-      --param cohort=moderna --param matching_round=2
-    needs:
-    - design
-    - match_potential_moderna_2
-    outputs:
-      highly_sensitive:
-        cohort: output/moderna/matchround2/extract/input_controlactual.feather
-
-  process_controlactual_moderna_2:
-    run: r:latest analysis/process_data.R actual moderna 2
-    needs:
-    - process_treated
-    - match_potential_moderna_2
-    - extract_controlpotential_moderna_2
-    - process_controlpotential_moderna_2
-    - extract_controlactual_moderna_2
-    - process_controlactual_moderna_1
-    outputs:
-      highly_sensitive:
-        rds: output/moderna/matchround2/actual/*.rds
-        csv: output/moderna/matchround2/actual/*.csv.gz
-      moderately_sensitive:
-        input_controlactual_skim: output/moderna/matchround2/extract/actual/*.txt
-        data_actual_skim: output/moderna/matchround2/actual/*.txt
-
-  extract_controlpotential_moderna_3:
-    run: cohortextractor:latest generate_cohort --study-definition study_definition_controlpotential
-      --output-file output/moderna/matchround3/extract/input_controlpotential.feather
-      --param cohort=moderna --param matching_round=3 --param index_date=2021-11-26
-    needs:
-    - design
-    - process_controlactual_moderna_2
-    outputs:
-      highly_sensitive:
-        cohort: output/moderna/matchround3/extract/input_controlpotential.feather
-
-  process_controlpotential_moderna_3:
-    run: r:latest analysis/process_data.R potential moderna 3
-    needs:
-    - extract_controlpotential_moderna_3
-    outputs:
-      highly_sensitive:
-        rds: output/moderna/matchround3/process/*.rds
-      moderately_sensitive:
-        input_controlpotential_skim: output/moderna/matchround3/extract/potential/*.txt
-        data_processed_skim: output/moderna/matchround3/potential/*.txt
-        data_controlpotential_skim: output/moderna/matchround3/process/*.txt
-
-  match_potential_moderna_3:
-    run: r:latest analysis/matching/match_potential.R moderna 3
-    needs:
-    - process_treated
-    - process_controlpotential_moderna_3
-    - process_controlactual_moderna_2
-    outputs:
-      highly_sensitive:
-        rds: output/moderna/matchround3/potential/*.rds
-        csv: output/moderna/matchround3/potential/*.csv.gz
-
-  extract_controlactual_moderna_3:
-    run: cohortextractor:latest generate_cohort --study-definition study_definition_controlactual
-      --output-file output/moderna/matchround3/extract/input_controlactual.feather
-      --param cohort=moderna --param matching_round=3
-    needs:
-    - design
-    - match_potential_moderna_3
-    outputs:
-      highly_sensitive:
-        cohort: output/moderna/matchround3/extract/input_controlactual.feather
-
-  process_controlactual_moderna_3:
-    run: r:latest analysis/process_data.R actual moderna 3
-    needs:
-    - process_treated
-    - match_potential_moderna_3
-    - extract_controlpotential_moderna_3
-    - process_controlpotential_moderna_3
-    - extract_controlactual_moderna_3
-    - process_controlactual_moderna_2
-    outputs:
-      highly_sensitive:
-        rds: output/moderna/matchround3/actual/*.rds
-        csv: output/moderna/matchround3/actual/*.csv.gz
-      moderately_sensitive:
-        input_controlactual_skim: output/moderna/matchround3/extract/actual/*.txt
-        data_actual_skim: output/moderna/matchround3/actual/*.txt
-
-  extract_controlpotential_moderna_4:
-    run: cohortextractor:latest generate_cohort --study-definition study_definition_controlpotential
-      --output-file output/moderna/matchround4/extract/input_controlpotential.feather
-      --param cohort=moderna --param matching_round=4 --param index_date=2021-12-10
-    needs:
-    - design
-    - process_controlactual_moderna_3
-    outputs:
-      highly_sensitive:
-        cohort: output/moderna/matchround4/extract/input_controlpotential.feather
-
-  process_controlpotential_moderna_4:
-    run: r:latest analysis/process_data.R potential moderna 4
-    needs:
-    - extract_controlpotential_moderna_4
-    outputs:
-      highly_sensitive:
-        rds: output/moderna/matchround4/process/*.rds
-      moderately_sensitive:
-        input_controlpotential_skim: output/moderna/matchround4/extract/potential/*.txt
-        data_processed_skim: output/moderna/matchround4/potential/*.txt
-        data_controlpotential_skim: output/moderna/matchround4/process/*.txt
-
-  match_potential_moderna_4:
-    run: r:latest analysis/matching/match_potential.R moderna 4
-    needs:
-    - process_treated
-    - process_controlpotential_moderna_4
-    - process_controlactual_moderna_3
-    outputs:
-      highly_sensitive:
-        rds: output/moderna/matchround4/potential/*.rds
-        csv: output/moderna/matchround4/potential/*.csv.gz
-
-  extract_controlactual_moderna_4:
-    run: cohortextractor:latest generate_cohort --study-definition study_definition_controlactual
-      --output-file output/moderna/matchround4/extract/input_controlactual.feather
-      --param cohort=moderna --param matching_round=4
-    needs:
-    - design
-    - match_potential_moderna_4
-    outputs:
-      highly_sensitive:
-        cohort: output/moderna/matchround4/extract/input_controlactual.feather
-
-  process_controlactual_moderna_4:
-    run: r:latest analysis/process_data.R actual moderna 4
-    needs:
-    - process_treated
-    - match_potential_moderna_4
-    - extract_controlpotential_moderna_4
-    - process_controlpotential_moderna_4
-    - extract_controlactual_moderna_4
-    - process_controlactual_moderna_3
-    outputs:
-      highly_sensitive:
-        rds: output/moderna/matchround4/actual/*.rds
-        csv: output/moderna/matchround4/actual/*.csv.gz
-      moderately_sensitive:
-        input_controlactual_skim: output/moderna/matchround4/extract/actual/*.txt
-        data_actual_skim: output/moderna/matchround4/actual/*.txt
-
-  extract_controlfinal_moderna:
-    run: cohortextractor:latest generate_cohort --study-definition study_definition_controlfinal
-      --output-file output/moderna/extract/input_controlfinal.feather --param cohort=moderna
-      --param n_matching_rounds=4
-    needs:
-    - design
-    - process_controlactual_moderna_4
-    outputs:
-      highly_sensitive:
-        extract: output/moderna/extract/input_controlfinal.feather
-
-  dummydata_controlfinal_moderna:
-    run: r:latest analysis/dummy/dummydata_controlfinal.R moderna
-    needs:
-    - process_controlactual_moderna_1
-    - process_controlactual_moderna_2
-    - process_controlactual_moderna_3
-    - process_controlactual_moderna_4
-    outputs:
-      highly_sensitive:
-        dummydata_controlfinal: output/moderna/dummydata/dummy_control_final.feather
-
-  process_controlfinal_moderna:
-    run: r:latest analysis/process_data.R final moderna
-    needs:
-    - process_controlactual_moderna_1
-    - process_controlactual_moderna_2
-    - process_controlactual_moderna_3
-    - process_controlactual_moderna_4
-    - extract_controlfinal_moderna
-    - process_treated
-    - dummydata_controlfinal_moderna
-    outputs:
-      highly_sensitive:
-        extract: output/moderna/match/*.rds
-      moderately_sensitive:
-        input_controlfinal_skim: output/moderna/extract/*.txt
-        data_matched_skim: output/moderna/match/*.txt
-
-  table1_moderna:
-    run: r:latest analysis/matching/table1.R moderna
-    needs:
-    - process_controlfinal_moderna
+    - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        csv: output/moderna/table1/*.csv
-        png: output/moderna/table1/*.png
+        rds: output/mrna/models/km/prior_covid_infection/ignore/postest/*.rds
+        png: output/mrna/models/km/prior_covid_infection/ignore/postest/*.png
 
-  cinc_dose4_moderna:
-    run: r:latest analysis/model/cinc_dose4.R moderna
+  km_mrna_prior_covid_infection_ignore_covidadmitted:
+    run: r:latest analysis/model/km.R mrna prior_covid_infection ignore covidadmitted
     needs:
-    - process_controlfinal_moderna
+    - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        csv: output/moderna/models/cinc_dose4/*.csv
-        png: output/moderna/models/cinc_dose4/*.png
+        rds: output/mrna/models/km/prior_covid_infection/ignore/covidadmitted/*.rds
+        png: output/mrna/models/km/prior_covid_infection/ignore/covidadmitted/*.png
+
+  km_mrna_prior_covid_infection_ignore_covidcritcareordeath:
+    run: r:latest analysis/model/km.R mrna prior_covid_infection ignore covidcritcareordeath
+    needs:
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        rds: output/mrna/models/km/prior_covid_infection/ignore/covidcritcareordeath/*.rds
+        png: output/mrna/models/km/prior_covid_infection/ignore/covidcritcareordeath/*.png
+
+  km_mrna_prior_covid_infection_ignore_coviddeath:
+    run: r:latest analysis/model/km.R mrna prior_covid_infection ignore coviddeath
+    needs:
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        rds: output/mrna/models/km/prior_covid_infection/ignore/coviddeath/*.rds
+        png: output/mrna/models/km/prior_covid_infection/ignore/coviddeath/*.png
+
+  km_mrna_prior_covid_infection_ignore_emergency:
+    run: r:latest analysis/model/km.R mrna prior_covid_infection ignore emergency
+    needs:
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        rds: output/mrna/models/km/prior_covid_infection/ignore/emergency/*.rds
+        png: output/mrna/models/km/prior_covid_infection/ignore/emergency/*.png
+
+  km_mrna_prior_covid_infection_ignore_covidemergency:
+    run: r:latest analysis/model/km.R mrna prior_covid_infection ignore covidemergency
+    needs:
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        rds: output/mrna/models/km/prior_covid_infection/ignore/covidemergency/*.rds
+        png: output/mrna/models/km/prior_covid_infection/ignore/covidemergency/*.png
+
+  km_mrna_prior_covid_infection_ignore_noncoviddeath:
+    run: r:latest analysis/model/km.R mrna prior_covid_infection ignore noncoviddeath
+    needs:
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        rds: output/mrna/models/km/prior_covid_infection/ignore/noncoviddeath/*.rds
+        png: output/mrna/models/km/prior_covid_infection/ignore/noncoviddeath/*.png
+
+  ## # # # # # # # # # # # # # # # # # # # # # # # # # # #  
+  ## cohort: mrna; subgroup: vax12_type; variant option: ignore 
+  ## # # # # # # # # # # # # # # # # # # # # # # # # # # #  
+
+  km_mrna_vax12_type_ignore_postest:
+    run: r:latest analysis/model/km.R mrna vax12_type ignore postest
+    needs:
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        rds: output/mrna/models/km/vax12_type/ignore/postest/*.rds
+        png: output/mrna/models/km/vax12_type/ignore/postest/*.png
+
+  km_mrna_vax12_type_ignore_covidadmitted:
+    run: r:latest analysis/model/km.R mrna vax12_type ignore covidadmitted
+    needs:
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        rds: output/mrna/models/km/vax12_type/ignore/covidadmitted/*.rds
+        png: output/mrna/models/km/vax12_type/ignore/covidadmitted/*.png
+
+  km_mrna_vax12_type_ignore_covidcritcareordeath:
+    run: r:latest analysis/model/km.R mrna vax12_type ignore covidcritcareordeath
+    needs:
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        rds: output/mrna/models/km/vax12_type/ignore/covidcritcareordeath/*.rds
+        png: output/mrna/models/km/vax12_type/ignore/covidcritcareordeath/*.png
+
+  km_mrna_vax12_type_ignore_coviddeath:
+    run: r:latest analysis/model/km.R mrna vax12_type ignore coviddeath
+    needs:
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        rds: output/mrna/models/km/vax12_type/ignore/coviddeath/*.rds
+        png: output/mrna/models/km/vax12_type/ignore/coviddeath/*.png
+
+  km_mrna_vax12_type_ignore_emergency:
+    run: r:latest analysis/model/km.R mrna vax12_type ignore emergency
+    needs:
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        rds: output/mrna/models/km/vax12_type/ignore/emergency/*.rds
+        png: output/mrna/models/km/vax12_type/ignore/emergency/*.png
+
+  km_mrna_vax12_type_ignore_covidemergency:
+    run: r:latest analysis/model/km.R mrna vax12_type ignore covidemergency
+    needs:
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        rds: output/mrna/models/km/vax12_type/ignore/covidemergency/*.rds
+        png: output/mrna/models/km/vax12_type/ignore/covidemergency/*.png
+
+  km_mrna_vax12_type_ignore_noncoviddeath:
+    run: r:latest analysis/model/km.R mrna vax12_type ignore noncoviddeath
+    needs:
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        rds: output/mrna/models/km/vax12_type/ignore/noncoviddeath/*.rds
+        png: output/mrna/models/km/vax12_type/ignore/noncoviddeath/*.png
+
+  ## # # # # # # # # # # # # # # # # # # # # # # # # # # #  
+  ## cohort: mrna; subgroup: agegroup; variant option: ignore 
+  ## # # # # # # # # # # # # # # # # # # # # # # # # # # #  
+
+  km_mrna_agegroup_ignore_postest:
+    run: r:latest analysis/model/km.R mrna agegroup ignore postest
+    needs:
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        rds: output/mrna/models/km/agegroup/ignore/postest/*.rds
+        png: output/mrna/models/km/agegroup/ignore/postest/*.png
+
+  km_mrna_agegroup_ignore_covidadmitted:
+    run: r:latest analysis/model/km.R mrna agegroup ignore covidadmitted
+    needs:
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        rds: output/mrna/models/km/agegroup/ignore/covidadmitted/*.rds
+        png: output/mrna/models/km/agegroup/ignore/covidadmitted/*.png
+
+  km_mrna_agegroup_ignore_covidcritcareordeath:
+    run: r:latest analysis/model/km.R mrna agegroup ignore covidcritcareordeath
+    needs:
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        rds: output/mrna/models/km/agegroup/ignore/covidcritcareordeath/*.rds
+        png: output/mrna/models/km/agegroup/ignore/covidcritcareordeath/*.png
+
+  km_mrna_agegroup_ignore_coviddeath:
+    run: r:latest analysis/model/km.R mrna agegroup ignore coviddeath
+    needs:
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        rds: output/mrna/models/km/agegroup/ignore/coviddeath/*.rds
+        png: output/mrna/models/km/agegroup/ignore/coviddeath/*.png
+
+  km_mrna_agegroup_ignore_emergency:
+    run: r:latest analysis/model/km.R mrna agegroup ignore emergency
+    needs:
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        rds: output/mrna/models/km/agegroup/ignore/emergency/*.rds
+        png: output/mrna/models/km/agegroup/ignore/emergency/*.png
+
+  km_mrna_agegroup_ignore_covidemergency:
+    run: r:latest analysis/model/km.R mrna agegroup ignore covidemergency
+    needs:
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        rds: output/mrna/models/km/agegroup/ignore/covidemergency/*.rds
+        png: output/mrna/models/km/agegroup/ignore/covidemergency/*.png
+
+  km_mrna_agegroup_ignore_noncoviddeath:
+    run: r:latest analysis/model/km.R mrna agegroup ignore noncoviddeath
+    needs:
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        rds: output/mrna/models/km/agegroup/ignore/noncoviddeath/*.rds
+        png: output/mrna/models/km/agegroup/ignore/noncoviddeath/*.png
 
   ## # # # # # # # # # # # # # # # # # # # 
-  ## Model 
-  ## # # # # # # # # # # # # # # # # # # # 
-  ## cohort: moderna; subgroup: all 
+  ## combine all outputs for mrna cohort 
   ## # # # # # # # # # # # # # # # # # # # 
 
-  km_moderna_all_postest:
-    run: r:latest analysis/model/km.R moderna all postest
+  combine_km_mrna:
+    run: r:latest analysis/model/km_combine.R mrna
     needs:
-    - process_controlfinal_moderna
+    - km_mrna_all_ignore_postest
+    - km_mrna_all_split_postest
+    - km_mrna_all_restrict_postest
+    - km_mrna_all_ignore_covidadmitted
+    - km_mrna_all_split_covidadmitted
+    - km_mrna_all_restrict_covidadmitted
+    - km_mrna_all_ignore_covidcritcareordeath
+    - km_mrna_all_split_covidcritcareordeath
+    - km_mrna_all_restrict_covidcritcareordeath
+    - km_mrna_all_ignore_coviddeath
+    - km_mrna_all_split_coviddeath
+    - km_mrna_all_restrict_coviddeath
+    - km_mrna_all_ignore_emergency
+    - km_mrna_all_split_emergency
+    - km_mrna_all_restrict_emergency
+    - km_mrna_all_ignore_covidemergency
+    - km_mrna_all_split_covidemergency
+    - km_mrna_all_restrict_covidemergency
+    - km_mrna_all_ignore_noncoviddeath
+    - km_mrna_all_split_noncoviddeath
+    - km_mrna_all_restrict_noncoviddeath
+    - km_mrna_vax3_type_ignore_postest
+    - km_mrna_vax3_type_ignore_covidadmitted
+    - km_mrna_vax3_type_ignore_covidcritcareordeath
+    - km_mrna_vax3_type_ignore_coviddeath
+    - km_mrna_vax3_type_ignore_emergency
+    - km_mrna_vax3_type_ignore_covidemergency
+    - km_mrna_vax3_type_ignore_noncoviddeath
+    - km_mrna_prior_covid_infection_ignore_postest
+    - km_mrna_prior_covid_infection_ignore_covidadmitted
+    - km_mrna_prior_covid_infection_ignore_covidcritcareordeath
+    - km_mrna_prior_covid_infection_ignore_coviddeath
+    - km_mrna_prior_covid_infection_ignore_emergency
+    - km_mrna_prior_covid_infection_ignore_covidemergency
+    - km_mrna_prior_covid_infection_ignore_noncoviddeath
+    - km_mrna_vax12_type_ignore_postest
+    - km_mrna_vax12_type_ignore_covidadmitted
+    - km_mrna_vax12_type_ignore_covidcritcareordeath
+    - km_mrna_vax12_type_ignore_coviddeath
+    - km_mrna_vax12_type_ignore_emergency
+    - km_mrna_vax12_type_ignore_covidemergency
+    - km_mrna_vax12_type_ignore_noncoviddeath
+    - km_mrna_agegroup_ignore_postest
+    - km_mrna_agegroup_ignore_covidadmitted
+    - km_mrna_agegroup_ignore_covidcritcareordeath
+    - km_mrna_agegroup_ignore_coviddeath
+    - km_mrna_agegroup_ignore_emergency
+    - km_mrna_agegroup_ignore_covidemergency
+    - km_mrna_agegroup_ignore_noncoviddeath
     outputs:
       moderately_sensitive:
-        rds: output/moderna/models/km/all/postest/*.rds
-        png: output/moderna/models/km/all/postest/*.png
-
-  km_moderna_all_emergency:
-    run: r:latest analysis/model/km.R moderna all emergency
-    needs:
-    - process_controlfinal_moderna
-    outputs:
-      moderately_sensitive:
-        rds: output/moderna/models/km/all/emergency/*.rds
-        png: output/moderna/models/km/all/emergency/*.png
-
-  km_moderna_all_covidemergency:
-    run: r:latest analysis/model/km.R moderna all covidemergency
-    needs:
-    - process_controlfinal_moderna
-    outputs:
-      moderately_sensitive:
-        rds: output/moderna/models/km/all/covidemergency/*.rds
-        png: output/moderna/models/km/all/covidemergency/*.png
-
-  km_moderna_all_covidadmitted:
-    run: r:latest analysis/model/km.R moderna all covidadmitted
-    needs:
-    - process_controlfinal_moderna
-    outputs:
-      moderately_sensitive:
-        rds: output/moderna/models/km/all/covidadmitted/*.rds
-        png: output/moderna/models/km/all/covidadmitted/*.png
-
-  km_moderna_all_covidcritcare:
-    run: r:latest analysis/model/km.R moderna all covidcritcare
-    needs:
-    - process_controlfinal_moderna
-    outputs:
-      moderately_sensitive:
-        rds: output/moderna/models/km/all/covidcritcare/*.rds
-        png: output/moderna/models/km/all/covidcritcare/*.png
-
-  km_moderna_all_coviddeath:
-    run: r:latest analysis/model/km.R moderna all coviddeath
-    needs:
-    - process_controlfinal_moderna
-    outputs:
-      moderately_sensitive:
-        rds: output/moderna/models/km/all/coviddeath/*.rds
-        png: output/moderna/models/km/all/coviddeath/*.png
-
-  km_moderna_all_noncoviddeath:
-    run: r:latest analysis/model/km.R moderna all noncoviddeath
-    needs:
-    - process_controlfinal_moderna
-    outputs:
-      moderately_sensitive:
-        rds: output/moderna/models/km/all/noncoviddeath/*.rds
-        png: output/moderna/models/km/all/noncoviddeath/*.png
-
-  ## # # # # # # # # # # # # # # # # # # # 
-  ## cohort: moderna; subgroup: prior_covid_infection 
-  ## # # # # # # # # # # # # # # # # # # # 
-
-  km_moderna_prior_covid_infection_postest:
-    run: r:latest analysis/model/km.R moderna prior_covid_infection postest
-    needs:
-    - process_controlfinal_moderna
-    outputs:
-      moderately_sensitive:
-        rds: output/moderna/models/km/prior_covid_infection/postest/*.rds
-        png: output/moderna/models/km/prior_covid_infection/postest/*.png
-
-  km_moderna_prior_covid_infection_emergency:
-    run: r:latest analysis/model/km.R moderna prior_covid_infection emergency
-    needs:
-    - process_controlfinal_moderna
-    outputs:
-      moderately_sensitive:
-        rds: output/moderna/models/km/prior_covid_infection/emergency/*.rds
-        png: output/moderna/models/km/prior_covid_infection/emergency/*.png
-
-  km_moderna_prior_covid_infection_covidemergency:
-    run: r:latest analysis/model/km.R moderna prior_covid_infection covidemergency
-    needs:
-    - process_controlfinal_moderna
-    outputs:
-      moderately_sensitive:
-        rds: output/moderna/models/km/prior_covid_infection/covidemergency/*.rds
-        png: output/moderna/models/km/prior_covid_infection/covidemergency/*.png
-
-  km_moderna_prior_covid_infection_covidadmitted:
-    run: r:latest analysis/model/km.R moderna prior_covid_infection covidadmitted
-    needs:
-    - process_controlfinal_moderna
-    outputs:
-      moderately_sensitive:
-        rds: output/moderna/models/km/prior_covid_infection/covidadmitted/*.rds
-        png: output/moderna/models/km/prior_covid_infection/covidadmitted/*.png
-
-  km_moderna_prior_covid_infection_covidcritcare:
-    run: r:latest analysis/model/km.R moderna prior_covid_infection covidcritcare
-    needs:
-    - process_controlfinal_moderna
-    outputs:
-      moderately_sensitive:
-        rds: output/moderna/models/km/prior_covid_infection/covidcritcare/*.rds
-        png: output/moderna/models/km/prior_covid_infection/covidcritcare/*.png
-
-  km_moderna_prior_covid_infection_coviddeath:
-    run: r:latest analysis/model/km.R moderna prior_covid_infection coviddeath
-    needs:
-    - process_controlfinal_moderna
-    outputs:
-      moderately_sensitive:
-        rds: output/moderna/models/km/prior_covid_infection/coviddeath/*.rds
-        png: output/moderna/models/km/prior_covid_infection/coviddeath/*.png
-
-  km_moderna_prior_covid_infection_noncoviddeath:
-    run: r:latest analysis/model/km.R moderna prior_covid_infection noncoviddeath
-    needs:
-    - process_controlfinal_moderna
-    outputs:
-      moderately_sensitive:
-        rds: output/moderna/models/km/prior_covid_infection/noncoviddeath/*.rds
-        png: output/moderna/models/km/prior_covid_infection/noncoviddeath/*.png
-
-  ## # # # # # # # # # # # # # # # # # # # 
-  ## cohort: moderna; subgroup: vax12_type 
-  ## # # # # # # # # # # # # # # # # # # # 
-
-  km_moderna_vax12_type_postest:
-    run: r:latest analysis/model/km.R moderna vax12_type postest
-    needs:
-    - process_controlfinal_moderna
-    outputs:
-      moderately_sensitive:
-        rds: output/moderna/models/km/vax12_type/postest/*.rds
-        png: output/moderna/models/km/vax12_type/postest/*.png
-
-  km_moderna_vax12_type_emergency:
-    run: r:latest analysis/model/km.R moderna vax12_type emergency
-    needs:
-    - process_controlfinal_moderna
-    outputs:
-      moderately_sensitive:
-        rds: output/moderna/models/km/vax12_type/emergency/*.rds
-        png: output/moderna/models/km/vax12_type/emergency/*.png
-
-  km_moderna_vax12_type_covidemergency:
-    run: r:latest analysis/model/km.R moderna vax12_type covidemergency
-    needs:
-    - process_controlfinal_moderna
-    outputs:
-      moderately_sensitive:
-        rds: output/moderna/models/km/vax12_type/covidemergency/*.rds
-        png: output/moderna/models/km/vax12_type/covidemergency/*.png
-
-  km_moderna_vax12_type_covidadmitted:
-    run: r:latest analysis/model/km.R moderna vax12_type covidadmitted
-    needs:
-    - process_controlfinal_moderna
-    outputs:
-      moderately_sensitive:
-        rds: output/moderna/models/km/vax12_type/covidadmitted/*.rds
-        png: output/moderna/models/km/vax12_type/covidadmitted/*.png
-
-  km_moderna_vax12_type_covidcritcare:
-    run: r:latest analysis/model/km.R moderna vax12_type covidcritcare
-    needs:
-    - process_controlfinal_moderna
-    outputs:
-      moderately_sensitive:
-        rds: output/moderna/models/km/vax12_type/covidcritcare/*.rds
-        png: output/moderna/models/km/vax12_type/covidcritcare/*.png
-
-  km_moderna_vax12_type_coviddeath:
-    run: r:latest analysis/model/km.R moderna vax12_type coviddeath
-    needs:
-    - process_controlfinal_moderna
-    outputs:
-      moderately_sensitive:
-        rds: output/moderna/models/km/vax12_type/coviddeath/*.rds
-        png: output/moderna/models/km/vax12_type/coviddeath/*.png
-
-  km_moderna_vax12_type_noncoviddeath:
-    run: r:latest analysis/model/km.R moderna vax12_type noncoviddeath
-    needs:
-    - process_controlfinal_moderna
-    outputs:
-      moderately_sensitive:
-        rds: output/moderna/models/km/vax12_type/noncoviddeath/*.rds
-        png: output/moderna/models/km/vax12_type/noncoviddeath/*.png
-
-  ## # # # # # # # # # # # # # # # # # # # 
-  ## cohort: moderna; subgroup: age65plus 
-  ## # # # # # # # # # # # # # # # # # # # 
-
-  km_moderna_age65plus_postest:
-    run: r:latest analysis/model/km.R moderna age65plus postest
-    needs:
-    - process_controlfinal_moderna
-    outputs:
-      moderately_sensitive:
-        rds: output/moderna/models/km/age65plus/postest/*.rds
-        png: output/moderna/models/km/age65plus/postest/*.png
-
-  km_moderna_age65plus_emergency:
-    run: r:latest analysis/model/km.R moderna age65plus emergency
-    needs:
-    - process_controlfinal_moderna
-    outputs:
-      moderately_sensitive:
-        rds: output/moderna/models/km/age65plus/emergency/*.rds
-        png: output/moderna/models/km/age65plus/emergency/*.png
-
-  km_moderna_age65plus_covidemergency:
-    run: r:latest analysis/model/km.R moderna age65plus covidemergency
-    needs:
-    - process_controlfinal_moderna
-    outputs:
-      moderately_sensitive:
-        rds: output/moderna/models/km/age65plus/covidemergency/*.rds
-        png: output/moderna/models/km/age65plus/covidemergency/*.png
-
-  km_moderna_age65plus_covidadmitted:
-    run: r:latest analysis/model/km.R moderna age65plus covidadmitted
-    needs:
-    - process_controlfinal_moderna
-    outputs:
-      moderately_sensitive:
-        rds: output/moderna/models/km/age65plus/covidadmitted/*.rds
-        png: output/moderna/models/km/age65plus/covidadmitted/*.png
-
-  km_moderna_age65plus_covidcritcare:
-    run: r:latest analysis/model/km.R moderna age65plus covidcritcare
-    needs:
-    - process_controlfinal_moderna
-    outputs:
-      moderately_sensitive:
-        rds: output/moderna/models/km/age65plus/covidcritcare/*.rds
-        png: output/moderna/models/km/age65plus/covidcritcare/*.png
-
-  km_moderna_age65plus_coviddeath:
-    run: r:latest analysis/model/km.R moderna age65plus coviddeath
-    needs:
-    - process_controlfinal_moderna
-    outputs:
-      moderately_sensitive:
-        rds: output/moderna/models/km/age65plus/coviddeath/*.rds
-        png: output/moderna/models/km/age65plus/coviddeath/*.png
-
-  km_moderna_age65plus_noncoviddeath:
-    run: r:latest analysis/model/km.R moderna age65plus noncoviddeath
-    needs:
-    - process_controlfinal_moderna
-    outputs:
-      moderately_sensitive:
-        rds: output/moderna/models/km/age65plus/noncoviddeath/*.rds
-        png: output/moderna/models/km/age65plus/noncoviddeath/*.png
-
-  ## # # # # # # # # # # # # # # # # # # # 
-  ## combine all outputs for moderna cohort 
-  ## # # # # # # # # # # # # # # # # # # # 
-
-  combine_km_moderna:
-    run: r:latest analysis/model/km_combine.R moderna
-    needs:
-    - km_moderna_all_postest
-    - km_moderna_all_emergency
-    - km_moderna_all_covidemergency
-    - km_moderna_all_covidadmitted
-    - km_moderna_all_covidcritcare
-    - km_moderna_all_coviddeath
-    - km_moderna_all_noncoviddeath
-    - km_moderna_prior_covid_infection_postest
-    - km_moderna_prior_covid_infection_emergency
-    - km_moderna_prior_covid_infection_covidemergency
-    - km_moderna_prior_covid_infection_covidadmitted
-    - km_moderna_prior_covid_infection_covidcritcare
-    - km_moderna_prior_covid_infection_coviddeath
-    - km_moderna_prior_covid_infection_noncoviddeath
-    - km_moderna_vax12_type_postest
-    - km_moderna_vax12_type_emergency
-    - km_moderna_vax12_type_covidemergency
-    - km_moderna_vax12_type_covidadmitted
-    - km_moderna_vax12_type_covidcritcare
-    - km_moderna_vax12_type_coviddeath
-    - km_moderna_vax12_type_noncoviddeath
-    - km_moderna_age65plus_postest
-    - km_moderna_age65plus_emergency
-    - km_moderna_age65plus_covidemergency
-    - km_moderna_age65plus_covidadmitted
-    - km_moderna_age65plus_covidcritcare
-    - km_moderna_age65plus_coviddeath
-    - km_moderna_age65plus_noncoviddeath
-    outputs:
-      moderately_sensitive:
-        rds: output/moderna/models/km/combined/*.csv
-        png: output/moderna/models/km/combined/*.png
+        rds: output/mrna/models/km/combined/*.csv
+        png: output/mrna/models/km/combined/*.png
 
   ## #### End #### 
 

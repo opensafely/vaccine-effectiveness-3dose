@@ -49,3 +49,8 @@ nhsd-primary-care-domain-refsets/palcare_cod/5fce98cf
 opensafely/midazolam-end-of-life/4c1b3c89
 opensafely/housebound/5bc77310
 opensafely/no-longer-housebound/29a88ca6
+primis-covid19-vacc-uptake/pregdel/v1.2.1
+primis-covid19-vacc-uptake/preg/v1
+opensafely/influenza-vaccination/2020-05-12
+opensafely/influenza-vaccination-clinical-codes-given/2020-05-21
+opensafely/influenza-vaccination-clinical-codes-not-given/2020-05-19

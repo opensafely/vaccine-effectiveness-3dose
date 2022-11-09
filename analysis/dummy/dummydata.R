@@ -43,12 +43,14 @@ firstmoderna_day <- as.integer(firstmoderna_date - index_date)
 
 known_variables <- c(
   "index_date", "pfizerstart_date", "modernastart_date", "firstpfizer_date", "firstaz_date", "firstmoderna_date",
-  "index_day", "pfizerstart_day", "modernastart_day", "firstpfizer_day", "firstaz_day", "firstmoderna_day"
+  "index_day", "pfizerstart_day", "modernastart_day", "firstpfizer_day", "firstaz_day", "firstmoderna_day",
+  "maxfup"
 )
 
 sim_list <- splice(
   sim_list_vax,
   sim_list_jcvi,
+  sim_list_covs,
   sim_list_demographic,
   sim_list_pre,
   sim_list_outcome
@@ -123,6 +125,7 @@ dummydata_processed %>%
 # dummy_control_potential1 (reused for actual)
 dummydata_processed %>% 
   select(-all_of(str_replace(names(sim_list_outcome), "_day", "_date"))) %>%
+  select(-all_of(names(sim_list_covs))) %>%
   select(-matches("covid_vax_\\w+_4_date")) %>%
   write_feather(sink = here("lib", "dummydata", "dummy_control_potential1.feather"))
 

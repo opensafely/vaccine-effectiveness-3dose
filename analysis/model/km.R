@@ -126,7 +126,7 @@ data_matched <- data_matched %>%
   mutate(all="all") %>%
   select(
     # select only variables needed for models to save space
-    new_id, treated, trial_date, variantend_date, variant,
+    patient_id, new_id, treated, trial_date, variantend_date, variant,
     controlistreated_date,
     vax3_date,
     death_date, dereg_date, coviddeath_date, noncoviddeath_date, vax4_date,
@@ -667,7 +667,7 @@ coxcontrast <- function(data, adj = FALSE, cuts=NULL){
     nest() %>%
     mutate(
       cox_obj = map(data, ~{
-        coxph(cox_formula, data = .x, y=FALSE, robust=TRUE, id=new_id, na.action="na.fail")
+        coxph(cox_formula, data = .x, y=FALSE, robust=TRUE, id=patient_id, na.action="na.fail")
       }),
       cox_obj_tidy = map(cox_obj, ~broom::tidy(.x)),
     ) %>%

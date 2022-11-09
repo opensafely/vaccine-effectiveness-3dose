@@ -142,16 +142,6 @@ def generate_demo_variables(index_date):
       }
     ),
   ),
-
-  #rurality
-  rural_urban=patients.address_as_of(
-    f"{index_date} - 1 day",
-    returning="rural_urban_classification",
-    return_expectations={
-      "rate": "universal",
-      "category": {"ratios": {1: 0.125, 2: 0.125, 3: 0.125, 4: 0.125, 5: 0.125, 6: 0.125, 7: 0.125, 8: 0.125}},
-    },
-  ),
   
   )
   return demo_variables

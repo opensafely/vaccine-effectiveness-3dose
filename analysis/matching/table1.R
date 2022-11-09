@@ -82,7 +82,6 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("")) {
     ethnicity ~ "Ethnicity",
     imd_Q5 ~ "Deprivation",
     region ~ "Region",
-    # rural_urban_group ~ "Rurality",
     
     bmi ~ "Body mass index",
     

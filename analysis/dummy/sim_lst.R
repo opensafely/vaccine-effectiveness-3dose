@@ -258,13 +258,7 @@ sim_list_demographic <- lst(
     ),
     missing_rate = ~0
   ),
-  
-  rural_urban = bn_node(
-    ~rfactor(n=..n, levels = 1:9, p = rep(1/9, 9)),
-    missing_rate = ~ 0 #can this be missing when imd nonmissing?
-  ),
-  
-  
+
 )
 
 # sim list pre ----

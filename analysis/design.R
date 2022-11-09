@@ -193,7 +193,6 @@ covariates_model <- c(
   "sex",
   "ethnicity",
   "imd_Q5",
-  # "rural_urban_group", # decide how to deal with missing if including
   "bmi",
   "learndis",
   "sev_mental",

@@ -1,7 +1,7 @@
 ######################################
 
 # This script:
-# reads in testing data
+# reads in testing data (generates dummy data if not running on real data)
 # processes testing data
 # sense checks the processed data
 # checks that fup-params n_any and n_pos were used in the study definition were appropriate

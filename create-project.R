@@ -465,6 +465,19 @@ actions_list <- splice(
           )
         ),
         
+        action(
+          name = glue("summarise_covidtests_{x}"),
+          run = "r:latest analysis/covidtests/summarise_covidtests.R",
+          arguments = c("mrna", "all"), # may want to look in subgroups later, but for now just "all"
+          needs = namelesslst(
+            glue("process_covidtests_{x}")
+          ),
+          moderately_sensitive = lst(
+            csv = "output/mrna/covidtests/summary/all/*.csv",
+            png = "output/mrna/covidtests/summary/all/*.png"
+          )
+        ),
+        
         comment("# # # # # # # # # # # # # # # # # # #",
                 "Model",
                 "# # # # # # # # # # # # # # # # # # #"),

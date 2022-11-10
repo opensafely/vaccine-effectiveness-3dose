@@ -258,6 +258,15 @@ actions:
         skim: output/mrna/covidtests/extract/*.txt
         png: output/mrna/covidtests/checks/*.png
 
+  summarise_covidtests_mrna:
+    run: r:latest analysis/covidtests/summarise_covidtests.R mrna all
+    needs:
+    - process_covidtests_mrna
+    outputs:
+      moderately_sensitive:
+        csv: output/mrna/covidtests/summary/all/*.csv
+        png: output/mrna/covidtests/summary/all/*.png
+
   ## # # # # # # # # # # # # # # # # # # # 
   ## Model 
   ## # # # # # # # # # # # # # # # # # # # 

@@ -65,6 +65,13 @@ fs::dir_create(output_dir)
 
 data_matched <- read_rds(ghere("output", cohort, "match", "data_matched.rds"))
 
+# set study end date ----
+if (outcome == "postest") {
+  studyend_date <- study_dates$testend_date
+} else {
+  studyend_date <- study_dates$studyend_date
+}
+
 if (variant_option == "restrict") {
   
   # create a duplicate row for each variant era (will filter later)
@@ -108,8 +115,8 @@ data_matched <- data_matched %>%
     ),
     variantend_date = if_else(
       variant %in% c("ignore", "split"),
-      study_dates$studyend_date,
-      min(study_dates$studyend_date, variant_dates$end_date[variant_id])
+      studyend_date,
+      min(studyend_date, variant_dates$end_date[variant_id])
     )
   ) %>%
   ungroup() %>%

@@ -21,34 +21,50 @@ if (length(args) == 0) {
   subgroup <- args[[2]]
 } 
 
-output_dir <- ghere("output", cohort, "covidtests", "summary")
-fs::dir_create(output_dir)
+if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("")) {
+  
+  ## Import released data ----
+  release_dir <- ""
+  
+  output_dir <- here("output", release_dir, "figures")
+  fs::dir_create(output_dir)
+  
+  raw_stats_redacted <- read_csv(fs::path(release_dir, "covidtest_rates.csv"))
+  
+} else {
+  
+  output_dir <- ghere("output", cohort, "covidtests", "summary", subgroup)
+  fs::dir_create(output_dir)
+  
+  ## import data ---
+  data_anytest_long <- read_rds(here("output", cohort, "covidtests", "process", "data_anytest_long.rds")) %>%
+    mutate(across(treated, as.factor)) 
+  
+  subgroup_sym <- sym(subgroup)
+  
+  # calculate rates ----
+  
+  data_counts <- data_anytest_long %>%
+    mutate(all="all") %>%
+    group_by(treated, anytest_cut, !!subgroup_sym) %>%
+    summarise(
+      n = roundmid_any(n(), threshold),
+      total_persondays = sum(persondays),
+      anytest_rate = sum(sum_anytest) / total_persondays,
+      symptomatic_rate = sum(sum_symptomatic) / total_persondays,
+      postest_rate = sum(sum_postest) / total_persondays,
+      firstpostest_rate = sum(sum_firstpostest) / total_persondays,
+      lftonly_rate = sum(sum_lftonly) / total_persondays,
+      pcronly_rate = sum(sum_pcronly) / total_persondays,
+      both_rate = sum(sum_both) / total_persondays,
+      .groups = "keep"
+    )
+  
+  write_csv(data_counts, fs::path(output_dir, "covidtest_rates.csv"))
+  
+}
 
-## import data ---
-data_anytest_long <- read_rds(here("output", cohort, "covidtests", "process", "data_anytest_long.rds")) %>%
-  mutate(across(treated, as.factor)) 
-
-subgroup_sym <- sym(subgroup)
-
-# calculate rates ----
-
-data_counts <- data_anytest_long %>%
-  mutate(all="all") %>%
-  group_by(treated, anytest_cut, !!subgroup_sym) %>%
-  summarise(
-    n = roundmid_any(n(), threshold),
-    total_persondays = sum(persondays),
-    anytest_rate = sum(sum_anytest) / total_persondays,
-    symptomatic_rate = sum(sum_symptomatic) / total_persondays,
-    postest_rate = sum(sum_postest) / total_persondays,
-    firstpostest_rate = sum(sum_firstpostest) / total_persondays,
-    lftonly_rate = sum(sum_lftonly) / total_persondays,
-    pcronly_rate = sum(sum_pcronly) / total_persondays,
-    both_rate = sum(sum_both) / total_persondays,
-    .groups = "keep"
-  )
-
-write_rds(data_counts, fs::path(output_dir, "rates.rds"))
+# plot covidtest_rates ----
 
 rates <- c( 
   "Any SARS-CoV-2 test" = "anytest", 
@@ -60,8 +76,6 @@ rates <- c(
   "PCR and LFT" = "both"
   )
 
-
-# plot rates ----
 data_counts %>%
   pivot_longer(
     cols = ends_with("rate")

@@ -65,7 +65,7 @@ def covidtest_n_X(name, index_date, shift, n, length, test_result):
   return variables
 
 ####################################################################################################
-def covidtest_date_X(
+def covidtest_returning_X(
   name, date_name, index_date, n, test_result, 
   # find_first_match_in_period, 
   restrict_to_earliest_specimen_date, 

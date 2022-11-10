@@ -83,7 +83,7 @@ def generate_covidtests_variables(index_date):
 
     # dates of tests
     ## dates of tests (to match to symoptomatic vars)
-    **covidtest_date_X(
+    **covidtest_returning_X(
         name="anytest",
         date_name="anytest",
         index_date=f"{index_date} - {prebaselineperiods*postbaselinedays} days",
@@ -93,7 +93,7 @@ def generate_covidtests_variables(index_date):
         returning="date",
     ),
     ## whether tests were symptomatic
-    **covidtest_date_X(
+    **covidtest_returning_X(
         name="anytest",
         date_name="anytest",
         index_date=f"{index_date} - {prebaselineperiods*postbaselinedays} days",
@@ -108,7 +108,7 @@ def generate_covidtests_variables(index_date):
              }
     ),
     # dates of positive tests
-    **covidtest_date_X(
+    **covidtest_returning_X(
         name="postest",
         date_name="postest",
         index_date=f"{index_date} - {prebaselineperiods*postbaselinedays} days",

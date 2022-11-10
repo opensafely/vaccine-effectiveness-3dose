@@ -74,10 +74,6 @@ events_lookup <- tribble(
   ~event, ~event_var, ~event_descr,
   
   # other
-  "anytest", "anytest_date", "SARS-CoV-2 test",
-  "symptest", "symptest_date", "SARS-CoV-2 test (symptomatic)",
-  "pcrtest", "pcrtest_date", "SARS-CoV-2 test (PCR)",
-  "lftest", "lftest_date", "SARS-CoV-2 test (lateral flow)",
   "dereg", "dereg_date", "Deregistration date",
   
   # effectiveness

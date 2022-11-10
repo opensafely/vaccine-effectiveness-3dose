@@ -67,9 +67,9 @@ data_matched <- read_rds(ghere("output", cohort, "match", "data_matched.rds"))
 
 # set study end date ----
 if (outcome == "postest") {
-  studyend_date <- study_dates$testend_date
+  study_dates$modelend_date <- study_dates$testend_date
 } else {
-  studyend_date <- study_dates$studyend_date
+  study_dates$modelend_date <- study_dates$studyend_date
 }
 
 if (variant_option == "restrict") {
@@ -115,8 +115,8 @@ data_matched <- data_matched %>%
     ),
     variantend_date = if_else(
       variant %in% c("ignore", "split"),
-      studyend_date,
-      min(studyend_date, variant_dates$end_date[variant_id])
+      study_dates$modelend_date,
+      min(study_dates$modelend_date, variant_dates$end_date[variant_id])
     )
   ) %>%
   ungroup() %>%

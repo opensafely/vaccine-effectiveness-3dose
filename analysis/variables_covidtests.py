@@ -29,7 +29,7 @@ def generate_covidtests_variables(index_date):
     **covidtest_n_X(
       "anytestpre", 
       index_date, 
-      shift=prebaselineperiods*postbaselinedays, 
+      shift=-prebaselineperiods*postbaselinedays, 
       n=prebaselineperiods, 
       length=postbaselinedays,
        test_result="any"
@@ -37,7 +37,7 @@ def generate_covidtests_variables(index_date):
     **covidtest_n_X(
       "postestpre", 
       index_date, 
-      shift=prebaselineperiods*postbaselinedays,
+      shift=-prebaselineperiods*postbaselinedays,
       n=prebaselineperiods,
       length=postbaselinedays, 
       test_result="positive"

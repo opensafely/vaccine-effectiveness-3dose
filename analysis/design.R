@@ -55,8 +55,7 @@ for (c in cohorts) {
   study_dates[[c]]$control_extract_dates = seq(study_dates[[c]]$start_date, study_dates$recruitmentend_date, extract_increment)
 }
 
-# just for testing, remove and rerun when ready to run on real data!
-study_dates[["mrna"]]$control_extract_dates <- study_dates[["mrna"]]$control_extract_dates[1:2]
+study_dates[["mrna"]]$control_extract_dates <- study_dates[["mrna"]]$control_extract_dates
 
 # number of matching rounds to perform for each cohort
 

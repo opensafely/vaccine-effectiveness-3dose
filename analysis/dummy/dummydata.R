@@ -9,7 +9,6 @@ source(here("lib", "functions", "utility.R"))
 
 # remotes::install_github("https://github.com/wjchulme/dd4d")
 library('dd4d')
-source('/Users/eh1415/Documents/dd4d/R/bn_simulate.R')
 
 source(here("analysis", "design.R"))
 

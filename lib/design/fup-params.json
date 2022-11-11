@@ -1,0 +1,10 @@
+{
+  "baselinedays": 14,
+  "postbaselinedays": 28,
+  "postbaselineperiods": 6,
+  "postbaselinecuts": [0, 14, 42, 70, 98, 126, 154, 182],
+  "maxfup": 182,
+  "prebaselineperiods": 3,
+  "n_any": 10,
+  "n_pos": 5
+}

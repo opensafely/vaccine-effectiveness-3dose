@@ -67,15 +67,23 @@ if (stage == "treated") {
   fs::dir_create(here("output", "moderna", "treated"))
   fs::dir_create(here("output", "treated", "eligible"))
   fs::dir_create(here("output", "treated", "process"))
+  studydef_path <- here("output", "treated", "extract", "input_treated.feather")
+  custom_path <- here("lib", "dummydata", "dummy_treated.feather")
 } else if (stage == "potential") {
   fs::dir_create(ghere("output", cohort, "matchround{matching_round}", "process"))
   fs::dir_create(ghere("output", cohort, "matchround{matching_round}", "extract", "potential"))
   fs::dir_create(ghere("output", cohort, "matchround{matching_round}", "potential"))
+  studydef_path <- ghere("output", cohort, "matchround{matching_round}", "extract", "input_controlpotential.feather")
+  custom_path <- here("lib", "dummydata", "dummy_control_potential1.feather")
 } else if (stage == "actual") {
   fs::dir_create(ghere("output", cohort, "matchround{matching_round}", "extract", "actual"))
   fs::dir_create(ghere("output", cohort, "matchround{matching_round}", "actual"))
+  studydef_path <- ghere("output", cohort, "matchround{matching_round}", "extract", "input_controlpotential.feather")
+  custom_path <- here("lib", "dummydata", "dummy_control_potential1.feather")
 } else if (stage == "final") {
   fs::dir_create(ghere("output", cohort, "match"))
+  studydef_path <- ghere("output", cohort, "extract", "input_controlfinal.feather")
+  custom_path <- ghere("output", cohort, "dummydata", "dummy_control_final.feather")
 }
 
 
@@ -95,24 +103,10 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
   # set seed so that dummy data results are reproducible
   set.seed(10)
   
-  # ideally in future this will check column existence and types from metadata,
-  # rather than from a cohort-extractor-generated dummy data
-  
-  if (stage == "treated") {
-    studydef_path <- here("output", "treated", "extract", "input_treated.feather")
-    custom_path <- here("lib", "dummydata", "dummy_treated.feather")
-  } else if (stage %in% c("potential", "actual")) {
-    studydef_path <- ghere("output", cohort, "matchround{matching_round}", "extract", "input_controlpotential.feather")
-    custom_path <- here("lib", "dummydata", "dummy_control_potential1.feather")
-  }  else if (stage == "final") {
-    studydef_path <- ghere("output", cohort, "extract", "input_controlfinal.feather")
-    custom_path <- ghere("output", cohort, "dummydata", "dummy_control_final.feather")
-  }
-  
   data_studydef_dummy <- read_feather(studydef_path) %>%
     # because date types are not returned consistently by cohort extractor
     mutate(across(ends_with("_date"), ~ as.Date(.))) %>%
-    # because of a bug in cohort extractor -- remove once pulled new version
+    # because of a bug in cohort extractor -- remove once fixed
     mutate(patient_id = as.integer(patient_id))
   
   data_custom_dummy <- read_feather(custom_path) 
@@ -185,19 +179,19 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
   
   if (stage == "treated") {
     
-    data_extract <- read_feather(ghere("output", "treated", "extract", "input_treated.feather")) %>%
+    data_extract <- read_feather(studydef_path) %>%
       #because date types are not returned consistently by cohort extractor
       mutate(across(ends_with("_date"),  as.Date))
     
   } else if (stage == "potential") {
     
-    data_extract <- read_feather(ghere("output", cohort, "matchround{matching_round}", "extract", "input_controlpotential.feather")) %>%
+    data_extract <- read_feather(studydef_path) %>%
       # because date types are not returned consistently by cohort extractor
       mutate(across(ends_with("_date"), as.Date))
     
   } else if (stage == "actual") {
     
-    data_extract <- read_feather(ghere("output", cohort, "matchround{matching_round}", "extract", glue("input_controlactual.feather"))) %>%
+    data_extract <- read_feather(studydef_path) %>%
       #because date types are not returned consistently by cohort extractor
       mutate(across(ends_with("_date"),  as.Date)) %>% 
       mutate(treated=0L) %>%
@@ -207,7 +201,7 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
     
   } else if (stage == "final") {
     
-    data_extract <- read_feather(ghere("output", cohort, "extract", "input_controlfinal.feather")) %>%
+    data_extract <- read_feather(studydef_path) %>%
       #because date types are not returned consistently by cohort extractor
       mutate(across(ends_with("_date"),  as.Date))
     
@@ -289,7 +283,14 @@ if (stage == "final") {
       any_of(c(matching_variables, covariates, events_lookup$event_var, subgroups))
     )
   
-  write_rds(data_matched, here("output", cohort, "match", "data_matched.rds"), compress="gz")
+  # for reading into analysis scripts
+  data_matched %>%
+    write_rds(here("output", cohort, "match", "data_matched.rds"), compress="gz")
+  
+  # for reading into tests project yaml
+  data_matched %>%
+    select(patient_id, trial_date) %>%
+    write_csv(here("output", cohort, "match", "data_matched.csv.gz"))
   
   # summarise matched data by treatment group
   data_matched %>% filter(treated==0) %>%

@@ -239,7 +239,8 @@ action_extract_and_match <- function(cohort){
         glue("dummydata_controlfinal_{cohort}")
       ),
       highly_sensitive = lst(
-        extract = glue("output/{cohort}/match/*.rds")
+        extract = glue("output/{cohort}/match/*.rds"),
+        ids = glue("output/{cohort}/match/*.csv.gz")
       ),
       moderately_sensitive = lst(
         input_controlfinal_skim = glue("output/{cohort}/extract/*.txt"),
@@ -424,6 +425,58 @@ actions_list <- splice(
         action_table1(x),
         
         action_coverage(x),
+        
+        comment("# # # # # # # # # # # # # # # # # # #",
+                "Covid tests data",
+                "# # # # # # # # # # # # # # # # # # #"),
+        
+        # covidtests data for all matched people
+        action(
+          name = glue("extract_covidtests_{x}"),
+          run = glue(
+            "cohortextractor:latest generate_cohort", 
+            " --study-definition study_definition_covidtests", 
+            " --output-file output/{x}/covidtests/extract/input_covidtests.feather",
+            " --param cohort={x}"
+          ),
+          needs = namelesslst(
+            "design",
+            "process_controlfinal_mrna"
+          ),
+          highly_sensitive = lst(
+            extract = glue("output/{x}/covidtests/extract/input_covidtests.feather")
+          ),
+        ),
+        
+        action(
+          name = glue("process_covidtests_{x}"),
+          run = "r:latest analysis/covidtests/process_covidtests.R",
+          arguments = "mrna",
+          needs = namelesslst(
+            "process_controlfinal_mrna",
+            glue("extract_covidtests_{x}")
+          ),
+          highly_sensitive = lst(
+            extract = "output/mrna/covidtests/process/*.rds",
+          ),
+          moderately_sensitive = lst(
+            skim = "output/mrna/covidtests/extract/*.txt",
+            png = "output/mrna/covidtests/checks/*.png"
+          )
+        ),
+        
+        action(
+          name = glue("summarise_covidtests_{x}"),
+          run = "r:latest analysis/covidtests/summarise_covidtests.R",
+          arguments = c("mrna", "all"), # may want to look in subgroups later, but for now just "all"
+          needs = namelesslst(
+            glue("process_covidtests_{x}")
+          ),
+          moderately_sensitive = lst(
+            csv = "output/mrna/covidtests/summary/all/*.csv",
+            png = "output/mrna/covidtests/summary/all/*.png"
+          )
+        ),
         
         comment("# # # # # # # # # # # # # # # # # # #",
                 "Model",

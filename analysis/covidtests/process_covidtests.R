@@ -70,26 +70,21 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
     data_tests <- data_tests %>%
       bind_cols(
         map_dfc(
-          .x = 1:prebaselineperiods,
+          .x = str_c(
+            abs(fup_params$covidtestcuts[-length(fup_params$covidtestcuts)]),
+            "to",
+            abs(fup_params$covidtestcuts[-1])
+          ),
           .f = ~tibble(
-            !! sym(str_c("anytestpre_", .x, "_n")) := rpois(n=nrow(data_tests), lambda = 2),
-            !! sym(str_c("postestpre_", .x, "_n")) := as.integer(max(
-              !! sym(str_c("anytestpre_", .x, "_n")) - rpois(n=nrow(data_tests), lambda = 1),
+            !! sym(str_c("anytest", .x, "_n")) := rpois(n=nrow(data_tests), lambda = 2),
+            !! sym(str_c("postest", .x, "_n")) := as.integer(max(
+              !! sym(str_c("anytest", .x, "_n")) - rpois(n=nrow(data_tests), lambda = 1),
               0
-              ))
-            )
-        ),
-        map_dfc(
-          .x = 0:postbaselineperiods,
-          .f = ~tibble(
-            !! sym(str_c("anytestpost_", .x, "_n")) := rpois(n=nrow(data_tests), lambda = 2),
-            !! sym(str_c("postestpost_", .x, "_n")) := as.integer(max(
-              !! sym(str_c("anytestpost_", .x, "_n")) - rpois(n=nrow(data_tests), lambda = 1),
-              0
-              ))
-            )
+            ))
+          )
         )
       )
+        
     
     data_tests <- data_tests %>%
       mutate(
@@ -268,8 +263,8 @@ data_split <- local({
     mutate(
       fup_cut = cut(
         tstart,
-        breaks = c(seq(-3*28, 0, 28), seq(14, 14+6*28, 28)),
-        right=FALSE
+        breaks = covidtestcuts,
+        right=TRUE
       )
     ) %>%
     transmute(
@@ -335,8 +330,8 @@ data_anytest_long <- data_extract %>%
     matches("\\w+_cut"),
     ~ cut(
       as.integer(.x-trial_date),
-      breaks = c(seq(-prebaselineperiods*postbaselinedays, -postbaselinedays, postbaselinedays), postbaselinecuts),
-      right=FALSE
+      breaks = covidtestcuts,
+      right=TRUE
     )
   )) %>%
   # remove unbinned dates
@@ -353,14 +348,8 @@ data_anytest_long <- data_extract %>%
   # remove any that are outside the time periods of interest (if this is the case for anytest_cut, it will be the case for all)
   filter(!is.na(anytest_cut)) %>%
   arrange(patient_id, trial_date, anytest_cut) %>%
-  mutate(
-    # create a variable with same labeling as the \\w+test\\w+_n variables for joining
-    name = factor(
-      as.integer(anytest_cut), 
-      labels = c(str_c("pre_", 1:prebaselineperiods), str_c("post_", 0:postbaselineperiods)))
-  ) %>%
   # sum the number of tests per period
-  group_by(patient_id, trial_date, treated, anytest_cut, name) %>%
+  group_by(patient_id, trial_date, treated, anytest_cut) %>%
   summarise(
     # sum all dates (this is just used to check value of n in study definition if correct)
     sum_anytest_uncensored=sum(!is.na(anytest_cut)),  
@@ -383,13 +372,24 @@ data_anytest_long <- data_extract %>%
   # join the total number of tests per period with returning=xxx in study definition
   left_join(
     data_extract %>%
-      select(patient_id, trial_date, matches("\\w+test\\w+_n")) %>%
+      select(patient_id, trial_date, matches("\\w+test\\d+to\\d+_n")) %>%
       pivot_longer(
-        cols = matches("\\w+test\\w+_n"),
+        cols = matches("\\w+test\\d+to\\d+_n"),
         names_pattern = "(.*test)(.*)_n",
         names_to = c(".value", "name")
-      ),
-    by = c("patient_id", "trial_date", "name")
+      ) %>%
+      mutate(
+       lhs=as.integer(str_extract(name, "^\\d+")),
+       rhs=as.integer(str_extract(name, "\\d+$")),
+       anytest_cut=as.character(case_when(
+         lhs<rhs ~ glue("({lhs},{rhs}]"),
+         rhs==0 ~ glue("(-{lhs},{rhs}]"),
+         TRUE ~ glue("(-{lhs},-{rhs}]")
+       ))
+      ) %>%
+      mutate(across(anytest_cut, factor, levels = glue("({covidtestcuts[-length(covidtestcuts)]},{covidtestcuts[-1]}]"))) %>%
+      select(-name,-lhs,-rhs),
+    by = c("patient_id", "trial_date", "anytest_cut")
   ) %>%
   # join data_split for persondays of follow-up
   left_join(
@@ -401,7 +401,7 @@ data_anytest_long <- data_extract %>%
   mutate(across(
     persondays,
     ~if_else(
-      str_detect(name, "^pre"),
+      str_detect(anytest_cut, "-"),
       as.integer(postbaselinedays),
       persondays
     )))

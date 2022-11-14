@@ -170,7 +170,8 @@ fup_params <- lst(
   prebaselineperiods = 3,
   # number of recurring events for the covidtests study definition
   n_any = 10,
-  n_pos = 5
+  n_pos = 5,
+  covidtestcuts = c(seq(-prebaselineperiods*postbaselinedays, -postbaselinedays, postbaselinedays), postbaselinecuts)
 )
 
 jsonlite::write_json(fup_params, path = here("lib", "design", "fup-params.json"), auto_unbox=TRUE, pretty =TRUE)

@@ -6,5 +6,6 @@
   "maxfup": 182,
   "prebaselineperiods": 3,
   "n_any": 10,
-  "n_pos": 5
+  "n_pos": 5,
+  "covidtestcuts": [-84, -56, -28, 0, 14, 42, 70, 98, 126, 154, 182]
 }

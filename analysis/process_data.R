@@ -117,9 +117,19 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
     # reuse previous extraction for dummy run, dummy_control_potential1.feather
     data_custom_dummy <- data_custom_dummy %>%
       filter(patient_id %in% data_potential_matchstatus[(data_potential_matchstatus$treated==0L),]$patient_id) %>%
+      # remove vaccine variables
+      select(-starts_with("covid_vax_")) %>%
+      # trial_date and match_id are not included in the dummy data so join them on here
+      # they're joined in the study def using `with_values_from_file`
+      left_join(
+        data_potential_matchstatus %>% 
+          filter(treated==0L) %>%
+          select(patient_id, trial_date, match_id),
+        by="patient_id"
+      ) %>%
       # change a few variables to simulate new index dates
       mutate(
-        region = if_else(runif(n())<0.05, sample(x=unique(region), size=n(), replace=TRUE), region),
+        region = if_else(runif(n())<0.05, sample(x=unique(region), size=n(), replace=TRUE), region)
       ) 
   }
   
@@ -159,17 +169,6 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
   
   data_extract <- data_custom_dummy 
   
-  if (stage == "actual") {
-    
-    data_extract <- data_extract %>%
-      # these variables are not included in the dummy data so join them on here
-      # they're joined in the study def using `with_values_from_file`
-      left_join(data_potential_matchstatus %>% filter(treated==0L), by=c("patient_id")) %>%
-      # remove vax variables
-      select(-starts_with("covid_vax"))
-    
-  }
-  
 } else {
   
   if (stage == "treated") {
@@ -188,11 +187,7 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
     
     data_extract <- read_feather(studydef_path) %>%
       #because date types are not returned consistently by cohort extractor
-      mutate(across(ends_with("_date"),  as.Date)) %>% 
-      mutate(treated=0L) %>%
-      # these variables are not included in the dummy data so join them on here
-      # they're joined in the study def using `with_values_from_file`
-      left_join(data_potential_matchstatus %>% filter(treated==0L), by=c("patient_id", "treated", "trial_date", "match_id"))
+      mutate(across(ends_with("_date"),  as.Date)) 
     
   } else if (stage == "final") {
     
@@ -201,6 +196,20 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
       mutate(across(ends_with("_date"),  as.Date))
     
   }
+  
+}
+
+# add certain matching variables when stage=actual
+if (stage == "actual") {
+  # add: treated 
+  data_extract <- data_extract %>%
+    mutate(treated=0L) %>%
+    # add: trial_time, matched, control, controlistreated_date to data_extract
+    left_join(
+      data_potential_matchstatus %>%
+        filter(treated==0L),
+      by=c("patient_id", "treated", "trial_date", "match_id")
+      )
   
 }
 

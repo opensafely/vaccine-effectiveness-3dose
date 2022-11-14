@@ -58,7 +58,7 @@ def covidtest_n_X(name, index_date, cuts, test_result):
       between=[f"{index_date} + {cuts[i] + 1} days", f"{index_date} + {cuts[i+1]} days"]
 
     return {
-      f"{name}{abs(cuts[i])}to{abs(cuts[i+1])}_n": patients.with_test_result_in_sgss(
+      f"{name}({cuts[i]},{cuts[i+1]}]_n": patients.with_test_result_in_sgss(
         pathogen="SARS-CoV-2",
         test_result=test_result,
         between=between,

@@ -69,16 +69,11 @@ if (stage == "treated") {
   fs::dir_create(here("output", "treated", "process"))
   studydef_path <- here("output", "treated", "extract", "input_treated.feather")
   custom_path <- here("lib", "dummydata", "dummy_treated.feather")
-} else if (stage == "potential") {
+} else if (stage %in% c("potential", "actual")) {
   fs::dir_create(ghere("output", cohort, "matchround{matching_round}", "process"))
-  fs::dir_create(ghere("output", cohort, "matchround{matching_round}", "extract", "potential"))
-  fs::dir_create(ghere("output", cohort, "matchround{matching_round}", "potential"))
-  studydef_path <- ghere("output", cohort, "matchround{matching_round}", "extract", "input_controlpotential.feather")
-  custom_path <- here("lib", "dummydata", "dummy_control_potential1.feather")
-} else if (stage == "actual") {
-  fs::dir_create(ghere("output", cohort, "matchround{matching_round}", "extract", "actual"))
-  fs::dir_create(ghere("output", cohort, "matchround{matching_round}", "actual"))
-  studydef_path <- ghere("output", cohort, "matchround{matching_round}", "extract", "input_controlpotential.feather")
+  fs::dir_create(ghere("output", cohort, "matchround{matching_round}", "extract", stage))
+  fs::dir_create(ghere("output", cohort, "matchround{matching_round}", stage))
+  studydef_path <- ghere("output", cohort, "matchround{matching_round}", "extract", "input_control{stage}.feather")
   custom_path <- here("lib", "dummydata", "dummy_control_potential1.feather")
 } else if (stage == "final") {
   fs::dir_create(ghere("output", cohort, "match"))

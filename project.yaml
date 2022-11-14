@@ -875,22 +875,34 @@ actions:
   ## Covid tests data 
   ## # # # # # # # # # # # # # # # # # # # 
 
-  extract_covidtests_mrna:
+  extract_covidtests_mrna_treated:
     run: cohortextractor:latest generate_cohort --study-definition study_definition_covidtests
-      --output-file output/mrna/covidtests/extract/input_covidtests.feather --param
-      cohort=mrna
+      --output-file output/mrna/covidtests/extract/input_covidtests_treated.feather
+      --param cohort=mrna --param arm=treated
     needs:
     - design
     - process_controlfinal_mrna
     outputs:
       highly_sensitive:
-        extract: output/mrna/covidtests/extract/input_covidtests.feather
+        extract: output/mrna/covidtests/extract/input_covidtests_treated.feather
+
+  extract_covidtests_mrna_control:
+    run: cohortextractor:latest generate_cohort --study-definition study_definition_covidtests
+      --output-file output/mrna/covidtests/extract/input_covidtests_control.feather
+      --param cohort=mrna --param arm=control
+    needs:
+    - design
+    - process_controlfinal_mrna
+    outputs:
+      highly_sensitive:
+        extract: output/mrna/covidtests/extract/input_covidtests_control.feather
 
   process_covidtests_mrna:
     run: r:latest analysis/covidtests/process_covidtests.R mrna
     needs:
     - process_controlfinal_mrna
-    - extract_covidtests_mrna
+    - extract_covidtests_mrna_treated
+    - extract_covidtests_mrna_control
     outputs:
       highly_sensitive:
         extract: output/mrna/covidtests/process/*.rds

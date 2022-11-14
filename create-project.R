@@ -430,22 +430,29 @@ actions_list <- splice(
                 "Covid tests data",
                 "# # # # # # # # # # # # # # # # # # #"),
         
-        # covidtests data for all matched people
-        action(
-          name = glue("extract_covidtests_{x}"),
-          run = glue(
-            "cohortextractor:latest generate_cohort", 
-            " --study-definition study_definition_covidtests", 
-            " --output-file output/{x}/covidtests/extract/input_covidtests.feather",
-            " --param cohort={x}"
-          ),
-          needs = namelesslst(
-            "design",
-            "process_controlfinal_mrna"
-          ),
-          highly_sensitive = lst(
-            extract = glue("output/{x}/covidtests/extract/input_covidtests.feather")
-          ),
+        lapply_actions(
+          c("treated", "control"),
+          function(y)
+            # covidtests data for all matched people
+            # need to do separately for treated and controls, one patient could have two different trial dates,
+            # and study_definition can only handle one row per patient
+            action(
+              name = glue("extract_covidtests_{x}_{y}"),
+              run = glue(
+                "cohortextractor:latest generate_cohort", 
+                " --study-definition study_definition_covidtests", 
+                " --output-file output/{x}/covidtests/extract/input_covidtests_{y}.feather",
+                " --param cohort={x}",
+                " --param arm={y}"
+              ),
+              needs = namelesslst(
+                "design",
+                "process_controlfinal_mrna"
+              ),
+              highly_sensitive = lst(
+                extract = glue("output/{x}/covidtests/extract/input_covidtests_{y}.feather")
+              )
+            )
         ),
         
         action(
@@ -454,7 +461,8 @@ actions_list <- splice(
           arguments = "mrna",
           needs = namelesslst(
             "process_controlfinal_mrna",
-            glue("extract_covidtests_{x}")
+            glue("extract_covidtests_{x}_treated"),
+            glue("extract_covidtests_{x}_control")
           ),
           highly_sensitive = lst(
             extract = "output/mrna/covidtests/process/*.rds",

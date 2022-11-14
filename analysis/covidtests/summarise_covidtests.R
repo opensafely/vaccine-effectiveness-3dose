@@ -37,14 +37,14 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("")) {
   fs::dir_create(output_dir)
   
   ## import data ---
-  data_anytest_long <- read_rds(here("output", cohort, "covidtests", "process", "data_anytest_long.rds")) %>%
+  data_anytest_sum <- read_rds(here("output", cohort, "covidtests", "process", "data_anytest_sum.rds")) %>%
     mutate(across(treated, as.factor)) 
   
   subgroup_sym <- sym(subgroup)
   
   # calculate rates ----
   
-  data_counts <- data_anytest_long %>%
+  data_rates <- data_anytest_sum %>%
     mutate(all="all") %>%
     group_by(treated, anytest_cut, !!subgroup_sym) %>%
     summarise(
@@ -76,7 +76,7 @@ rates <- c(
   "PCR and LFT" = "both"
   )
 
-data_counts %>%
+data_rates %>%
   pivot_longer(
     cols = ends_with("rate")
   ) %>%

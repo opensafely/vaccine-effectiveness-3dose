@@ -311,7 +311,8 @@ local({
 write_rds(data_matchstatus, ghere("output", cohort, "matchround{matching_round}", "potential", "data_potential_matchstatus.rds"), compress="gz")
 
 # number of treated/controls per trial
-with(data_matchstatus %>% filter(matched==1), table(trial_time, treated))
+# use trial=trial_time+1 so that this printout matches the printout from the loop for(trial in trials){}
+with(data_matchstatus %>% filter(matched==1), table(trial=trial_time+1, treated))
 
 # total matched pairs
 with(data_matchstatus %>% filter(matched==1), table(treated))

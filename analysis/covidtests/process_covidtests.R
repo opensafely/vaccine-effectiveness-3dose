@@ -248,7 +248,7 @@ data_split <- local({
     droplevels() %>%
     select(new_id, period_id, fupstart_time) 
   
-  # split follow-up time by postbaseline cuts
+  # split time until censoring by postbaseline cuts
   data_split <-
     tmerge(
       data1 = data_matched,
@@ -274,14 +274,16 @@ data_split <- local({
     transmute(
       patient_id, trial_date, treated, censor_date, fup_cut,
       persondays = as.integer(tstop-tstart)
-    )
+    ) %>%
+    as_tibble()
   
-  return(as_tibble(data_split))
+  return(data_split)
   
 })
 
 # reshape data_extract to data_anytest_long
 data_anytest_long <- data_extract %>%
+  # select recurring date variables
   select(patient_id, trial_date, matches("\\w+test_\\d+_\\w+")) %>%
   # rename to make it easier to reshape
   rename_with(
@@ -294,60 +296,29 @@ data_anytest_long <- data_extract %>%
     names_pattern = "(.*)_(.*_.*)",
     values_drop_na = TRUE
   ) %>%
-  # select(-index) %>% 
+  mutate(anytest_result = if_else(is.na(postest_date), "negative", "positive")) %>%
+  select(-index, -postest_date) %>%
   left_join(
     data_extract %>% select(patient_id, trial_date, starts_with("firstpostest")), 
-    # joining on  "postest_date" = "firstpostest_date" here means that firstpostest_category only joined if postest if the individual's first postest ever
-    by = c("patient_id", "trial_date", "postest_date" = "firstpostest_date")
+    # joining on  "anytest_date" = "firstpostest_date" here means that firstpostest_category joined to date of individual's first ever postest
+    by = c("patient_id", "trial_date", "anytest_date" = "firstpostest_date")
   ) %>%
+  # join censor date
   left_join(
     data_split %>%
       distinct(patient_id, trial_date, treated, censor_date), 
     by = c("patient_id", "trial_date")
     ) %>%
+  mutate(censor = if_else(anytest_date <= censor_date, FALSE, TRUE)) %>%
+  # bin anytest_date
   mutate(
-    # duplicate dates (these will be censored)
-    anytestcensor_date=anytest_date,
-    postestcensor_date=postest_date,
-  ) %>%
-  # censor
-  mutate(across(
-    matches("\\w+testcensor_date"),
-    ~if_else(
-      .x <= censor_date,
-      .x,
-      as.Date(NA_character_)
-    )
-  )) %>%
-  # duplicate dates (these dates will be binned)
-  mutate(
-    # uncesnored
-    anytest_cut=anytest_date,
-    postest_cut=postest_date,
-    # censored
-    anytestcensor_cut=anytestcensor_date,
-    postestcensor_cut=postestcensor_date,
-  ) %>%
-  # bin dates
-  mutate(across(
-    matches("\\w+_cut"),
-    ~ cut(
-      as.integer(.x-trial_date),
+    anytest_cut=cut(
+      as.integer(anytest_date - trial_date),
       breaks = covidtestcuts,
       right=TRUE
     )
-  )) %>%
-  # remove unbinned dates
-  select(-matches(c("\\w+test_date", "\\w+testcensor_date"))) %>%
-  # replace symptomatic and category with NA when it corresponds to to censored date
-  mutate(across(
-    c(anytest_symptomatic, firstpostest_category),
-    ~if_else(
-      is.na(anytestcensor_cut),
-      NA_character_,
-      as.character(.x)
-    )
-  )) %>%
+  ) %>%
+  select(-anytest_date, -censor_date) %>% # remove unused
   # remove any that are outside the time periods of interest (if this is the case for anytest_cut, it will be the case for all)
   filter(!is.na(anytest_cut)) %>%
   arrange(patient_id, trial_date, anytest_cut) 
@@ -358,24 +329,25 @@ data_anytest_sum <- data_anytest_long %>%
   group_by(patient_id, trial_date, treated, anytest_cut) %>%
   summarise(
     # sum all dates (this is just used to check value of n in study definition if correct)
-    sum_anytest_uncensored=sum(!is.na(anytest_cut)),  
-    sum_postest_uncensored=sum(!is.na(anytest_cut)),  
+    sum_anytest_uncensored=n(),  
+    sum_postest_uncensored=sum(anytest_result=="positive", na.rm=TRUE),  
     # all variables below in this summarise() are derived from censored dates:
     # sum censored dates (this will be used to calculate testing rates)
-    sum_anytest=sum(!is.na(anytestcensor_cut)),  
-    sum_postest=sum(!is.na(anytestcensor_cut)),  
+    sum_anytest=sum(!censor),  
+    # number of positive tests
+    sum_postest=sum(anytest_result=="positive" & !censor, na.rm=TRUE),  
     # number of symtpomatic tests
-    sum_symptomatic=sum(anytest_symptomatic=="Y", na.rm = TRUE),
+    sum_symptomatic=sum(anytest_symptomatic=="Y" & !censor, na.rm = TRUE),
     # number of firstpostest
-    sum_firstpostest=sum(!is.na(firstpostest_category)),
+    sum_firstpostest=sum(!is.na(firstpostest_category) & !censor),
     # number of each firstpostest type
-    sum_lftonly=sum(firstpostest_category=="LFT_Only", na.rm = TRUE),
-    sum_pcronly=sum(firstpostest_category=="PCR_Only", na.rm = TRUE),
-    sum_both=sum(firstpostest_category=="LFT_WithPCR", na.rm = TRUE),
+    sum_lftonly=sum(firstpostest_category=="LFT_Only" & !censor, na.rm = TRUE),
+    sum_pcronly=sum(firstpostest_category=="PCR_Only" & !censor, na.rm = TRUE),
+    sum_both=sum(firstpostest_category=="LFT_WithPCR" & !censor, na.rm = TRUE),
     .groups="keep"
     ) %>%
   ungroup() %>%
-  # join the total number of tests per period with returning="number_of_matches_in_period" in study definition
+  # join the total number of tests per period (extracted with returning="number_of_matches_in_period" in study definition)
   left_join(
     data_extract %>%
       select(patient_id, trial_date, matches("\\w+test.+_n")) %>%
@@ -393,13 +365,13 @@ data_anytest_sum <- data_anytest_long %>%
     by = c("patient_id", "trial_date", "treated", "anytest_cut" = "fup_cut")
   ) %>%
   # label periods as pre or post baseline
-  mutate(period = factor(
-    if_else(
+  mutate(
+    period = factor(if_else(
       as.character(anytest_cut) %in% covidtestcuts_labels[1:fup_params$prebaselineperiods],
-      "prebaseline", "postbaseline"
-    ), 
-    levels = c("prebaseline", "postbaseline")
-  )
+      "prebaseline",
+      "postbaseline"
+    ), levels = c("prebaseline", "postbaseline")
+    )
   ) %>%
   # fill in persondays for prebaseline periods 
   # (must be postbaselinedays, otherwise they wouldn't be eligible)

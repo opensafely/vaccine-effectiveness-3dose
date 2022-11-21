@@ -41,7 +41,8 @@ def generate_covidtests_variables(index_date):
     **covidtest_returning_X(
         name="anytest",
         date_name="anytest",
-        index_date=f"{index_date} - {abs(covidtestcuts[1])} days",
+        index_date=index_date,
+        shift=covidtestcuts[1],
         n=n_any,
         test_result="any",
         restrict_to_earliest_specimen_date=False,
@@ -51,7 +52,8 @@ def generate_covidtests_variables(index_date):
     **covidtest_returning_X(
         name="anytest",
         date_name="anytest",
-        index_date=f"{index_date} - {abs(covidtestcuts[1])} days",
+        index_date=index_date,
+        shift=covidtestcuts[1],
         n=n_any,
         test_result="any",
         restrict_to_earliest_specimen_date=False,
@@ -66,25 +68,26 @@ def generate_covidtests_variables(index_date):
     **covidtest_returning_X(
         name="postest",
         date_name="postest",
-        index_date=f"{index_date} - {abs(covidtestcuts[1])} days",
+        index_date=index_date,
+        shift=covidtestcuts[1],
         n=n_pos,
         test_result="any",
         restrict_to_earliest_specimen_date=False,
         returning="date",
     ),
 
-    # date of first positive test (to match to case category vars)
+    # date of first positive test (to match to case category vars, after index date only)
     firstpostest_date=patients.with_test_result_in_sgss(
         pathogen="SARS-CoV-2",
-        on_or_after=f"{index_date} - {abs(covidtestcuts[1])} days",
+        on_or_after=index_date,
         test_result="positive",
         restrict_to_earliest_specimen_date=True,
         returning="date",
     ),
-    # case-category of first positive test
+    # case-category of first positive test (after index date only)
     firstpostest_category=patients.with_test_result_in_sgss(
         pathogen="SARS-CoV-2",
-        on_or_after=f"{index_date} - {abs(covidtestcuts[1])} days",
+        on_or_after=index_date,
         test_result="positive",
         restrict_to_earliest_specimen_date=True,
         returning="case_category",

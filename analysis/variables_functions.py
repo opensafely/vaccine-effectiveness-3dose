@@ -79,7 +79,7 @@ def covidtest_n_X(name, index_date, cuts, test_result):
 
 ####################################################################################################
 def covidtest_returning_X(
-  name, date_name, index_date, n, test_result, 
+  name, date_name, index_date, shift, n, test_result, 
   # find_first_match_in_period, 
   restrict_to_earliest_specimen_date, 
   returning,
@@ -87,11 +87,16 @@ def covidtest_returning_X(
   ):
   # covid test date (result can be "any", "positive", or "negative")
   def var_signature(name, on_or_after):
+
+    # specify sign based on shift
+    if shift < 0: sign = "-"
+    else: sign="+"
+
     return {
       name: patients.with_test_result_in_sgss(
         pathogen="SARS-CoV-2",
         test_result=test_result,
-        on_or_after=on_or_after,
+        on_or_after=f"{index_date} {sign} {abs(shift)} days",
         # find_first_match_in_period=find_first_match_in_period,
         restrict_to_earliest_specimen_date=restrict_to_earliest_specimen_date,
         returning=returning,

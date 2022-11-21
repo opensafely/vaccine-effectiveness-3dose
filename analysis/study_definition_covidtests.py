@@ -15,6 +15,7 @@ from cohortextractor import (
 )
 
 cohort = params["cohort"]
+arm = params["arm"]
 
 ############################################################
 ## tests
@@ -36,9 +37,9 @@ study = StudyDefinition(
   },
   
   # This line defines the study population (TODO update to include treated!)
-  population = patients.which_exist_in_file(f_path=f"output/{cohort}/match/data_matched.csv.gz"),
+  population = patients.which_exist_in_file(f_path=f"output/{cohort}/match/data_matched_{arm}.csv.gz"),
 
-  trial_date = patients.with_value_from_file(f_path=f"output/{cohort}/match/data_matched.csv.gz", returning="trial_date", returning_type="date", date_format='YYYY-MM-DD'),
+  trial_date = patients.with_value_from_file(f_path=f"output/{cohort}/match/data_matched_{arm}.csv.gz", returning="trial_date", returning_type="date", date_format='YYYY-MM-DD'),
   
 
   ###############################################################################

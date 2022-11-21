@@ -45,28 +45,41 @@ def vaccination_date_X(name, index_date, n, product_name_matches=None, target_di
 
 ####################################################################################################
 # number of covid tests in n intervals of a given length, first interval starts on index_date + shift days
-def covidtest_n_X(name, index_date, shift, n, length, test_result):
+def covidtest_n_X(name, index_date, cuts, test_result):
   # covid test date (result can be "any", "positive", or "negative")
   def var_signature(name, i):
+
+    # the following lines are added to avoid the following error:
+    # ValueError: Date not in YYYY-MM-DD format: trial_date + -28 days
+    # 0 must be included in cuts
+    if 0 in cuts:
+      if cuts[i] < 0:
+        between=[f"{index_date} - {abs(cuts[i]) - 1} days", f"{index_date} - {abs(cuts[i+1])} days"]
+      else:
+        between=[f"{index_date} + {cuts[i] + 1} days", f"{index_date} + {cuts[i+1]} days"]
+
     return {
-      name: patients.with_test_result_in_sgss(
+      f"{name}({cuts[i]},{cuts[i+1]}]_n": patients.with_test_result_in_sgss(
         pathogen="SARS-CoV-2",
         test_result=test_result,
-        between=[f"{index_date} + {shift + (i-1)*(length)} days", f"{index_date} + {shift + (i-1)*(length) + length - 1} days"],
+        between=between,
         find_first_match_in_period=True,
         restrict_to_earliest_specimen_date=False,
         returning="number_of_matches_in_period",
         date_format="YYYY-MM-DD",
       ),
     }
+
+  n=len(cuts)-1
   variables=dict()
-  for i in range(1, n+1):
-    variables.update(var_signature(f"{name}_{i}_n", i))
+  for i in range(0, n):
+    variables.update(var_signature(name, i))
+    # variables.update(var_signature(f"{name}_{i}_n", i))
   return variables
 
 ####################################################################################################
 def covidtest_returning_X(
-  name, date_name, index_date, n, test_result, 
+  name, date_name, index_date, shift, n, test_result, 
   # find_first_match_in_period, 
   restrict_to_earliest_specimen_date, 
   returning,
@@ -74,11 +87,16 @@ def covidtest_returning_X(
   ):
   # covid test date (result can be "any", "positive", or "negative")
   def var_signature(name, on_or_after):
+
+    # specify sign based on shift
+    if shift < 0: sign = "-"
+    else: sign="+"
+
     return {
       name: patients.with_test_result_in_sgss(
         pathogen="SARS-CoV-2",
         test_result=test_result,
-        on_or_after=on_or_after,
+        on_or_after=f"{index_date} {sign} {abs(shift)} days",
         # find_first_match_in_period=find_first_match_in_period,
         restrict_to_earliest_specimen_date=restrict_to_earliest_specimen_date,
         returning=returning,

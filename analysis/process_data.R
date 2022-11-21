@@ -292,9 +292,16 @@ if (stage == "final") {
     write_rds(here("output", cohort, "match", "data_matched.rds"), compress="gz")
   
   # for reading into tests project yaml
+  # treated
   data_matched %>%
+    filter(treated==1) %>%
     select(patient_id, trial_date) %>%
-    write_csv(here("output", cohort, "match", "data_matched.csv.gz"))
+    write_csv(here("output", cohort, "match", "data_matched_treated.csv.gz"))
+  
+  data_matched %>%
+    filter(treated==0) %>%
+    select(patient_id, trial_date) %>%
+    write_csv(here("output", cohort, "match", "data_matched_control.csv.gz"))
   
   # summarise matched data by treatment group
   data_matched %>% filter(treated==0) %>%

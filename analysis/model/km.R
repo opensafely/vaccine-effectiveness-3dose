@@ -717,3 +717,5 @@ write_rds(cox_adj_contrasts_cuts, fs::path(output_dir, "cox_adj_contrasts_cuts_r
 
 cox_adj_contrasts_overall <- coxcontrast(data_matched, adj = TRUE, cuts = c(0,maxfup))
 write_rds(cox_adj_contrasts_overall, fs::path(output_dir, "cox_adj_contrasts_overall_rounded.rds"))
+
+cat("script complete")

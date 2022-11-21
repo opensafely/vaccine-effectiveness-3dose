@@ -60,7 +60,7 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("")) {
       .groups = "keep"
     )
   
-  write_csv(data_counts, fs::path(output_dir, "covidtest_rates.csv"))
+  write_csv(data_rates, fs::path(output_dir, "covidtest_rates.csv"))
   
 }
 

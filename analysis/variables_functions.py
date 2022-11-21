@@ -51,11 +51,12 @@ def covidtest_n_X(name, index_date, cuts, test_result):
 
     # the following lines are added to avoid the following error:
     # ValueError: Date not in YYYY-MM-DD format: trial_date + -28 days
-    # it assumes that 0 is included in cuts
-    if cuts[i] < 0:
-      between=[f"{index_date} - {abs(cuts[i]) - 1} days", f"{index_date} - {abs(cuts[i+1])} days"]
-    else:
-      between=[f"{index_date} + {cuts[i] + 1} days", f"{index_date} + {cuts[i+1]} days"]
+    # 0 must be included in cuts
+    if 0 in cuts:
+      if cuts[i] < 0:
+        between=[f"{index_date} - {abs(cuts[i]) - 1} days", f"{index_date} - {abs(cuts[i+1])} days"]
+      else:
+        between=[f"{index_date} + {cuts[i] + 1} days", f"{index_date} + {cuts[i+1]} days"]
 
     return {
       f"{name}({cuts[i]},{cuts[i+1]}]_n": patients.with_test_result_in_sgss(

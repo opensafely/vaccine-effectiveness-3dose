@@ -78,11 +78,11 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
     # add number of tests variables
     data_tests <- data_tests %>%
       bind_cols(map_dfc(
-        .x = covidtestcuts_labels,
+        .x = seq_along(covidtestcuts_labels)-1, #-1 because python starts at 0
         .f = ~tibble(
-          !! sym(str_c("anytest", .x, "_n")) := rpois(n=nrow(data_tests), lambda = 2),
-          !! sym(str_c("postest", .x, "_n")) := as.integer(pmax(
-            !! sym(str_c("anytest", .x, "_n")) - rpois(n=nrow(data_tests), lambda = 1),
+          !! sym(str_c("anytest_", .x, "_n")) := rpois(n=nrow(data_tests), lambda = 2),
+          !! sym(str_c("postest_", .x, "_n")) := as.integer(pmax(
+            !! sym(str_c("anytest_", .x, "_n")) - rpois(n=nrow(data_tests), lambda = 1),
             0
           ))
         )
@@ -284,7 +284,7 @@ data_split <- local({
 # reshape data_extract to data_anytest_long
 data_anytest_long <- data_extract %>%
   # select recurring date variables
-  select(patient_id, trial_date, matches("\\w+test_\\d+_\\w+")) %>%
+  select(patient_id, trial_date, matches(c("\\w+test_\\d+_date", "\\w+test_\\d+_symptomatic"))) %>%
   # rename to make it easier to reshape
   rename_with(
     .fn = ~str_c(str_extract(.x, "\\d+_"), str_remove(.x, "\\d+_")), 
@@ -350,13 +350,18 @@ data_anytest_sum <- data_anytest_long %>%
   # join the total number of tests per period (extracted with returning="number_of_matches_in_period" in study definition)
   left_join(
     data_extract %>%
-      select(patient_id, trial_date, matches("\\w+test.+_n")) %>%
+      select(patient_id, trial_date, matches("\\w+test_\\d+_n")) %>%
       pivot_longer(
-        cols = matches("\\w+test.+_n"),
-        names_pattern = "(.*test)(.*)_n",
+        cols = matches("\\w+test_\\d+_n"),
+        names_pattern = "(.*test)_(.*)_n",
         names_to = c(".value", "fup_cut")
       ) %>%
-      mutate(across(fup_cut, factor, levels = covidtestcuts_labels)),
+      mutate(across(
+        fup_cut, 
+        ~factor(as.integer(.x)+1, # +1 because python starts at 0
+                levels = seq_along(covidtestcuts_labels),
+                labels = covidtestcuts_labels
+        ))),
     by = c("patient_id", "trial_date", "anytest_cut" = "fup_cut")
   ) %>%
   # join data_split for persondays of follow-up per period
@@ -390,7 +395,7 @@ data_anytest_sum <- data_anytest_long %>%
 cat("-----------------")
 cat("Sense checks ----\n")
 
-cat("Maximum counts derived from firstpostest  = 1")
+cat("Check maximum counts derived from firstpostest  = 1:")
 data_anytest_sum %>%
   # sum all events within each patient_id, trial_date
   group_by(patient_id, trial_date) %>%

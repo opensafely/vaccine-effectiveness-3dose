@@ -40,7 +40,6 @@ def generate_covidtests_variables(index_date):
     ## dates of tests (to match to symoptomatic vars)
     **covidtest_returning_X(
         name="anytest",
-        date_name="anytest",
         index_date=index_date,
         shift=covidtestcuts[1],
         n=n_any,
@@ -51,7 +50,6 @@ def generate_covidtests_variables(index_date):
     ## whether tests were symptomatic
     **covidtest_returning_X(
         name="anytest",
-        date_name="anytest",
         index_date=index_date,
         shift=covidtestcuts[1],
         n=n_any,
@@ -67,7 +65,6 @@ def generate_covidtests_variables(index_date):
     # dates of positive tests
     **covidtest_returning_X(
         name="postest",
-        date_name="postest",
         index_date=index_date,
         shift=covidtestcuts[1],
         n=n_pos,

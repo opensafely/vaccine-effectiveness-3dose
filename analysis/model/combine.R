@@ -30,62 +30,74 @@ if(length(args)==0){
   cohort <- args[[1]]
 }
 
-
-
-output_dir <- ghere("output", cohort, "models", "km", "combined")
+output_dir <- ghere("output", cohort, "models", "combined")
 fs::dir_create(output_dir)
 
 # metaparams for all models that have been run
 metaparams <-
   km_args %>%
-  mutate(
-    outcome_descr = fct_recoderelevel(outcome,  recoder$outcome),
-    subgroup_descr = fct_recoderelevel(subgroup,  recoder$subgroups),
-  )
+  select(-model) %>%
+  distinct() 
+
+# get all subgroups
+subgroups <- metaparams %>% distinct(subgroup) %>% unlist() %>% unname()
+
+try_read <- function(path) {
+  dat <- try(read_rds(path))
+  if (inherits(dat, "try-error")) dat <- tibble()
+  return(dat)
+}
 
 # combine and save outputs ----
-combine_and_save <- function(filename) {
+combine_and_save <- function(model, filename) {
+  
+  filename_full <- glue("{model}_{filename}_rounded")
   
   metaparams %>%
     mutate(
       data = pmap(
         list(cohort, subgroup, variant_option, outcome), 
-        function(cohort, subgroup, variant_option, outcome) {
-          subgroup <- as.character(subgroup)
-          dat <- read_rds(here("output", cohort, "models", "km", subgroup, variant_option, outcome, glue("{filename}.rds")))
-          dat %>%
-            add_column(
-              subgroup_level = as.character(.[[subgroup]]),
-              subgroup_level_descr = fct_recoderelevel(.[[subgroup]], recoder[[subgroup]]),
-              .before=1
-            ) %>%
-            select(-all_of(subgroup))
-        })
+        function(cohort, subgroup, variant_option, outcome)  {
+          dat <- try(read_rds(here("output", cohort, "models", model, subgroup, variant_option, outcome, glue("{filename_full}.rds")))) 
+          if (inherits(dat, "try-error")) {
+            dat <- tibble()
+          } else {
+            dat <- dat %>%
+              add_column(
+                subgroup_level = as.character(.[[subgroup]]),
+                .before=1
+              ) 
+          }
+          return(dat)
+        }
+          
+        )
     ) %>%
     unnest(data) %>%
-    write_csv(fs::path(output_dir, glue("{filename}.csv")))
+    select(-any_of(subgroups)) %>%
+    write_csv(fs::path(output_dir, glue("{filename_full}.csv")))
 }
 
 
 # km outputs
 for (i in c("estimates", "contrasts_daily", "contrasts_cuts", "contrasts_overall")) {
-  combine_and_save(glue("km_{i}_rounded")) 
+  combine_and_save(model="km", filename = i) 
 }
 # cox outputs
 for (i in c("contrasts_cuts", "contrasts_overall")) {
-  combine_and_save(glue("cox_unadj_{i}_rounded")) 
-  combine_and_save(glue("cox_adj_{i}_rounded")) 
+  combine_and_save(model="cox", filename = glue("unadj_{i}")) 
+  combine_and_save(model="cox", filename = glue("adj_{i}")) 
 }
 
 
 ## move km plots to single folder ----
-fs::dir_create(here("output", cohort, "models", "km", "combined"))
+fs::dir_create(here("output", cohort, "models", "combined"))
 
 for (i in c("rounded", "unrounded")) {
   metaparams %>%
     mutate(
       plotdir = glue("output", cohort, "models", "km", "{subgroup}", "{variant_option}", "{outcome}", "km_plot_{i}.png", .sep="/"),
-      plotnewdir = glue("output", cohort, "models", "km", "combined", "km_plot_{i}_{subgroup}_{outcome}.png", .sep="/")
+      plotnewdir = glue("output", cohort, "models", "combined", "km_plot_{i}_{subgroup}_{outcome}.png", .sep="/")
     ) %>%
     {walk2(.$plotdir, .$plotnewdir, ~fs::file_copy(.x, .y, overwrite = TRUE))}
 }
@@ -98,28 +110,41 @@ plot_estimates <- function(.data, estimate, estimate.ll, estimate.ul, name){
   colour_labs <- c("ignore", variant_dates$variant)
   colour_palette <- c("#636363",  RColorBrewer::brewer.pal(n=length(variant_dates$variant), name="Dark2"))
   names(colour_palette) <- colour_labs
-
-  plot_temp <-
-    .data %>%
-    mutate(across(subgroup_level_descr,
-                  ~if_else(
-                    subgroup=="all",glue("{subgroup_level_descr} ({variant_option})"),
-                    .x))) %>%
-    mutate(across(variant, factor, levels = colour_labs)) %>%
-    group_by(outcome_descr) %>%
+  
+  subgroup_levels_labels <- unlist(unname(recoder[subgroups]))
+  
+  plot_data <- .data %>%
     mutate(
-      outcome_descr = fct_relabel(outcome_descr, str_wrap, width=10),
-      subgroup_level_descr = fct_rev(subgroup_level_descr)
+      subgroup = fct_recoderelevel(subgroup, recoder$subgroups),
+      outcome = fct_recoderelevel(outcome,  recoder$outcome),
+      subgroup_level = fct_recoderelevel(subgroup_level, subgroup_levels_labels),
+      yvar = as.character(if_else(
+        subgroup %in% "Main",
+        glue("{subgroup}\n({str_to_sentence(variant_option)})"),
+        glue("{subgroup}\n({subgroup_level})")
+      )),
+      .before = 1
     ) %>%
-    ggplot(aes(y=subgroup_level_descr, colour = variant)) +
+    mutate(outcome = fct_relabel(outcome, str_wrap, width=10)) 
+  
+  ylevels <- plot_data %>%
+    distinct(yvar, subgroup, subgroup_level, variant_option) %>%
+    arrange(subgroup, subgroup_level, variant_option) %>%
+    select(yvar) %>% unlist() %>% unname()
+  
+  plot_temp <- plot_data %>%
+    mutate(outcome = fct_relabel(outcome, str_wrap, width=10))  %>%
+    mutate(across(variant, factor, levels = colour_labs)) %>%
+    mutate(across(yvar, factor, levels = ylevels)) %>%
+    ggplot(aes(y=yvar, colour = variant)) +
     geom_vline(aes(xintercept=0), linetype="dotted", colour="darkgrey")+
     geom_point(aes(x={{estimate}}), position=position_dodge(width=-0.3), alpha=0.7)+
     geom_linerange(aes(xmin={{estimate.ll}}, xmax={{estimate.ul}}), position=position_dodge(width=-0.3))+
-    facet_grid(rows=vars(subgroup_descr), cols=vars(outcome_descr), scales="free", space="free_y", switch="y")+
+    facet_grid(rows=vars(yvar), cols=vars(outcome), scales="free", space="free_y", switch="y")+
     scale_x_continuous(expand = expansion(mult=c(0,0.01)))+
     scale_color_manual(values=colour_palette)+
     labs(y=NULL)+
-    theme_minimal()+
+    theme_bw()+
     theme(
       legend.position="bottom",
       axis.text.x.top=element_text(hjust=0),
@@ -137,16 +162,16 @@ plot_estimates <- function(.data, estimate, estimate.ll, estimate.ul, name){
 
 
   ggsave(
-    filename=glue("output", cohort, "models", "km", "combined", "overall_plot_rounded_{name}.png", .sep="/"),
+    filename=glue("output", cohort, "models", "combined", "overall_plot_rounded_{name}.png", .sep="/"),
     plot_temp,
-    width=20, height=15, units="cm"
+    width=30, height=20, units="cm"
   )
 
   plot_temp
 }
 
 # read data and create plots ----
-km_contrasts_overall <- read_csv(fs::path(output_dir, glue("km_contrasts_overall_rounded.csv")))
+km_contrasts_overall <- read_csv(fs::path(output_dir, glue("km_contrasts_overall_rounded.csv"))) 
 km_contrasts_overall %>% plot_estimates(rd, rd.ll, rd.ul, "km_rd")
 km_contrasts_overall %>% plot_estimates(rr, rr.ll, rr.ul, "km_rr")
 

@@ -254,42 +254,59 @@ action_extract_and_match <- function(cohort){
 # test action
 # action_extract_and_match("pfizer", 2)
 
-action_km <- function(cohort, subgroup, variant_option, outcome){
-  action(
-    name = glue("km_{cohort}_{subgroup}_{variant_option}_{outcome}"),
-    run = glue("r:latest analysis/model/km.R"),
-    arguments = c(cohort, subgroup, variant_option, outcome),
-    needs = namelesslst(
-      glue("process_controlfinal_{cohort}"),
+actions_model <- function(cohort, subgroup, variant_option, outcome){
+  splice(
+    # km
+    action(
+      name = glue("km_{cohort}_{subgroup}_{variant_option}_{outcome}"),
+      run = glue("r:latest analysis/model/km.R"),
+      arguments = c(cohort, subgroup, variant_option, outcome),
+      needs = namelesslst(
+        glue("process_controlfinal_{cohort}")
+      ),
+      moderately_sensitive= lst(
+        #csv= glue("output/{cohort}/models/km/{subgroup}/{outcome}/*.csv"),
+        rds= glue("output/{cohort}/models/km/{subgroup}/{variant_option}/{outcome}/*.rds"),
+        png= glue("output/{cohort}/models/km/{subgroup}/{variant_option}/{outcome}/*.png")
+      )
     ),
-    moderately_sensitive= lst(
-      #csv= glue("output/{cohort}/models/km/{subgroup}/{outcome}/*.csv"),
-      rds= glue("output/{cohort}/models/km/{subgroup}/{variant_option}/{outcome}/*.rds"),
-      png= glue("output/{cohort}/models/km/{subgroup}/{variant_option}/{outcome}/*.png"),
+    # cox
+    action(
+      name = glue("cox_{cohort}_{subgroup}_{variant_option}_{outcome}"),
+      run = glue("r:latest analysis/model/cox.R"),
+      arguments = c(cohort, subgroup, variant_option, outcome),
+      needs = namelesslst(
+        glue("process_controlfinal_{cohort}")
+      ),
+      moderately_sensitive= lst(
+        #csv= glue("output/{cohort}/models/cox/{subgroup}/{outcome}/*.csv"),
+        rds= glue("output/{cohort}/models/cox/{subgroup}/{variant_option}/{outcome}/*.rds")
+      )
     )
   )
 }
 
+
 ## model action function ----
-action_km_combine <- function(
+action_combine <- function(
     cohort
 ){
 
   action(
-    name = glue("combine_km_{cohort}"),
-    run = glue("r:latest analysis/model/km_combine.R"),
+    name = glue("combine_{cohort}"),
+    run = glue("r:latest analysis/model/combine.R"),
     arguments = c(cohort),
     needs = splice(
       as.list(
         glue_data(
           .x=km_args,
-          "km_{cohort}_{subgroup}_{variant_option}_{outcome}"
+          "{model}_{cohort}_{subgroup}_{variant_option}_{outcome}"
         )
       )
     ),
     moderately_sensitive = lst(
-      rds = glue("output/{cohort}/models/km/combined/*.csv"),
-      png = glue("output/{cohort}/models/km/combined/*.png"),
+      rds = glue("output/{cohort}/models/combined/*.csv"),
+      png = glue("output/{cohort}/models/combined/*.png"),
     )
   )
 }
@@ -496,7 +513,10 @@ actions_list <- splice(
           subgroups,
           function(y) {
             lapply_actions(
-              km_args %>% filter(subgroup==y) %>% distinct(variant_option) %>% unlist() %>% unname(),
+              km_args %>% 
+                filter(subgroup==y) %>%
+                distinct(variant_option) %>%
+                unlist() %>% unname(),
               function(v) {
                 c(
                   comment("# # # # # # # # # # # # # # # # # # # # # # # # # # # ",
@@ -504,7 +524,7 @@ actions_list <- splice(
                           "# # # # # # # # # # # # # # # # # # # # # # # # # # # "),
                   lapply_actions(
                     outcomes,
-                    function(z) action_km(cohort=x, subgroup=y, variant_option=v, outcome=z)
+                    function(z) actions_model(cohort=x, subgroup=y, variant_option=v, outcome=z)
                   )
                 )
               }
@@ -516,7 +536,7 @@ actions_list <- splice(
                 glue("combine all outputs for {x} cohort"),
                 "# # # # # # # # # # # # # # # # # # #"),
         
-        action_km_combine(x)
+        action_combine(x)
         
       )
     }

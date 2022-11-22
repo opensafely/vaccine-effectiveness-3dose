@@ -365,7 +365,7 @@ actions_list <- splice(
     name = "design",
     run = glue("r:latest analysis/design.R"),
     moderately_sensitive = lst(
-      lib = glue("lib/design/study-dates.json")
+      lib = glue("lib/design/*.json")
     ),
   ),
   

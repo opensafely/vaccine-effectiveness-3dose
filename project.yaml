@@ -20,7 +20,7 @@ actions:
     run: r:latest analysis/design.R
     outputs:
       moderately_sensitive:
-        lib: lib/design/study-dates.json
+        lib: lib/design/*.json
 
   ## # # # # # # # # # # # # # # # # # # # 
   ## Extract and process treated data 

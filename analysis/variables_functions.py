@@ -59,7 +59,8 @@ def covidtest_n_X(name, index_date, cuts, test_result):
         between=[f"{index_date} + {cuts[i] + 1} days", f"{index_date} + {cuts[i+1]} days"]
 
     return {
-      f"{name}({cuts[i]},{cuts[i+1]}]_n": patients.with_test_result_in_sgss(
+      # f"{name}({cuts[i]},{cuts[i+1]}]_n": patients.with_test_result_in_sgss(
+      f"{name}_{i}_n": patients.with_test_result_in_sgss(  
         pathogen="SARS-CoV-2",
         test_result=test_result,
         between=between,
@@ -74,7 +75,6 @@ def covidtest_n_X(name, index_date, cuts, test_result):
   variables=dict()
   for i in range(0, n):
     variables.update(var_signature(name, i))
-    # variables.update(var_signature(f"{name}_{i}_n", i))
   return variables
 
 ####################################################################################################

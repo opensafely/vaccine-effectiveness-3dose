@@ -79,7 +79,7 @@ def covidtest_n_X(name, index_date, cuts, test_result):
 
 ####################################################################################################
 def covidtest_returning_X(
-  name, date_name, index_date, shift, n, test_result, 
+  name, index_date, shift, n, test_result, 
   # find_first_match_in_period, 
   restrict_to_earliest_specimen_date, 
   returning,
@@ -87,16 +87,11 @@ def covidtest_returning_X(
   ):
   # covid test date (result can be "any", "positive", or "negative")
   def var_signature(name, on_or_after):
-
-    # specify sign based on shift
-    if shift < 0: sign = "-"
-    else: sign="+"
-
     return {
       name: patients.with_test_result_in_sgss(
         pathogen="SARS-CoV-2",
         test_result=test_result,
-        on_or_after=f"{index_date} {sign} {abs(shift)} days",
+        on_or_after=on_or_after,
         # find_first_match_in_period=find_first_match_in_period,
         restrict_to_earliest_specimen_date=restrict_to_earliest_specimen_date,
         returning=returning,
@@ -104,11 +99,19 @@ def covidtest_returning_X(
         return_expectations=return_expectations
       ),
     }
-  variables = var_signature(f"{name}_1_{returning}", index_date)
+    
+  # specify sign based on shift
+  if shift < 0: sign="-"
+  else: sign="+" 
+
+  variables=var_signature(
+    name=f"{name}_1_{returning}", 
+    on_or_after=f"{index_date} {sign} {abs(shift)} days"
+    )
   for i in range(2, n+1):
     variables.update(var_signature(
-      f"{name}_{i}_{returning}", 
-      f"{date_name}_{i-1}_date + 1 day"
+      name=f"{name}_{i}_{returning}", 
+      on_or_after=f"{name}_{i-1}_date + 1 day"
       ))
   return variables
 

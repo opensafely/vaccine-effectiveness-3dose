@@ -488,7 +488,7 @@ data_anytest_sum %>%
   theme_bw() +
   theme(legend.position = "bottom")
 ggsave(
-  filename = file.path(outdir, glue("check_counts_dist.png")),
+  filename = file.path(outdir, "checks", glue("check_counts_dist.png")),
   width = 15, height = 20, units = "cm"
 )
 

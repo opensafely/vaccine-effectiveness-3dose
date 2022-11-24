@@ -46,20 +46,20 @@ def generate_covidtests_variables(index_date):
         test_result="any",
         returning="date",
     ),
-    ## whether tests were symptomatic
-    **covidtest_returning_X(
-        name="anytest",
-        index_date=index_date,
-        shift=int(covidtestcuts[0]),
-        n=n_any,
-        test_result="any",
-        returning="symptomatic",
-        return_expectations = {
-            "incidence" : 1,
-            # not using study def dummy data, but returns error without stating expectations
-            "category": {"ratios": {"": 0.5, "Y": 0.3, "N": 0.2}},
-             }
-    ),
+    # ## whether tests were symptomatic
+    # **covidtest_returning_X(
+    #     name="anytest",
+    #     index_date=index_date,
+    #     shift=int(covidtestcuts[0]),
+    #     n=n_any,
+    #     test_result="any",
+    #     returning="symptomatic",
+    #     return_expectations = {
+    #         "incidence" : 1,
+    #         # not using study def dummy data, but returns error without stating expectations
+    #         "category": {"ratios": {"": 0.5, "Y": 0.3, "N": 0.2}},
+    #          }
+    # ),
     # # dates of positive tests
     # **covidtest_returning_X(
     #     name="postest",

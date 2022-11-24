@@ -42,12 +42,6 @@ metaparams <-
 # get all subgroups
 subgroups <- metaparams %>% distinct(subgroup) %>% unlist() %>% unname()
 
-try_read <- function(path) {
-  dat <- try(read_rds(path))
-  if (inherits(dat, "try-error")) dat <- tibble()
-  return(dat)
-}
-
 # combine and save outputs ----
 combine_and_save <- function(model, filename) {
   
@@ -85,8 +79,10 @@ for (i in c("estimates", "contrasts_daily", "contrasts_cuts", "contrasts_overall
 }
 # cox outputs
 for (i in c("contrasts_cuts", "contrasts_overall")) {
-  combine_and_save(model="cox", filename = glue("unadj_{i}")) 
-  combine_and_save(model="cox", filename = glue("adj_{i}")) 
+  for (m in c("unadj", "adj")) {
+    combine_and_save(model=glue("cox_{m}"), filename = i) 
+    combine_and_save(model=glue("cox_{m}"), filename = i) 
+  }
 }
 
 

@@ -244,7 +244,7 @@ variant_dates <- tribble(
 
 # analysis table 
 km_args <- expand_grid(
-  model=c("km", "cox"),
+  model=c("km", "cox_unadj", "cox_adj"),
   subgroup=subgroups,
   outcome=outcomes,
 ) %>%

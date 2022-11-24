@@ -266,22 +266,26 @@ actions_model <- function(cohort, subgroup, variant_option, outcome){
       ),
       moderately_sensitive= lst(
         #csv= glue("output/{cohort}/models/km/{subgroup}/{outcome}/*.csv"),
-        rds= glue("output/{cohort}/models/km/{subgroup}/{variant_option}/{outcome}/*.rds"),
-        png= glue("output/{cohort}/models/km/{subgroup}/{variant_option}/{outcome}/*.png")
+        rds = glue("output/{cohort}/models/km/{subgroup}/{variant_option}/{outcome}/*.rds"),
+        png = glue("output/{cohort}/models/km/{subgroup}/{variant_option}/{outcome}/*.png")
       )
     ),
     # cox
-    action(
-      name = glue("cox_{cohort}_{subgroup}_{variant_option}_{outcome}"),
-      run = glue("r:latest analysis/model/cox.R"),
-      arguments = c(cohort, subgroup, variant_option, outcome),
-      needs = namelesslst(
-        glue("process_controlfinal_{cohort}")
-      ),
-      moderately_sensitive= lst(
-        #csv= glue("output/{cohort}/models/cox/{subgroup}/{outcome}/*.csv"),
-        rds= glue("output/{cohort}/models/cox/{subgroup}/{variant_option}/{outcome}/*.rds")
-      )
+    lapply_actions(
+      c("unadj", "adj"),
+      function(type)
+        action(
+          name = glue("cox_{type}_{cohort}_{subgroup}_{variant_option}_{outcome}"),
+          run = glue("r:latest analysis/model/cox.R"),
+          arguments = c(cohort, type, subgroup, variant_option, outcome),
+          needs = namelesslst(
+            glue("process_controlfinal_{cohort}")
+          ),
+          moderately_sensitive= lst(
+            #csv= glue("output/{cohort}/models/cox/{subgroup}/{outcome}/*.csv"),
+            rds = glue("output/{cohort}/models/cox_{type}/{subgroup}/{variant_option}/{outcome}/*.rds")
+          )
+        )
     )
   )
 }

@@ -6,6 +6,7 @@
 #  - Fit Cox models
 #  - The script must be accompanied by three arguments:
 #    `cohort` - pfizer or moderna
+#    `type` - unadj, adj (Cox model adjustment)
 #    `subgroup` - prior_covid_infection, vax12_type, cev, age65plus
 #    `outcome` - the dependent variable
 #    `variant_option` - ignore (ignore variant era), 
@@ -39,29 +40,30 @@ args <- commandArgs(trailingOnly=TRUE)
 if(length(args)==0){
   # use for interactive testing
   cohort <- "mrna"
+  type <- "unadj"
   subgroup <- "all"
   variant_option <- "ignore" # ignore, split, restrict (delta, transition, omicron)
   outcome <- "postest"
   
 } else {
   cohort <- args[[1]]
-  subgroup <- args[[2]]
-  variant_option <- args[[3]]
-  outcome <- args[[4]]
+  type <- args[[2]]
+  subgroup <- args[[3]]
+  variant_option <- args[[4]]
+  outcome <- args[[5]]
 }
 
 if (subgroup!="all" & variant_option != "ignore") 
   stop("Must set `variant`=\"ignore\" for subgroup analyses.")
 
+# create output directories ----
+output_dir <- ghere("output", cohort, "models", "cox_{type}", subgroup, variant_option, outcome)
+fs::dir_create(output_dir)
+
 # derive symbolic arguments for programming with
 
 cohort_sym <- sym(cohort)
 subgroup_sym <- sym(subgroup)
-
-# create output directories ----
-
-output_dir <- ghere("output", cohort, "models", "cox", subgroup, variant_option, outcome)
-fs::dir_create(output_dir)
 
 # read and process data_matched ----
 source(here("analysis", "model", "process_data_model.R"))
@@ -202,25 +204,33 @@ coxcontrast <- function(data, adj = FALSE, cuts=NULL){
 # apply contrast functions ----
 
 # cox unadjusted
-cat("---- start cox_unadj_contrasts_cuts ----\n")
-cox_unadj_contrasts_cuts <- coxcontrast(data_matched, cuts = postbaselinecuts)
-write_rds(cox_unadj_contrasts_cuts, fs::path(output_dir, "cox_unadj_contrasts_cuts_rounded.rds"))
-cat("---- start cox_unadj_contrasts_cuts ----\n")
-
-cat("---- start cox_unadj_contrasts_overall ----\n")
-cox_unadj_contrasts_overall <- coxcontrast(data_matched, cuts = c(0,maxfup))
-write_rds(cox_unadj_contrasts_overall, fs::path(output_dir, "cox_unadj_contrasts_overall_rounded.rds"))
-cat("---- start cox_unadj_contrasts_overall ----\n")
+if (type == "unadj") {
+  
+  cat("---- start cox_unadj_contrasts_cuts ----\n")
+  cox_unadj_contrasts_cuts <- coxcontrast(data_matched, cuts = postbaselinecuts)
+  write_rds(cox_unadj_contrasts_cuts, fs::path(output_dir, "cox_unadj_contrasts_cuts_rounded.rds"))
+  cat("---- end cox_unadj_contrasts_cuts ----\n")
+  
+  cat("---- start cox_unadj_contrasts_overall ----\n")
+  cox_unadj_contrasts_overall <- coxcontrast(data_matched, cuts = c(0,maxfup))
+  write_rds(cox_unadj_contrasts_overall, fs::path(output_dir, "cox_unadj_contrasts_overall_rounded.rds"))
+  cat("---- end cox_unadj_contrasts_overall ----\n")
+  
+}
 
 # cox adjusted
-cat("---- start cox_adj_contrasts_cuts ----\n")
-cox_adj_contrasts_cuts <- coxcontrast(data_matched, adj = TRUE, cuts = postbaselinecuts)
-write_rds(cox_adj_contrasts_cuts, fs::path(output_dir, "cox_adj_contrasts_cuts_rounded.rds"))
-cat("---- start cox_adj_contrasts_cuts ----\n")
-
-cat("---- start cox_adj_contrasts_overall ----\n")
-cox_adj_contrasts_overall <- coxcontrast(data_matched, adj = TRUE, cuts = c(0,maxfup))
-write_rds(cox_adj_contrasts_overall, fs::path(output_dir, "cox_adj_contrasts_overall_rounded.rds"))
-cat("---- start cox_adj_contrasts_overall ----\n")
+if (type == "adj") {
+  
+  cat("---- start cox_adj_contrasts_cuts ----\n")
+  cox_adj_contrasts_cuts <- coxcontrast(data_matched, adj = TRUE, cuts = postbaselinecuts)
+  write_rds(cox_adj_contrasts_cuts, fs::path(output_dir, "cox_adj_contrasts_cuts_rounded.rds"))
+  cat("---- end cox_adj_contrasts_cuts ----\n")
+  
+  cat("---- start cox_adj_contrasts_overall ----\n")
+  cox_adj_contrasts_overall <- coxcontrast(data_matched, adj = TRUE, cuts = c(0,maxfup))
+  write_rds(cox_adj_contrasts_overall, fs::path(output_dir, "cox_adj_contrasts_overall_rounded.rds"))
+  cat("---- end cox_adj_contrasts_overall ----\n")
+  
+}
 
 cat("script complete")

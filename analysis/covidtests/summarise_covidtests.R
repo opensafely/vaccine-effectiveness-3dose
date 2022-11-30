@@ -2,6 +2,8 @@
 library(tidyverse)
 library(here)
 library(glue)
+library(cowplot)
+library(ggh4x)
 
 ## import local functions and parameters ---
 
@@ -21,6 +23,16 @@ if (length(args) == 0) {
   subgroup <- args[[2]]
 } 
 
+rates <- c( 
+  "First positive SARS-CoV-2 test" = "firstpostest",
+  "PCR only" = "pcronly", 
+  "LFT only" = "lftonly", 
+  "PCR and LFT" = "both",
+  "Any SARS-CoV-2 test" = "anytest", 
+  "SARS-CoV-2 test for symptomatic case" = "symptomatic",
+  "Positive SARS-CoV-2 test" = "postest"
+)
+
 if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("")) {
   
   ## Import released data ----
@@ -29,7 +41,7 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("")) {
   output_dir <- here("output", release_dir, "figures")
   fs::dir_create(output_dir)
   
-  raw_stats_redacted <- read_csv(fs::path(release_dir, "covidtest_rates.csv"))
+  data_rates_rounded <- read_csv(fs::path(output_dir, "covidtest_rates_rounded.csv"))
   
 } else {
   
@@ -44,57 +56,95 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("")) {
   
   # calculate rates ----
   
-  data_rates <- data_anytest_sum %>%
+  calc_rates <- function(.data) {
+    .data %>%
+      mutate(across(matches(glue("{unname(rates)}_n")), ~.x/persondays_n)) %>%
+      rename_with(.f = ~str_replace(.x, "_n", "_rate"), .cols = matches(glue("{unname(rates)}_n")))
+  }
+  
+  data_n <- data_anytest_sum %>%
     mutate(all="all") %>%
     group_by(treated, anytest_cut, !!subgroup_sym) %>%
     summarise(
-      n = roundmid_any(n(), threshold),
-      total_persondays = sum(persondays),
-      anytest_rate = sum(sum_anytest) / total_persondays,
-      symptomatic_rate = sum(sum_symptomatic) / total_persondays,
-      postest_rate = sum(sum_postest) / total_persondays,
-      firstpostest_rate = sum(sum_firstpostest) / total_persondays,
-      lftonly_rate = sum(sum_lftonly) / total_persondays,
-      pcronly_rate = sum(sum_pcronly) / total_persondays,
-      both_rate = sum(sum_both) / total_persondays,
+      total_n = roundmid_any(n(), threshold),
+      persondays_n = sum(persondays),
+      anytest_n = sum(sum_anytest),
+      symptomatic_n = sum(sum_symptomatic),
+      postest_n = sum(sum_postest),
+      firstpostest_n = sum(sum_firstpostest),
+      lftonly_n = sum(sum_lftonly),
+      pcronly_n = sum(sum_pcronly),
+      both_n = sum(sum_both),
       .groups = "keep"
-    )
+    ) %>%
+    ungroup() 
   
-  write_csv(data_rates, fs::path(output_dir, "covidtest_rates.csv"))
+  data_rates_unrounded <- data_n %>%
+    calc_rates()
+  write_csv(data_rates_unrounded, fs::path(output_dir, "covidtest_rates_unrounded.csv"))
+  
+  data_rates_rounded <- data_n %>%
+    mutate(across(ends_with("_n"), ~roundmid_any(.x, to = threshold))) %>%
+    calc_rates()
+  write_csv(data_rates_rounded, fs::path(output_dir, "covidtest_rates_rounded.csv"))
   
 }
 
 # plot covidtest_rates ----
 
-rates <- c( 
-  "Any SARS-CoV-2 test" = "anytest", 
-  "SARS-CoV-2 test for symptomatic case" = "symptomatic",
-  "Positive SARS-CoV-2 test" = "postest", 
-  "First positive SARS-CoV-2 test" = "firstpostest",
-  "PCR only" = "pcronly", 
-  "LFT only" = "lftonly", 
-  "PCR and LFT" = "both"
-  )
-
-data_rates %>%
-  pivot_longer(
-    cols = ends_with("rate")
-  ) %>%
-  mutate(across(name, factor, levels = str_c(rates, "_rate"), labels = str_wrap(names(rates), 20))) %>%
-  ggplot(aes(x = anytest_cut, y = value, group = treated, colour = treated)) +
-  geom_point() +
-  geom_line() +
-  facet_wrap(~name, nrow=2) +
-  labs(
-    x = "time period (days relative to trial_date)",
-    y = "rate per person-day of follow-up"
-  ) +
-  theme_bw() +
-  theme(
-    axis.text.x = element_text(angle = 90),
-    legend.position = c(0.9, 0.15)
+plot_rates <- function(.data, filename) {
+  
+  plot_data <- data_rates_rounded %>%
+    pivot_longer(
+      cols = ends_with("rate")
+    ) %>%
+    mutate(longname=name) %>%
+    mutate(across(longname, factor, levels = str_c(rates, "_rate"), labels = str_wrap(names(rates[1:7]), 20)))
+  
+  plot_function <- function(.data, legend.position = "none") {
+    .data %>%
+      ggplot(aes(x = anytest_cut, y = value, group = treated, colour = treated)) +
+      geom_point() +
+      geom_line() +
+      facet_grid(~longname,  scales = "free") +
+      labs(
+        x = "time period (days relative to trial_date)",
+        y = "rate per person-day of follow-up"
+      ) +
+      theme_bw() +
+      theme(
+        axis.text.x = element_text(angle = 90),
+        legend.position = legend.position
+      )
+  }
+  
+  p1 <- plot_data %>% 
+    filter(name %in% glue("{rates[5:7]}_rate")) %>%
+    droplevels() %>%
+    plot_function() 
+  
+  p2 <- plot_data %>% 
+    filter(name %in% glue("{rates[1:4]}_rate")) %>%
+    droplevels() %>%
+    plot_function(legend.position = "right")
+  
+  plot_legend <- get_legend(p2)
+  p2 <- p2 + theme(legend.position = "none")  
+  
+  plot_grid(
+    plot_grid(p1, plot_legend, nrow=1, rel_widths = c(3,1)),
+    p2,
+    nrow=2, rel_widths = c(10,1)
+    # align = "v", axis = "l", nrow=2
     )
-ggsave(
-  filename = file.path(output_dir, "rates.png"),
-  width = 15, height = 20, units = "cm"
-)
+  
+  plot_grid(p1, plot_legend, p2, nrow=2, rel_widths = c(3,1,4))
+  
+  ggsave(
+    filename = file.path(output_dir, glue("rates_{filename}.png")),
+    width = 15, height = 20, units = "cm"
+  )
+  
+}
+
+

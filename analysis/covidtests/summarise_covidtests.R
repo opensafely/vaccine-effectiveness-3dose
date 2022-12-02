@@ -3,7 +3,7 @@ library(tidyverse)
 library(here)
 library(glue)
 library(cowplot)
-library(ggh4x)
+# library(ggh4x)
 
 ## import local functions and parameters ---
 
@@ -92,28 +92,60 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("")) {
 
 # plot covidtest_rates ----
 
-plot_rates <- function(.data, filename) {
+plot_rates <- function(.data, filename, legend.position = "bottom") {
   
-  plot_data <- data_rates_rounded %>%
+  key <- .data %>%
+    distinct(anytest_cut) %>%
+    mutate(
+      lower = fup_params$covidtestcuts[-length(fup_params$covidtestcuts)],
+      upper = fup_params$covidtestcuts[-1]
+    ) %>%
+    pivot_longer(
+      cols = -anytest_cut
+    ) %>%
+    select(anytest_cut, time=value)
+  
+  plot_data <- .data %>%
     pivot_longer(
       cols = ends_with("rate")
     ) %>%
     mutate(longname=name) %>%
-    mutate(across(longname, factor, levels = str_c(rates, "_rate"), labels = str_wrap(names(rates[1:7]), 20)))
+    mutate(across(longname, 
+                  factor, 
+                  levels = str_c(rates, "_rate"), 
+                  labels = str_wrap(names(rates), 100)
+                  )) %>%
+    mutate(across(treated, 
+                  factor, 
+                  levels = c(0,1), 
+                  labels = c("two doses", "three doses")
+                  )) %>%
+    left_join(key, by = "anytest_cut")
   
-  plot_function <- function(.data, legend.position = "none") {
+  plot_function <- function(.data) {
     .data %>%
-      ggplot(aes(x = anytest_cut, y = value, group = treated, colour = treated)) +
-      geom_point() +
-      geom_line() +
-      facet_grid(~longname,  scales = "free") +
+      ggplot(aes(x = time, y = value, group = treated, colour = treated)) +
+      geom_vline(xintercept = 0, linetype = "dashed", colour = "grey") +
+      geom_step() +
+      facet_wrap("longname", ncol=1) +
       labs(
-        x = "time period (days relative to trial_date)",
+        x = "time (days relative to trial date)",
         y = "rate per person-day of follow-up"
+      ) +
+      scale_x_continuous(
+        breaks = fup_params$covidtestcuts
+        ) +
+      scale_y_continuous(
+        limits = c(0, NA)
+      ) +
+      scale_color_discrete(
+        name = NULL
       ) +
       theme_bw() +
       theme(
-        axis.text.x = element_text(angle = 90),
+        axis.title.x = element_text(margin = margin(t=10)),
+        axis.title.y = element_text(margin = margin(r=10)),
+        legend.box.background = element_rect(colour = "black"),
         legend.position = legend.position
       )
   }
@@ -123,28 +155,15 @@ plot_rates <- function(.data, filename) {
     droplevels() %>%
     plot_function() 
   
-  p2 <- plot_data %>% 
-    filter(name %in% glue("{rates[1:4]}_rate")) %>%
-    droplevels() %>%
-    plot_function(legend.position = "right")
-  
-  plot_legend <- get_legend(p2)
-  p2 <- p2 + theme(legend.position = "none")  
-  
-  plot_grid(
-    plot_grid(p1, plot_legend, nrow=1, rel_widths = c(3,1)),
-    p2,
-    nrow=2, rel_widths = c(10,1)
-    # align = "v", axis = "l", nrow=2
-    )
-  
-  plot_grid(p1, plot_legend, p2, nrow=2, rel_widths = c(3,1,4))
-  
   ggsave(
+    plot = p1,
     filename = file.path(output_dir, glue("rates_{filename}.png")),
     width = 15, height = 20, units = "cm"
   )
   
+  return(p1)
+  
 }
 
-
+data_rates_unrounded %>% plot_rates(filename = "unrounded", legend.position = c(0.8, 0.225))
+data_rates_rounded %>% plot_rates(filename = "rounded", legend.position = c(0.8, 0.225))

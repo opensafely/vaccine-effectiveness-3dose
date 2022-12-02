@@ -2291,26 +2291,26 @@ actions:
     - cox_unadj_mrna_agegroup_ignore_covidemergency
     - cox_unadj_mrna_agegroup_ignore_noncoviddeath
     - cox_adj_mrna_all_ignore_postest
-    - cox_adj_mrna_all_split_postest
+    # - cox_adj_mrna_all_split_postest
     - cox_adj_mrna_all_restrict_postest
     - cox_adj_mrna_all_ignore_covidadmitted
-    - cox_adj_mrna_all_split_covidadmitted
+    # - cox_adj_mrna_all_split_covidadmitted
     - cox_adj_mrna_all_restrict_covidadmitted
     - cox_adj_mrna_all_ignore_covidcritcareordeath
-    - cox_adj_mrna_all_split_covidcritcareordeath
+    # - cox_adj_mrna_all_split_covidcritcareordeath
     - cox_adj_mrna_all_restrict_covidcritcareordeath
     - cox_adj_mrna_all_ignore_coviddeath
-    - cox_adj_mrna_all_split_coviddeath
+    # - cox_adj_mrna_all_split_coviddeath
     - cox_adj_mrna_all_restrict_coviddeath
     - cox_adj_mrna_all_ignore_emergency
-    - cox_adj_mrna_all_split_emergency
+    # - cox_adj_mrna_all_split_emergency
     - cox_adj_mrna_all_restrict_emergency
     - cox_adj_mrna_all_ignore_covidemergency
-    - cox_adj_mrna_all_split_covidemergency
+    # - cox_adj_mrna_all_split_covidemergency
     - cox_adj_mrna_all_restrict_covidemergency
     - cox_adj_mrna_all_ignore_noncoviddeath
-    - cox_adj_mrna_all_split_noncoviddeath
-    - cox_adj_mrna_all_restrict_noncoviddeath
+    # - cox_adj_mrna_all_split_noncoviddeath
+    # - cox_adj_mrna_all_restrict_noncoviddeath
     - cox_adj_mrna_vax3_type_ignore_postest
     - cox_adj_mrna_vax3_type_ignore_covidadmitted
     - cox_adj_mrna_vax3_type_ignore_covidcritcareordeath

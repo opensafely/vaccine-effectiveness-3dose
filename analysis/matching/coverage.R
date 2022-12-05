@@ -41,12 +41,12 @@ dates <- study_dates[[cohort]]
 if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("")) {
   
   ## Import released data ----
-  release_dir <- ""
+  release_dir <- "release20221202"
   
-  output_dir <- here("output", release_dir, "figures")
+  output_dir <- here(release_dir, "figures")
   fs::dir_create(output_dir)
   
-  data_coverage_rounded <- read_csv(fs::path(release_dir, "data_coverage.csv"))
+  data_coverage_rounded <- read_csv(here(release_dir, "matching", "data_coverage.csv"))
   
   
 } else {
@@ -145,7 +145,8 @@ plot_coverage_n <-
       y=n,
       group=paste0(vax3_type,status),
       fill=treatment_descr,
-      alpha=fct_rev(status),
+      alpha=status,
+      # alpha=fct_rev(status),
       colour=NULL
     ),
     position=position_stack(reverse=TRUE),
@@ -154,7 +155,7 @@ plot_coverage_n <-
   ) +
   geom_hline(yintercept = 0, colour="black") +
   scale_x_date(
-    breaks = unique(lubridate::ceiling_date(data_coverage$vax3_date, "1 month")),
+    breaks = unique(lubridate::ceiling_date(data_coverage_rounded$vax3_date, "1 month")),
     limits = c(xmin-1, NA),
     labels = scales::label_date("%d/%m"),
     expand = expansion(add=1),
@@ -196,7 +197,8 @@ plot_coverage_cumuln <-
       y=cumuln,
       group=paste0(vax3_type,status),
       fill=treatment_descr,
-      alpha=fct_rev(status),
+      alpha=status,
+      # alpha=fct_rev(status),
       colour=NULL
     ),
     position=position_stack(reverse=TRUE),
@@ -204,7 +206,7 @@ plot_coverage_cumuln <-
   )+
   geom_rect(xmin=xmin, xmax= xmax+1, ymin=-6, ymax=6, fill="grey", colour="transparent")+
   scale_x_date(
-    breaks = unique(lubridate::ceiling_date(data_coverage$vax3_date, "1 month")),
+    breaks = unique(lubridate::ceiling_date(data_coverage_rounded$vax3_date, "1 month")),
     limits = c(xmin-1, NA),
     labels = scales::label_date("%d/%m"),
     expand = expansion(add=1),

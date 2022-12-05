@@ -531,7 +531,7 @@ data_criteria <- data_processed %>%
     # read in stage specific vars
     !!! selection_stage,
     
-    no_recentinfection = time_since_infection!="1-30",
+    no_recentinfection = time_since_infection!="1-30 days",
     
     isnot_inhospital = case_when(
       is.na(index_date) ~ FALSE,

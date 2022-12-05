@@ -36,12 +36,12 @@ rates <- c(
 if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("")) {
   
   ## Import released data ----
-  release_dir <- ""
+  release_dir <- "release20221202"
   
-  output_dir <- here("output", release_dir, "figures")
+  output_dir <- here(release_dir, "figures")
   fs::dir_create(output_dir)
   
-  data_rates_rounded <- read_csv(fs::path(output_dir, "covidtest_rates_rounded.csv"))
+  data_rates_rounded <- read_csv(fs::path(release_dir, "preliminary_results", "covidtest_rates_rounded.csv"))
   
 } else {
   
@@ -165,5 +165,8 @@ plot_rates <- function(.data, filename, legend.position = "bottom") {
   
 }
 
-data_rates_unrounded %>% plot_rates(filename = "unrounded", legend.position = c(0.8, 0.225))
 data_rates_rounded %>% plot_rates(filename = "rounded", legend.position = c(0.8, 0.225))
+
+if(!(Sys.getenv("OPENSAFELY_BACKEND") %in% c(""))) {
+  data_rates_unrounded %>% plot_rates(filename = "unrounded", legend.position = c(0.8, 0.225))
+}

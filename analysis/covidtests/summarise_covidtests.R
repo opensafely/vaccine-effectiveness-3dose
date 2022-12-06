@@ -124,8 +124,8 @@ plot_rates <- function(.data, filename, legend.position = "bottom") {
   
   plot_function <- function(.data) {
     .data %>%
-      ggplot(aes(x = time, y = value, group = treated, colour = treated)) +
-      geom_vline(xintercept = 0, linetype = "dashed", colour = "grey") +
+      ggplot(aes(x = time, y = value, group = treated, linetype = treated)) +
+      geom_vline(xintercept = 0, linetype = "dotted", colour = "grey") +
       geom_step() +
       facet_wrap("longname", ncol=1) +
       labs(
@@ -138,8 +138,9 @@ plot_rates <- function(.data, filename, legend.position = "bottom") {
       scale_y_continuous(
         limits = c(0, NA)
       ) +
-      scale_color_discrete(
-        name = NULL
+      scale_linetype_manual(
+        name = NULL,
+        values = c("two doses" = "dashed", "three doses" = "solid")
       ) +
       theme_bw() +
       theme(

@@ -32,7 +32,7 @@ study_dates <- lst(
   recruitmentend_date = "2022-02-28",
   
   testend_date = "2022-03-31", # last day of public testing in England
-  studyend_date = "2022-06-30", # end of available hospitalization data
+  studyend_date = "2022-09-30", # end of available hospitalization data
   
   lastvax2_date = "2021-12-01", # don't recruit anyone with second vaccination after this date
   

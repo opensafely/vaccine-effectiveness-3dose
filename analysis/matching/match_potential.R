@@ -97,6 +97,10 @@ data_eligible <-
   bind_rows(data_alltreated, data_control) %>%
   mutate(
     treatment_date = if_else(treated==1L, vax3_date, as.Date(NA)),
+  ) %>%
+  left_join(
+    readr::read_rds(here("output", cohort, "models", "cinc_dose3", "data_recruitmentcutoff.rds")),
+    by = "jcvi_group"
   )
 
 
@@ -139,7 +143,9 @@ local({
         # select treated
         treated == 1L,
         # select people vaccinated on trial day i
-        treatment_date == trial_date
+        treatment_date == trial_date,
+        # select people in jcvi groups in which cumulative incidence of third dose has not yet reached 90%
+        trial_date < cutoff_date
         ) %>% 
       transmute(
         patient_id,
@@ -160,7 +166,9 @@ local({
         # remove anyone already vaccinated
         (vax3_date > trial_date) | is.na(vax3_date),
         # select only people not already selected as a control
-        patient_id %in% candidate_ids
+        patient_id %in% candidate_ids,
+        # select people in jcvi groups in which cumulative incidence of third dose has not yet reached 90%
+        trial_date < cutoff_date
       ) %>%
       transmute(
         patient_id,

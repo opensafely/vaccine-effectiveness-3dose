@@ -80,6 +80,9 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
       # admitted_unplanned_day = missing(as.integer(runif(n=n(), trial_day, trial_day+maxfup)), 0.7),
       death_day = missing(as.integer(runif(n=n(), trial_day, trial_day+maxfup)), 0.9),
       coviddeath_day = missing(death_day, 0.7),
+      fractureemergency_day = missing(as.integer(runif(n=n(), trial_day, trial_day+maxfup)), 0.99),
+      fractureadmitted_day = missing(as.integer(runif(n=n(), trial_day, trial_day+maxfup)), 0.99),
+      fracturedeath_day = missing(as.integer(runif(n=n(), trial_day, trial_day+maxfup)), 0.99)
     )
   
   

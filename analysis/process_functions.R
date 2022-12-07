@@ -43,32 +43,36 @@ process_jcvi <- function(.data) {
       
       
       jcvi_group = fct_case_when(
-        care_home_combined | hscworker  ~ "1",
-        age_aug2021>=80 ~ "2",
-        age_aug2021>=75 ~ "3",
-        age_aug2021>=70 | (cev & (age_aug2021>=16)) ~ "4",
-        age_aug2021>=65 ~ "5",
-        between(age_aug2021, 16, 64.999) & cv ~ "6",
-        age_aug2021>=60 ~ "7",
-        age_aug2021>=55 ~ "8",
-        age_aug2021>=50 ~ "9",
-        age_aug2021>=40 ~ "10a",
-        TRUE ~ "10b"
+        care_home_combined | hscworker  ~ "01",
+        age_aug2021>=80 ~ "02",
+        age_aug2021>=75 ~ "03",
+        age_aug2021>=70 ~ "04a",
+        age_aug2021>=16 & cev ~ "04b",
+        age_aug2021>=65 ~ "05",
+        age_aug2021>=16 & cv ~ "06",
+        age_aug2021>=60 ~ "07",
+        age_aug2021>=55 ~ "08",
+        age_aug2021>=50 ~ "09",
+        age_aug2021>=40 ~ "10",
+        age_aug2021>=30 ~ "11",
+        TRUE ~ "12"
       ),
       
       jcvi_group_descr = fct_recode(
         jcvi_group,
-        "Care home residents and health and social care workers"="1",
-        "80+ years"="2",
-        "75-79 years"="3",
-        "70-74 years or clinically extremely vulnerable"="4",
-        "65-69 years"="5",
-        "16-64 years or clinically at-risk"="6",
-        "60-64 years"="7",
-        "55-59 years"="8",
-        "50-54 years"="9",
-        "40-49 years"="10a",
-        "16-39 years"="10b"
+        "Care home residents and health and social care workers"="01",
+        "80+ years"="02",
+        "75-79 years"="03",
+        "70-74 years"="04a",
+        "16-69 years and clinically extremely vulnerable"="04b",
+        "65-69 years"="05",
+        "16-64 years and clinically at-risk"="06",
+        "60-64 years"="07",
+        "55-59 years"="08",
+        "50-54 years"="09",
+        "40-49 years"="10",
+        "30-39 years"="11",
+        "18-29 years"="12"
       ),
       
     ) %>%
@@ -165,8 +169,8 @@ process_pre <- function(.data) {
       prior_covid_infection_date = pmax(positive_test_0_date, covidemergency_0_date, admitted_covid_0_date, na.rm=TRUE),
       time_since_infection = fct_case_when(
         is.na(prior_covid_infection_date) ~ "never",
-        prior_covid_infection_date <= 30 ~ "1-30 days",
-        prior_covid_infection_date <= 90 ~ "31-90 days",
+        as.integer(index_date - prior_covid_infection_date) <= 30 ~ "1-30 days",
+        as.integer(index_date - prior_covid_infection_date) <= 90 ~ "31-90 days",
         TRUE ~ "91+ days"
       )
       # note the slight discrepancy between definitions of `prior_covid_infection` (matching variable) and `anycovid_0_date` (used in exclusion criteria):

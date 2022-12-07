@@ -78,11 +78,24 @@ actions:
         data_processed_skim: output/mrna/matchround1/potential/*.txt
         data_controlpotential_skim: output/mrna/matchround1/process/*.txt
 
+  cinc_dose3_mrna:
+    run: r:latest analysis/model/cinc_dose3.R mrna
+    needs:
+    - process_treated
+    - process_controlpotential_mrna_1
+    outputs:
+      highly_sensitive:
+        rds: output/mrna/models/cinc_dose3/*.rds
+      moderately_sensitive:
+        csv: output/mrna/models/cinc_dose3/*.csv
+        png: output/mrna/models/cinc_dose3/*.png
+
   match_potential_mrna_1:
     run: r:latest analysis/matching/match_potential.R mrna 1
     needs:
     - process_treated
     - process_controlpotential_mrna_1
+    - cinc_dose3_mrna
     outputs:
       highly_sensitive:
         rds: output/mrna/matchround1/potential/*.rds
@@ -143,6 +156,7 @@ actions:
     needs:
     - process_treated
     - process_controlpotential_mrna_2
+    - cinc_dose3_mrna
     - process_controlactual_mrna_1
     outputs:
       highly_sensitive:
@@ -205,6 +219,7 @@ actions:
     needs:
     - process_treated
     - process_controlpotential_mrna_3
+    - cinc_dose3_mrna
     - process_controlactual_mrna_2
     outputs:
       highly_sensitive:
@@ -267,6 +282,7 @@ actions:
     needs:
     - process_treated
     - process_controlpotential_mrna_4
+    - cinc_dose3_mrna
     - process_controlactual_mrna_3
     outputs:
       highly_sensitive:
@@ -329,6 +345,7 @@ actions:
     needs:
     - process_treated
     - process_controlpotential_mrna_5
+    - cinc_dose3_mrna
     - process_controlactual_mrna_4
     outputs:
       highly_sensitive:
@@ -391,6 +408,7 @@ actions:
     needs:
     - process_treated
     - process_controlpotential_mrna_6
+    - cinc_dose3_mrna
     - process_controlactual_mrna_5
     outputs:
       highly_sensitive:
@@ -453,6 +471,7 @@ actions:
     needs:
     - process_treated
     - process_controlpotential_mrna_7
+    - cinc_dose3_mrna
     - process_controlactual_mrna_6
     outputs:
       highly_sensitive:
@@ -515,6 +534,7 @@ actions:
     needs:
     - process_treated
     - process_controlpotential_mrna_8
+    - cinc_dose3_mrna
     - process_controlactual_mrna_7
     outputs:
       highly_sensitive:
@@ -577,6 +597,7 @@ actions:
     needs:
     - process_treated
     - process_controlpotential_mrna_9
+    - cinc_dose3_mrna
     - process_controlactual_mrna_8
     outputs:
       highly_sensitive:
@@ -639,6 +660,7 @@ actions:
     needs:
     - process_treated
     - process_controlpotential_mrna_10
+    - cinc_dose3_mrna
     - process_controlactual_mrna_9
     outputs:
       highly_sensitive:
@@ -701,6 +723,7 @@ actions:
     needs:
     - process_treated
     - process_controlpotential_mrna_11
+    - cinc_dose3_mrna
     - process_controlactual_mrna_10
     outputs:
       highly_sensitive:
@@ -763,6 +786,7 @@ actions:
     needs:
     - process_treated
     - process_controlpotential_mrna_12
+    - cinc_dose3_mrna
     - process_controlactual_mrna_11
     outputs:
       highly_sensitive:
@@ -2291,26 +2315,26 @@ actions:
     - cox_unadj_mrna_agegroup_ignore_covidemergency
     - cox_unadj_mrna_agegroup_ignore_noncoviddeath
     - cox_adj_mrna_all_ignore_postest
-    # - cox_adj_mrna_all_split_postest
+    - cox_adj_mrna_all_split_postest
     - cox_adj_mrna_all_restrict_postest
     - cox_adj_mrna_all_ignore_covidadmitted
-    # - cox_adj_mrna_all_split_covidadmitted
+    - cox_adj_mrna_all_split_covidadmitted
     - cox_adj_mrna_all_restrict_covidadmitted
     - cox_adj_mrna_all_ignore_covidcritcareordeath
-    # - cox_adj_mrna_all_split_covidcritcareordeath
+    - cox_adj_mrna_all_split_covidcritcareordeath
     - cox_adj_mrna_all_restrict_covidcritcareordeath
     - cox_adj_mrna_all_ignore_coviddeath
-    # - cox_adj_mrna_all_split_coviddeath
+    - cox_adj_mrna_all_split_coviddeath
     - cox_adj_mrna_all_restrict_coviddeath
     - cox_adj_mrna_all_ignore_emergency
-    # - cox_adj_mrna_all_split_emergency
+    - cox_adj_mrna_all_split_emergency
     - cox_adj_mrna_all_restrict_emergency
     - cox_adj_mrna_all_ignore_covidemergency
-    # - cox_adj_mrna_all_split_covidemergency
+    - cox_adj_mrna_all_split_covidemergency
     - cox_adj_mrna_all_restrict_covidemergency
     - cox_adj_mrna_all_ignore_noncoviddeath
-    # - cox_adj_mrna_all_split_noncoviddeath
-    # - cox_adj_mrna_all_restrict_noncoviddeath
+    - cox_adj_mrna_all_split_noncoviddeath
+    - cox_adj_mrna_all_restrict_noncoviddeath
     - cox_adj_mrna_vax3_type_ignore_postest
     - cox_adj_mrna_vax3_type_ignore_covidadmitted
     - cox_adj_mrna_vax3_type_ignore_covidcritcareordeath

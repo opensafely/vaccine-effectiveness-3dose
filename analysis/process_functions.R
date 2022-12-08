@@ -339,7 +339,9 @@ process_outcome <- function(.data) {
         TRUE ~ NA_character_
       ),
       
-      covidcritcareordeath_date = pmin(covidcritcare_date, coviddeath_date, na.rm=TRUE)
+      covidcritcareordeath_date = pmin(covidcritcare_date, coviddeath_date, na.rm=TRUE),
+      
+      fracture_date = pmin(fractureemergency_date, fractureadmitted_date, fracturedeath_date, na.rm=TRUE)
       
     )
 }

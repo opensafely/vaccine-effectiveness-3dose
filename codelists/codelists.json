@@ -335,6 +335,12 @@
       "url": "https://codelists.opensafely.org/codelist/opensafely/influenza-vaccination-clinical-codes-not-given/2020-05-19/",
       "downloaded_at": "2022-10-27 13:08:20.601249Z",
       "sha": "db68fd1368358f1ecbbc006c83419b3b47bcb82c"
+    },
+    "opensafely-fractures.csv": {
+      "id": "opensafely/fractures/086e92fc",
+      "url": "https://codelists.opensafely.org/codelist/opensafely/fractures/086e92fc/",
+      "downloaded_at": "2022-12-07 16:35:24.226244Z",
+      "sha": "0c73d4faea48e0e5cc410cc8a4373e287196dcdc"
     }
   }
 }

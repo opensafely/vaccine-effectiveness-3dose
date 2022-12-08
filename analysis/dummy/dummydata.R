@@ -29,7 +29,7 @@ firstpfizer_date <- as.Date(study_dates$firstpfizer_date)
 firstaz_date <- as.Date(study_dates$firstaz_date)
 firstmoderna_date <- as.Date(study_dates$firstmoderna_date)
 
-index_date <- as.Date("2020-01-01") # doesn't matter what this is, just need some constant date
+index_date <- pfizerstart_date
 
 index_day <- 0L
 pfizerstart_day <- as.integer(pfizerstart_date - index_date)

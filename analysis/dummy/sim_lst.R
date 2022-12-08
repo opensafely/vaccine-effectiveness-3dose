@@ -387,5 +387,19 @@ sim_list_outcome = lst(
     missing_rate = ~0.90
   ),
   
+  # fracture negative control outcomes
+  fractureemergency_day = bn_node(
+    ~ as.integer(runif(n = ..n, index_day, index_day + maxfup)),
+    missing_rate = ~0.99
+  ),
+  fractureadmitted_day = bn_node(
+    ~ as.integer(runif(n = ..n, index_day, index_day + maxfup)),
+    missing_rate = ~0.99
+  ),
+  fracturedeath_day = bn_node(
+    ~ as.integer(runif(n = ..n, index_day, index_day + maxfup)),
+    missing_rate = ~0.99
+  )
+  
 )
 

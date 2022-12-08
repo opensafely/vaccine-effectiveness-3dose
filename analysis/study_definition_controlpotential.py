@@ -16,7 +16,7 @@ from cohortextractor import (
 
 # define params
 cohort = params["cohort"]
-matching_round = params["matching_round"]
+matching_round = int(params["matching_round"])
 index_date = params["index_date"]
 
 
@@ -40,7 +40,22 @@ demo_variables = generate_demo_variables(index_date="index_date")
 ## pre variables
 from variables_pre import generate_pre_variables 
 pre_variables = generate_pre_variables(index_date="index_date")
-
+############################################################
+## censor variables
+if matching_round == 1: censor_variables = dict(
+    # deregistration date
+    dereg_date=patients.date_deregistered_from_all_supported_practices(
+      on_or_after="index_date",
+      date_format="YYYY-MM-DD",
+    ),
+    # All-cause death
+    death_date=patients.died_from_any_cause(
+      returning="date_of_death",
+      date_format="YYYY-MM-DD",
+    ),
+)
+else: censor_variables = dict()
+############################################################
 
 
 # Specify study defeinition
@@ -92,6 +107,11 @@ study = StudyDefinition(
   ###############################################################################
   # pre variables
   ##############################################################################
-  **pre_variables,    
+  **pre_variables,  
+
+  ###############################################################################
+  # outcome variables (only extracted when matching round=1)
+  ##############################################################################
+  **censor_variables,    
 
 )

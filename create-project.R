@@ -83,7 +83,33 @@ action_1matchround <- function(cohort, matching_round){
   
   control_extract_date <- study_dates[[cohort]][["control_extract_dates"]][matching_round]
   
-  splice(
+  if (matching_round==1) {
+    
+    action_cinc_dose3 <- 
+      action(
+        name = glue("cinc_dose3_{cohort}"),
+        run = glue("r:latest analysis/model/cinc_dose3.R"),
+        arguments = c(cohort),
+        needs = namelesslst(
+          "process_treated",
+          glue("process_controlpotential_{cohort}_1")
+        ),
+        highly_sensitive = lst(
+          rds= glue("output/{cohort}/models/cinc_dose3/*.rds"),
+        ),
+        moderately_sensitive= lst(
+          csv= glue("output/{cohort}/models/cinc_dose3/*.csv"),
+          png= glue("output/{cohort}/models/cinc_dose3/*.png")
+        )
+      )
+    
+  } else {
+    
+    action_cinc_dose3 <- NULL
+    
+  }
+  
+  matching_actions <- splice(
     action(
       name = glue("extract_controlpotential_{cohort}_{matching_round}"),
       run = glue(
@@ -120,6 +146,8 @@ action_1matchround <- function(cohort, matching_round){
       )
     ),
     
+    action_cinc_dose3,
+    
     action(
       name = glue("match_potential_{cohort}_{matching_round}"),
       run = glue("r:latest analysis/matching/match_potential.R"),
@@ -127,6 +155,7 @@ action_1matchround <- function(cohort, matching_round){
       needs = c(
         glue("process_treated"), 
         glue("process_controlpotential_{cohort}_{matching_round}"),
+        glue("cinc_dose3_{cohort}"),
         if(matching_round>1) {glue("process_controlactual_{cohort}_{matching_round-1}")} else {NULL}
       ) %>% as.list,
       highly_sensitive = lst(
@@ -177,6 +206,11 @@ action_1matchround <- function(cohort, matching_round){
     )
 
   )
+  
+  matching_actions <- matching_actions[sapply(matching_actions, function(x) !is.null(x))]
+  
+  return(matching_actions)
+  
 }
 
 # test function

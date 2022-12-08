@@ -61,7 +61,7 @@ if (length(args) == 0) {
   }
 } 
 
-## create output directory ----
+## create output directories and define parameters ----
 if (stage == "treated") {
   fs::dir_create(here("output", "pfizer", "treated"))
   fs::dir_create(here("output", "moderna", "treated"))
@@ -75,6 +75,7 @@ if (stage == "treated") {
   fs::dir_create(ghere("output", cohort, "matchround{matching_round}", stage))
   studydef_path <- ghere("output", cohort, "matchround{matching_round}", "extract", "input_control{stage}.feather")
   custom_path <- here("lib", "dummydata", "dummy_control_potential1.feather")
+  matching_round_date <- study_dates[[cohort]]$control_extract_dates[matching_round]
 } else if (stage == "final") {
   fs::dir_create(ghere("output", cohort, "match"))
   studydef_path <- ghere("output", cohort, "extract", "input_controlfinal.feather")
@@ -111,6 +112,26 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
       mutate(
         msoa = sample(factor(c("1", "2")), size=n(), replace=TRUE) # override msoa so matching success more likely
       )
+  }
+  
+  if (stage == "potential") {
+    if(matching_round == 1) {
+      # read censoring events
+      data_custom_dummy <- data_custom_dummy %>%
+        mutate(
+          dereg_date = if_else(
+            purrr::rbernoulli(n=n(), p=0.01), 
+            sample(x=1:365, size=n(), replace=TRUE),
+            NA_integer_
+          ),
+          death_date = if_else(
+            purrr::rbernoulli(n=n(), p=0.01), 
+            sample(x=1:365, size=n(), replace=TRUE),
+            NA_integer_
+          )
+        ) %>%
+        mutate(across(c(dereg_date, death_date), ~as.Date(study_dates$mrna$control_extract_dates[matching_round]) + .x))
+    }
   }
   
   if (stage == "actual") {
@@ -343,7 +364,6 @@ if (stage == "final") {
 
 # script stops here when stage = "final"
 
-
 # process data -----
 
 ## patient-level info ----
@@ -351,7 +371,15 @@ if (stage == "final") {
 # process variables
 if (stage %in% c("treated", "potential", "actual")) {
   
+  # define index_date depending on stage
+  stage_index_date <- case_when(
+    stage=="treated" ~ "covid_vax_disease_3_date",
+    stage=="potential" ~ "matching_round_date",
+    stage=="actual" ~ "trial_date"
+  )
+  
   data_processed <- data_extract %>%
+    mutate(index_date = !! sym(stage_index_date)) %>%
     process_jcvi() %>%
     process_demo() %>%
     process_pre() 
@@ -434,8 +462,6 @@ if (stage == "treated") {
   
 } else if (stage %in% c("potential",  "actual")) {
   
-  matching_round_date <- study_dates[[cohort]]$control_extract_dates[matching_round]
-  
   selection_stage <- rlang::quos(
     
     vax3_notbeforeindexdate = case_when(
@@ -453,13 +479,6 @@ if (stage == "treated") {
 } 
 
 if (stage %in% c("treated", "potential", "actual")) {
-  
-  # define index_date depending on stage
-  stage_index_date <- case_when(
-    stage=="treated" ~ "vax3_date",
-    stage=="potential" ~ "matching_round_date",
-    stage=="actual" ~ "trial_date"
-  )
   
 data_criteria <- data_processed %>%
   left_join(
@@ -479,8 +498,6 @@ data_criteria <- data_processed %>%
     isnot_carehomeresident = !care_home_combined,
     isnot_endoflife = !endoflife,
     isnot_housebound = !housebound,
-    
-    index_date = !! sym(stage_index_date),
     
     # make sure vaccine dates match for all doses
     covid_vax_disease_12_date_matches_vax_12_date = case_when(
@@ -531,7 +548,7 @@ data_criteria <- data_processed %>%
     # read in stage specific vars
     !!! selection_stage,
     
-    no_recentinfection = time_since_infection!="1-30",
+    no_recentinfection = time_since_infection!="1-30 days",
     
     isnot_inhospital = case_when(
       is.na(index_date) ~ FALSE,

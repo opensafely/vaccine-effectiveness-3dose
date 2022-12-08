@@ -32,7 +32,7 @@ study_dates <- lst(
   recruitmentend_date = "2022-02-28",
   
   testend_date = "2022-03-31", # last day of public testing in England
-  studyend_date = "2022-06-30", # end of available hospitalization data
+  studyend_date = "2022-09-30", # end of available hospitalization data
   
   lastvax2_date = "2021-12-01", # don't recruit anyone with second vaccination after this date
   
@@ -90,10 +90,10 @@ events_lookup <- tribble(
   "covidemergencyhosp", "covidemergencyhosp_date", "COVID-19 A&E attendance with disharge to hospital",
   "noncoviddeath", "noncoviddeath_date", "Non-COVID-19 death",
   "death", "death_date", "Any death",
-  
+  "fracture", "fracture_date", "Fracture"
 )
 
-outcomes <- c("postest",  "covidadmitted", "covidcritcareordeath", "coviddeath", "emergency", "covidemergency", "noncoviddeath")
+outcomes <- c("postest",  "covidadmitted", "coviddeath", "noncoviddeath", "fracture")
 
 # define treatments ----
 

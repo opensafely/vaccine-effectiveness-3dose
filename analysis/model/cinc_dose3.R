@@ -160,7 +160,7 @@ km_process <- function(.data, round_by){
     # transform to dates
     mutate(across(c(time, lagtime), ~ study_dates$pfizer$start_date - 1 + .x)) %>%
     # cutoff time where cumulative incidence first exceeds 0.9
-    mutate(cutoff_date = min(time[risk>=0.9])) %>%
+    mutate(cutoff_date = min(time[risk>=0.9], na.rm = TRUE)) %>%
     mutate(across(cutoff_date, ~if_else(is.na(as.integer(.x)), study_dates$recruitmentend_date, .x)))
 }
 

@@ -136,6 +136,11 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("")) {
   y_labels <- waiver()
 }
 
+colour_palette <- c(
+  "BNT162b2" = "#e7298a", # dark pink 
+  "mRNA-1273" = "#7570b3" # dark purple 
+)
+
 plot_coverage_n <-
   data_plot %>%
   ggplot() +
@@ -157,15 +162,15 @@ plot_coverage_n <-
   scale_x_date(
     breaks = unique(lubridate::ceiling_date(data_coverage_rounded$vax3_date, "1 month")),
     limits = c(xmin-1, NA),
-    labels = scales::label_date("%d/%m"),
-    expand = expansion(add=1),
+    labels = scales::label_date("%b %Y"),
+    expand = expansion(add=7),
   ) +
   scale_y_continuous(
     labels = y_labels,
     expand = expansion(c(0, NA)),
   ) +
-  scale_fill_brewer(type="qual", palette="Set2") +
-  scale_colour_brewer(type="qual", palette="Set2") +
+  scale_fill_manual(values = colour_palette) +
+  scale_colour_manual(values = colour_palette) +
   scale_alpha_discrete(range= c(0.8,0.4))+
   labs(
     x="Date",
@@ -208,15 +213,15 @@ plot_coverage_cumuln <-
   scale_x_date(
     breaks = unique(lubridate::ceiling_date(data_coverage_rounded$vax3_date, "1 month")),
     limits = c(xmin-1, NA),
-    labels = scales::label_date("%d/%m"),
-    expand = expansion(add=1),
+    labels = scales::label_date("%b %Y"),
+    expand = expansion(add=7),
   )+
   scale_y_continuous(
     labels = y_labels,
     expand = expansion(c(0, NA))
   )+
-  scale_fill_brewer(type="qual", palette="Set2")+
-  scale_colour_brewer(type="qual", palette="Set2")+
+  scale_fill_manual(values = colour_palette) +
+  scale_colour_manual(values = colour_palette) +
   scale_alpha_discrete(range= c(0.8,0.4))+
   labs(
     x="Date",

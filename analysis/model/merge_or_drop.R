@@ -11,8 +11,8 @@ merge_or_drop <- function(
     stop("covariate_col must be logical, factor or numeric")
   }
   
-  # if logical convert to factor
-  if (is.logical(covariate_col)) covariate_col <- as.factor(covariate_col)
+  # if logical convert to factor (specify the levels in case any are all one level)
+  if (is.logical(covariate_col)) covariate_col <- factor(covariate_col, levels = c(FALSE, TRUE))
   
   if (is.factor(covariate_col)) {
     

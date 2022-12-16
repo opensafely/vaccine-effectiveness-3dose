@@ -40,8 +40,8 @@ args <- commandArgs(trailingOnly=TRUE)
 if(length(args)==0){
   # use for interactive testing
   cohort <- "mrna"
-  type <- "unadj"
-  subgroup <- "all"
+  type <- "adj"
+  subgroup <- "prior_covid_infection"
   variant_option <- "ignore" # ignore, split, restrict (delta, transition, omicron)
   outcome <- "postest"
   
@@ -67,6 +67,7 @@ subgroup_sym <- sym(subgroup)
 
 # read and process data_matched ----
 source(here("analysis", "model", "process_data_model.R"))
+source(here("analysis", "model", "merge_or_drop.R"))
 
 # cox models ----
 
@@ -75,24 +76,11 @@ source(here("analysis", "model", "process_data_model.R"))
 # variant = "delta"/"transition"/"omicron": restrict to a variant era
 coxcontrast <- function(data, adj = FALSE, cuts=NULL){
   
-  cox_formula <- formula(Surv(tstart, tstop, ind_outcome) ~ treated)
-  
   if (is.null(cuts)) {
     stop("Specify `cuts`.")
   } else if (length(cuts) < 2) {
     stop("`cuts` must specify a start and an end date")
   } 
-  
-  if (length(cuts) > 2 | variant_option != "ignore") {
-    # stratify by fup_period if more than one follow-up period
-    cox_formula <- cox_formula %>% update(as.formula(". ~ .:strata(period_id)"))
-  } 
-  
-  # add covariates if fitting adjusted model
-  if (adj) {
-    cox_formula <- cox_formula %>%
-      update(as.formula(str_c(". ~ . +", str_c(covariates_model, collapse = " + "))))
-  }
   
   fup_period_labels <- str_c(cuts[-length(cuts)]+1, "-", lead(cuts)[-length(cuts)])
   
@@ -177,13 +165,75 @@ coxcontrast <- function(data, adj = FALSE, cuts=NULL){
       period_id = tdc(fupstart_time, period_id)
     ) 
   
-  data_cox <-
-    data_split %>%
+  cox_formula_string <- "Surv(tstart, tstop, ind_outcome) ~ treated"
+  if (n_distinct(data_split$period_id) > 1) {
+    cox_formula_string <- str_c(cox_formula_string, ":strata(period_id)")
+  }
+  
+  # only keep periods with >2 events per level of exposure
+  data_cox_nested <- data_split %>%
+    group_by(!!subgroup_sym, period_id, treated, ind_outcome) %>%
+    mutate(n_events = n()) %>%
+    ungroup(treated, ind_outcome) %>%
+    mutate(min_events = min(n_events)) %>%
+    ungroup() %>%
+    filter(min_events>2) %>%
+    select(-n_events, -min_events) %>%
     group_by(!!subgroup_sym) %>%
     nest() %>%
     mutate(
+      cox_formula = cox_formula_string
+    )
+  
+  
+  if (nrow(data_cox_nested) == 0) {
+    cat("Not enough events to fit Cox model.\n")
+    return(tibble())
+  }
+    
+  # add covariates if fitting adjusted model
+  if (adj) {
+    
+    data_cox_nested <- data_cox_nested %>%
+      mutate(
+        
+        # merge covariate levels until at least `event_threshold` events per expo/outcome/covariate level combo
+        # drop if not satisfied with >=2 levels
+        data = map(data, ~{
+          .x %>%
+            select(-all_of(covariates_model)) %>%
+            bind_cols(
+              lapply(
+                covariates_model,
+                function(var)
+                  merge_or_drop(
+                    covariate_name = var,
+                    covariate_col = .x[[var]],
+                    outcome_col = .x[["ind_outcome"]],
+                    expo_col = .x[["treated"]],
+                    events_threshold = 2
+                  )
+              )
+            )
+        }),
+        
+        # add the covariates to cox_formula 
+        cox_formula = map(data, ~{
+          add_covariates <- names(.x)[names(.x) %in% covariates_model]
+          str_c(c(cox_formula, add_covariates), collapse = " + ")
+        })
+        
+      ) %>%
+      unnest(cox_formula)
+
+  }
+  
+  # fit the models
+  data_cox <-
+    data_cox_nested %>%
+    mutate(
       cox_obj = map(data, ~{
-        coxph(cox_formula, data = .x, y=FALSE, robust=TRUE, id=patient_id, na.action="na.fail")
+        coxph(as.formula(cox_formula), data = .x, y=FALSE, robust=TRUE, id=patient_id, na.action="na.fail")
       }),
       cox_obj_tidy = map(cox_obj, ~broom::tidy(.x)),
     ) %>%
@@ -211,10 +261,10 @@ if (type == "unadj") {
   write_rds(cox_unadj_contrasts_cuts, fs::path(output_dir, "cox_unadj_contrasts_cuts_rounded.rds"))
   cat("---- end cox_unadj_contrasts_cuts ----\n")
   
-  cat("---- start cox_unadj_contrasts_overall ----\n")
-  cox_unadj_contrasts_overall <- coxcontrast(data_matched, cuts = c(0,maxfup))
-  write_rds(cox_unadj_contrasts_overall, fs::path(output_dir, "cox_unadj_contrasts_overall_rounded.rds"))
-  cat("---- end cox_unadj_contrasts_overall ----\n")
+  # cat("---- start cox_unadj_contrasts_overall ----\n")
+  # cox_unadj_contrasts_overall <- coxcontrast(data_matched, cuts = c(0,maxfup))
+  # write_rds(cox_unadj_contrasts_overall, fs::path(output_dir, "cox_unadj_contrasts_overall_rounded.rds"))
+  # cat("---- end cox_unadj_contrasts_overall ----\n")
   
 }
 
@@ -226,10 +276,10 @@ if (type == "adj") {
   write_rds(cox_adj_contrasts_cuts, fs::path(output_dir, "cox_adj_contrasts_cuts_rounded.rds"))
   cat("---- end cox_adj_contrasts_cuts ----\n")
   
-  cat("---- start cox_adj_contrasts_overall ----\n")
-  cox_adj_contrasts_overall <- coxcontrast(data_matched, adj = TRUE, cuts = c(0,maxfup))
-  write_rds(cox_adj_contrasts_overall, fs::path(output_dir, "cox_adj_contrasts_overall_rounded.rds"))
-  cat("---- end cox_adj_contrasts_overall ----\n")
+  # cat("---- start cox_adj_contrasts_overall ----\n")
+  # cox_adj_contrasts_overall <- coxcontrast(data_matched, adj = TRUE, cuts = c(0,maxfup))
+  # write_rds(cox_adj_contrasts_overall, fs::path(output_dir, "cox_adj_contrasts_overall_rounded.rds"))
+  # cat("---- end cox_adj_contrasts_overall ----\n")
   
 }
 

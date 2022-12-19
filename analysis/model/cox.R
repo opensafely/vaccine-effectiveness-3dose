@@ -191,6 +191,7 @@ coxcontrast <- function(data, adj = FALSE, cuts=NULL){
   
   if (nrow(data_cox_nested) == 0) {
     cat("Not enough events to fit Cox model.\n")
+    # return emtpy tibble so that script doesn't fail
     return(tibble())
   }
     

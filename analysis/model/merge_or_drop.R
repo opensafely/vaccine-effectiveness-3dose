@@ -91,8 +91,7 @@ merge_or_drop <- function(
          # expand the df to make sure 0 counts are captured
 complete(expo, outcome, covariate, fill = list(n = 0)) %>%
         summarise(min_events = min(n)) %>%
-        unlist() %>% 
-        unname()
+        pull(min_events)
         
     }
     

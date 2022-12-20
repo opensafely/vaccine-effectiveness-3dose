@@ -89,11 +89,7 @@ merge_or_drop <- function(
         count() %>%
         ungroup() %>%
          # expand the df to make sure 0 counts are captured
-        right_join(
-          df %>% expand(covariate, outcome, expo),
-          by = c("expo", "outcome", "covariate")
-        ) %>%
-        mutate(across(n, ~if_else(is.na(.x), 0L, .x))) %>%
+complete(expo, outcome, covariate, fill = list(n = 0)) %>%
         summarise(min_events = min(n)) %>%
         unlist() %>% 
         unname()

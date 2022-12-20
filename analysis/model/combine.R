@@ -52,7 +52,7 @@ combine_and_save <- function(model, filename) {
       data = pmap(
         list(cohort, subgroup, variant_option, outcome), 
         function(cohort, subgroup, variant_option, outcome)  {
-          dat <- try(read_rds(here("output", cohort, "models", model, subgroup, variant_option, outcome, glue("{filename_full}.rds")))) 
+          dat <- try(read_csv(here("output", cohort, "models", model, subgroup, variant_option, outcome, glue("{filename_full}.csv")))) 
           if (inherits(dat, "try-error")) {
             dat <- tibble()
           } else {

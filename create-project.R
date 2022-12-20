@@ -299,8 +299,7 @@ actions_model <- function(cohort, subgroup, variant_option, outcome){
         glue("process_controlfinal_{cohort}")
       ),
       moderately_sensitive= lst(
-        #csv= glue("output/{cohort}/models/km/{subgroup}/{outcome}/*.csv"),
-        rds = glue("output/{cohort}/models/km/{subgroup}/{variant_option}/{outcome}/*.rds"),
+        rds = glue("output/{cohort}/models/km/{subgroup}/{variant_option}/{outcome}/*.csv"),
         png = glue("output/{cohort}/models/km/{subgroup}/{variant_option}/{outcome}/*.png")
       )
     ),
@@ -316,8 +315,7 @@ actions_model <- function(cohort, subgroup, variant_option, outcome){
             glue("process_controlfinal_{cohort}")
           ),
           moderately_sensitive= lst(
-            #csv= glue("output/{cohort}/models/cox/{subgroup}/{outcome}/*.csv"),
-            rds = glue("output/{cohort}/models/cox_{type}/{subgroup}/{variant_option}/{outcome}/*.rds")
+            csv = glue("output/{cohort}/models/cox_{type}/{subgroup}/{variant_option}/{outcome}/*.csv")
           )
         )
     )

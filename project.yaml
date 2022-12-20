@@ -966,7 +966,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/all/ignore/postest/*.rds
+        rds: output/mrna/models/km/all/ignore/postest/*.csv
         png: output/mrna/models/km/all/ignore/postest/*.png
 
   cox_unadj_mrna_all_ignore_postest:
@@ -975,7 +975,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_unadj/all/ignore/postest/*.rds
+        csv: output/mrna/models/cox_unadj/all/ignore/postest/*.csv
 
   cox_adj_mrna_all_ignore_postest:
     run: r:latest analysis/model/cox.R mrna adj all ignore postest
@@ -983,7 +983,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_adj/all/ignore/postest/*.rds
+        csv: output/mrna/models/cox_adj/all/ignore/postest/*.csv
 
   km_mrna_all_ignore_covidadmitted:
     run: r:latest analysis/model/km.R mrna all ignore covidadmitted
@@ -991,7 +991,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/all/ignore/covidadmitted/*.rds
+        rds: output/mrna/models/km/all/ignore/covidadmitted/*.csv
         png: output/mrna/models/km/all/ignore/covidadmitted/*.png
 
   cox_unadj_mrna_all_ignore_covidadmitted:
@@ -1000,7 +1000,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_unadj/all/ignore/covidadmitted/*.rds
+        csv: output/mrna/models/cox_unadj/all/ignore/covidadmitted/*.csv
 
   cox_adj_mrna_all_ignore_covidadmitted:
     run: r:latest analysis/model/cox.R mrna adj all ignore covidadmitted
@@ -1008,7 +1008,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_adj/all/ignore/covidadmitted/*.rds
+        csv: output/mrna/models/cox_adj/all/ignore/covidadmitted/*.csv
 
   km_mrna_all_ignore_coviddeath:
     run: r:latest analysis/model/km.R mrna all ignore coviddeath
@@ -1016,7 +1016,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/all/ignore/coviddeath/*.rds
+        rds: output/mrna/models/km/all/ignore/coviddeath/*.csv
         png: output/mrna/models/km/all/ignore/coviddeath/*.png
 
   cox_unadj_mrna_all_ignore_coviddeath:
@@ -1025,7 +1025,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_unadj/all/ignore/coviddeath/*.rds
+        csv: output/mrna/models/cox_unadj/all/ignore/coviddeath/*.csv
 
   cox_adj_mrna_all_ignore_coviddeath:
     run: r:latest analysis/model/cox.R mrna adj all ignore coviddeath
@@ -1033,7 +1033,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_adj/all/ignore/coviddeath/*.rds
+        csv: output/mrna/models/cox_adj/all/ignore/coviddeath/*.csv
 
   km_mrna_all_ignore_noncoviddeath:
     run: r:latest analysis/model/km.R mrna all ignore noncoviddeath
@@ -1041,7 +1041,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/all/ignore/noncoviddeath/*.rds
+        rds: output/mrna/models/km/all/ignore/noncoviddeath/*.csv
         png: output/mrna/models/km/all/ignore/noncoviddeath/*.png
 
   cox_unadj_mrna_all_ignore_noncoviddeath:
@@ -1050,7 +1050,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_unadj/all/ignore/noncoviddeath/*.rds
+        csv: output/mrna/models/cox_unadj/all/ignore/noncoviddeath/*.csv
 
   cox_adj_mrna_all_ignore_noncoviddeath:
     run: r:latest analysis/model/cox.R mrna adj all ignore noncoviddeath
@@ -1058,7 +1058,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_adj/all/ignore/noncoviddeath/*.rds
+        csv: output/mrna/models/cox_adj/all/ignore/noncoviddeath/*.csv
 
   km_mrna_all_ignore_fracture:
     run: r:latest analysis/model/km.R mrna all ignore fracture
@@ -1066,7 +1066,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/all/ignore/fracture/*.rds
+        rds: output/mrna/models/km/all/ignore/fracture/*.csv
         png: output/mrna/models/km/all/ignore/fracture/*.png
 
   cox_unadj_mrna_all_ignore_fracture:
@@ -1075,7 +1075,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_unadj/all/ignore/fracture/*.rds
+        csv: output/mrna/models/cox_unadj/all/ignore/fracture/*.csv
 
   cox_adj_mrna_all_ignore_fracture:
     run: r:latest analysis/model/cox.R mrna adj all ignore fracture
@@ -1083,7 +1083,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_adj/all/ignore/fracture/*.rds
+        csv: output/mrna/models/cox_adj/all/ignore/fracture/*.csv
 
   ## # # # # # # # # # # # # # # # # # # # # # # # # # # #  
   ## cohort: mrna; subgroup: all; variant option: split 
@@ -1095,7 +1095,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/all/split/postest/*.rds
+        rds: output/mrna/models/km/all/split/postest/*.csv
         png: output/mrna/models/km/all/split/postest/*.png
 
   cox_unadj_mrna_all_split_postest:
@@ -1104,7 +1104,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_unadj/all/split/postest/*.rds
+        csv: output/mrna/models/cox_unadj/all/split/postest/*.csv
 
   cox_adj_mrna_all_split_postest:
     run: r:latest analysis/model/cox.R mrna adj all split postest
@@ -1112,7 +1112,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_adj/all/split/postest/*.rds
+        csv: output/mrna/models/cox_adj/all/split/postest/*.csv
 
   km_mrna_all_split_covidadmitted:
     run: r:latest analysis/model/km.R mrna all split covidadmitted
@@ -1120,7 +1120,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/all/split/covidadmitted/*.rds
+        rds: output/mrna/models/km/all/split/covidadmitted/*.csv
         png: output/mrna/models/km/all/split/covidadmitted/*.png
 
   cox_unadj_mrna_all_split_covidadmitted:
@@ -1129,7 +1129,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_unadj/all/split/covidadmitted/*.rds
+        csv: output/mrna/models/cox_unadj/all/split/covidadmitted/*.csv
 
   cox_adj_mrna_all_split_covidadmitted:
     run: r:latest analysis/model/cox.R mrna adj all split covidadmitted
@@ -1137,7 +1137,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_adj/all/split/covidadmitted/*.rds
+        csv: output/mrna/models/cox_adj/all/split/covidadmitted/*.csv
 
   km_mrna_all_split_coviddeath:
     run: r:latest analysis/model/km.R mrna all split coviddeath
@@ -1145,7 +1145,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/all/split/coviddeath/*.rds
+        rds: output/mrna/models/km/all/split/coviddeath/*.csv
         png: output/mrna/models/km/all/split/coviddeath/*.png
 
   cox_unadj_mrna_all_split_coviddeath:
@@ -1154,7 +1154,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_unadj/all/split/coviddeath/*.rds
+        csv: output/mrna/models/cox_unadj/all/split/coviddeath/*.csv
 
   cox_adj_mrna_all_split_coviddeath:
     run: r:latest analysis/model/cox.R mrna adj all split coviddeath
@@ -1162,7 +1162,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_adj/all/split/coviddeath/*.rds
+        csv: output/mrna/models/cox_adj/all/split/coviddeath/*.csv
 
   km_mrna_all_split_noncoviddeath:
     run: r:latest analysis/model/km.R mrna all split noncoviddeath
@@ -1170,7 +1170,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/all/split/noncoviddeath/*.rds
+        rds: output/mrna/models/km/all/split/noncoviddeath/*.csv
         png: output/mrna/models/km/all/split/noncoviddeath/*.png
 
   cox_unadj_mrna_all_split_noncoviddeath:
@@ -1179,7 +1179,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_unadj/all/split/noncoviddeath/*.rds
+        csv: output/mrna/models/cox_unadj/all/split/noncoviddeath/*.csv
 
   cox_adj_mrna_all_split_noncoviddeath:
     run: r:latest analysis/model/cox.R mrna adj all split noncoviddeath
@@ -1187,7 +1187,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_adj/all/split/noncoviddeath/*.rds
+        csv: output/mrna/models/cox_adj/all/split/noncoviddeath/*.csv
 
   km_mrna_all_split_fracture:
     run: r:latest analysis/model/km.R mrna all split fracture
@@ -1195,7 +1195,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/all/split/fracture/*.rds
+        rds: output/mrna/models/km/all/split/fracture/*.csv
         png: output/mrna/models/km/all/split/fracture/*.png
 
   cox_unadj_mrna_all_split_fracture:
@@ -1204,7 +1204,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_unadj/all/split/fracture/*.rds
+        csv: output/mrna/models/cox_unadj/all/split/fracture/*.csv
 
   cox_adj_mrna_all_split_fracture:
     run: r:latest analysis/model/cox.R mrna adj all split fracture
@@ -1212,7 +1212,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_adj/all/split/fracture/*.rds
+        csv: output/mrna/models/cox_adj/all/split/fracture/*.csv
 
   ## # # # # # # # # # # # # # # # # # # # # # # # # # # #  
   ## cohort: mrna; subgroup: all; variant option: restrict 
@@ -1224,7 +1224,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/all/restrict/postest/*.rds
+        rds: output/mrna/models/km/all/restrict/postest/*.csv
         png: output/mrna/models/km/all/restrict/postest/*.png
 
   cox_unadj_mrna_all_restrict_postest:
@@ -1233,7 +1233,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_unadj/all/restrict/postest/*.rds
+        csv: output/mrna/models/cox_unadj/all/restrict/postest/*.csv
 
   cox_adj_mrna_all_restrict_postest:
     run: r:latest analysis/model/cox.R mrna adj all restrict postest
@@ -1241,7 +1241,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_adj/all/restrict/postest/*.rds
+        csv: output/mrna/models/cox_adj/all/restrict/postest/*.csv
 
   km_mrna_all_restrict_covidadmitted:
     run: r:latest analysis/model/km.R mrna all restrict covidadmitted
@@ -1249,7 +1249,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/all/restrict/covidadmitted/*.rds
+        rds: output/mrna/models/km/all/restrict/covidadmitted/*.csv
         png: output/mrna/models/km/all/restrict/covidadmitted/*.png
 
   cox_unadj_mrna_all_restrict_covidadmitted:
@@ -1258,7 +1258,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_unadj/all/restrict/covidadmitted/*.rds
+        csv: output/mrna/models/cox_unadj/all/restrict/covidadmitted/*.csv
 
   cox_adj_mrna_all_restrict_covidadmitted:
     run: r:latest analysis/model/cox.R mrna adj all restrict covidadmitted
@@ -1266,7 +1266,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_adj/all/restrict/covidadmitted/*.rds
+        csv: output/mrna/models/cox_adj/all/restrict/covidadmitted/*.csv
 
   km_mrna_all_restrict_coviddeath:
     run: r:latest analysis/model/km.R mrna all restrict coviddeath
@@ -1274,7 +1274,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/all/restrict/coviddeath/*.rds
+        rds: output/mrna/models/km/all/restrict/coviddeath/*.csv
         png: output/mrna/models/km/all/restrict/coviddeath/*.png
 
   cox_unadj_mrna_all_restrict_coviddeath:
@@ -1283,7 +1283,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_unadj/all/restrict/coviddeath/*.rds
+        csv: output/mrna/models/cox_unadj/all/restrict/coviddeath/*.csv
 
   cox_adj_mrna_all_restrict_coviddeath:
     run: r:latest analysis/model/cox.R mrna adj all restrict coviddeath
@@ -1291,7 +1291,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_adj/all/restrict/coviddeath/*.rds
+        csv: output/mrna/models/cox_adj/all/restrict/coviddeath/*.csv
 
   km_mrna_all_restrict_noncoviddeath:
     run: r:latest analysis/model/km.R mrna all restrict noncoviddeath
@@ -1299,7 +1299,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/all/restrict/noncoviddeath/*.rds
+        rds: output/mrna/models/km/all/restrict/noncoviddeath/*.csv
         png: output/mrna/models/km/all/restrict/noncoviddeath/*.png
 
   cox_unadj_mrna_all_restrict_noncoviddeath:
@@ -1308,7 +1308,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_unadj/all/restrict/noncoviddeath/*.rds
+        csv: output/mrna/models/cox_unadj/all/restrict/noncoviddeath/*.csv
 
   cox_adj_mrna_all_restrict_noncoviddeath:
     run: r:latest analysis/model/cox.R mrna adj all restrict noncoviddeath
@@ -1316,7 +1316,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_adj/all/restrict/noncoviddeath/*.rds
+        csv: output/mrna/models/cox_adj/all/restrict/noncoviddeath/*.csv
 
   km_mrna_all_restrict_fracture:
     run: r:latest analysis/model/km.R mrna all restrict fracture
@@ -1324,7 +1324,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/all/restrict/fracture/*.rds
+        rds: output/mrna/models/km/all/restrict/fracture/*.csv
         png: output/mrna/models/km/all/restrict/fracture/*.png
 
   cox_unadj_mrna_all_restrict_fracture:
@@ -1333,7 +1333,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_unadj/all/restrict/fracture/*.rds
+        csv: output/mrna/models/cox_unadj/all/restrict/fracture/*.csv
 
   cox_adj_mrna_all_restrict_fracture:
     run: r:latest analysis/model/cox.R mrna adj all restrict fracture
@@ -1341,7 +1341,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_adj/all/restrict/fracture/*.rds
+        csv: output/mrna/models/cox_adj/all/restrict/fracture/*.csv
 
   ## # # # # # # # # # # # # # # # # # # # # # # # # # # #  
   ## cohort: mrna; subgroup: vax3_type; variant option: ignore 
@@ -1353,7 +1353,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/vax3_type/ignore/postest/*.rds
+        rds: output/mrna/models/km/vax3_type/ignore/postest/*.csv
         png: output/mrna/models/km/vax3_type/ignore/postest/*.png
 
   cox_unadj_mrna_vax3_type_ignore_postest:
@@ -1362,7 +1362,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_unadj/vax3_type/ignore/postest/*.rds
+        csv: output/mrna/models/cox_unadj/vax3_type/ignore/postest/*.csv
 
   cox_adj_mrna_vax3_type_ignore_postest:
     run: r:latest analysis/model/cox.R mrna adj vax3_type ignore postest
@@ -1370,7 +1370,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_adj/vax3_type/ignore/postest/*.rds
+        csv: output/mrna/models/cox_adj/vax3_type/ignore/postest/*.csv
 
   km_mrna_vax3_type_ignore_covidadmitted:
     run: r:latest analysis/model/km.R mrna vax3_type ignore covidadmitted
@@ -1378,7 +1378,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/vax3_type/ignore/covidadmitted/*.rds
+        rds: output/mrna/models/km/vax3_type/ignore/covidadmitted/*.csv
         png: output/mrna/models/km/vax3_type/ignore/covidadmitted/*.png
 
   cox_unadj_mrna_vax3_type_ignore_covidadmitted:
@@ -1387,7 +1387,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_unadj/vax3_type/ignore/covidadmitted/*.rds
+        csv: output/mrna/models/cox_unadj/vax3_type/ignore/covidadmitted/*.csv
 
   cox_adj_mrna_vax3_type_ignore_covidadmitted:
     run: r:latest analysis/model/cox.R mrna adj vax3_type ignore covidadmitted
@@ -1395,7 +1395,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_adj/vax3_type/ignore/covidadmitted/*.rds
+        csv: output/mrna/models/cox_adj/vax3_type/ignore/covidadmitted/*.csv
 
   km_mrna_vax3_type_ignore_coviddeath:
     run: r:latest analysis/model/km.R mrna vax3_type ignore coviddeath
@@ -1403,7 +1403,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/vax3_type/ignore/coviddeath/*.rds
+        rds: output/mrna/models/km/vax3_type/ignore/coviddeath/*.csv
         png: output/mrna/models/km/vax3_type/ignore/coviddeath/*.png
 
   cox_unadj_mrna_vax3_type_ignore_coviddeath:
@@ -1412,7 +1412,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_unadj/vax3_type/ignore/coviddeath/*.rds
+        csv: output/mrna/models/cox_unadj/vax3_type/ignore/coviddeath/*.csv
 
   cox_adj_mrna_vax3_type_ignore_coviddeath:
     run: r:latest analysis/model/cox.R mrna adj vax3_type ignore coviddeath
@@ -1420,7 +1420,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_adj/vax3_type/ignore/coviddeath/*.rds
+        csv: output/mrna/models/cox_adj/vax3_type/ignore/coviddeath/*.csv
 
   km_mrna_vax3_type_ignore_noncoviddeath:
     run: r:latest analysis/model/km.R mrna vax3_type ignore noncoviddeath
@@ -1428,7 +1428,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/vax3_type/ignore/noncoviddeath/*.rds
+        rds: output/mrna/models/km/vax3_type/ignore/noncoviddeath/*.csv
         png: output/mrna/models/km/vax3_type/ignore/noncoviddeath/*.png
 
   cox_unadj_mrna_vax3_type_ignore_noncoviddeath:
@@ -1437,7 +1437,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_unadj/vax3_type/ignore/noncoviddeath/*.rds
+        csv: output/mrna/models/cox_unadj/vax3_type/ignore/noncoviddeath/*.csv
 
   cox_adj_mrna_vax3_type_ignore_noncoviddeath:
     run: r:latest analysis/model/cox.R mrna adj vax3_type ignore noncoviddeath
@@ -1445,7 +1445,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_adj/vax3_type/ignore/noncoviddeath/*.rds
+        csv: output/mrna/models/cox_adj/vax3_type/ignore/noncoviddeath/*.csv
 
   km_mrna_vax3_type_ignore_fracture:
     run: r:latest analysis/model/km.R mrna vax3_type ignore fracture
@@ -1453,7 +1453,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/vax3_type/ignore/fracture/*.rds
+        rds: output/mrna/models/km/vax3_type/ignore/fracture/*.csv
         png: output/mrna/models/km/vax3_type/ignore/fracture/*.png
 
   cox_unadj_mrna_vax3_type_ignore_fracture:
@@ -1462,7 +1462,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_unadj/vax3_type/ignore/fracture/*.rds
+        csv: output/mrna/models/cox_unadj/vax3_type/ignore/fracture/*.csv
 
   cox_adj_mrna_vax3_type_ignore_fracture:
     run: r:latest analysis/model/cox.R mrna adj vax3_type ignore fracture
@@ -1470,7 +1470,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_adj/vax3_type/ignore/fracture/*.rds
+        csv: output/mrna/models/cox_adj/vax3_type/ignore/fracture/*.csv
 
   ## # # # # # # # # # # # # # # # # # # # # # # # # # # #  
   ## cohort: mrna; subgroup: prior_covid_infection; variant option: ignore 
@@ -1482,7 +1482,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/prior_covid_infection/ignore/postest/*.rds
+        rds: output/mrna/models/km/prior_covid_infection/ignore/postest/*.csv
         png: output/mrna/models/km/prior_covid_infection/ignore/postest/*.png
 
   cox_unadj_mrna_prior_covid_infection_ignore_postest:
@@ -1491,7 +1491,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_unadj/prior_covid_infection/ignore/postest/*.rds
+        csv: output/mrna/models/cox_unadj/prior_covid_infection/ignore/postest/*.csv
 
   cox_adj_mrna_prior_covid_infection_ignore_postest:
     run: r:latest analysis/model/cox.R mrna adj prior_covid_infection ignore postest
@@ -1499,7 +1499,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_adj/prior_covid_infection/ignore/postest/*.rds
+        csv: output/mrna/models/cox_adj/prior_covid_infection/ignore/postest/*.csv
 
   km_mrna_prior_covid_infection_ignore_covidadmitted:
     run: r:latest analysis/model/km.R mrna prior_covid_infection ignore covidadmitted
@@ -1507,7 +1507,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/prior_covid_infection/ignore/covidadmitted/*.rds
+        rds: output/mrna/models/km/prior_covid_infection/ignore/covidadmitted/*.csv
         png: output/mrna/models/km/prior_covid_infection/ignore/covidadmitted/*.png
 
   cox_unadj_mrna_prior_covid_infection_ignore_covidadmitted:
@@ -1516,7 +1516,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_unadj/prior_covid_infection/ignore/covidadmitted/*.rds
+        csv: output/mrna/models/cox_unadj/prior_covid_infection/ignore/covidadmitted/*.csv
 
   cox_adj_mrna_prior_covid_infection_ignore_covidadmitted:
     run: r:latest analysis/model/cox.R mrna adj prior_covid_infection ignore covidadmitted
@@ -1524,7 +1524,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_adj/prior_covid_infection/ignore/covidadmitted/*.rds
+        csv: output/mrna/models/cox_adj/prior_covid_infection/ignore/covidadmitted/*.csv
 
   km_mrna_prior_covid_infection_ignore_coviddeath:
     run: r:latest analysis/model/km.R mrna prior_covid_infection ignore coviddeath
@@ -1532,7 +1532,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/prior_covid_infection/ignore/coviddeath/*.rds
+        rds: output/mrna/models/km/prior_covid_infection/ignore/coviddeath/*.csv
         png: output/mrna/models/km/prior_covid_infection/ignore/coviddeath/*.png
 
   cox_unadj_mrna_prior_covid_infection_ignore_coviddeath:
@@ -1541,7 +1541,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_unadj/prior_covid_infection/ignore/coviddeath/*.rds
+        csv: output/mrna/models/cox_unadj/prior_covid_infection/ignore/coviddeath/*.csv
 
   cox_adj_mrna_prior_covid_infection_ignore_coviddeath:
     run: r:latest analysis/model/cox.R mrna adj prior_covid_infection ignore coviddeath
@@ -1549,7 +1549,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_adj/prior_covid_infection/ignore/coviddeath/*.rds
+        csv: output/mrna/models/cox_adj/prior_covid_infection/ignore/coviddeath/*.csv
 
   km_mrna_prior_covid_infection_ignore_noncoviddeath:
     run: r:latest analysis/model/km.R mrna prior_covid_infection ignore noncoviddeath
@@ -1557,7 +1557,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/prior_covid_infection/ignore/noncoviddeath/*.rds
+        rds: output/mrna/models/km/prior_covid_infection/ignore/noncoviddeath/*.csv
         png: output/mrna/models/km/prior_covid_infection/ignore/noncoviddeath/*.png
 
   cox_unadj_mrna_prior_covid_infection_ignore_noncoviddeath:
@@ -1566,7 +1566,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_unadj/prior_covid_infection/ignore/noncoviddeath/*.rds
+        csv: output/mrna/models/cox_unadj/prior_covid_infection/ignore/noncoviddeath/*.csv
 
   cox_adj_mrna_prior_covid_infection_ignore_noncoviddeath:
     run: r:latest analysis/model/cox.R mrna adj prior_covid_infection ignore noncoviddeath
@@ -1574,7 +1574,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_adj/prior_covid_infection/ignore/noncoviddeath/*.rds
+        csv: output/mrna/models/cox_adj/prior_covid_infection/ignore/noncoviddeath/*.csv
 
   km_mrna_prior_covid_infection_ignore_fracture:
     run: r:latest analysis/model/km.R mrna prior_covid_infection ignore fracture
@@ -1582,7 +1582,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/prior_covid_infection/ignore/fracture/*.rds
+        rds: output/mrna/models/km/prior_covid_infection/ignore/fracture/*.csv
         png: output/mrna/models/km/prior_covid_infection/ignore/fracture/*.png
 
   cox_unadj_mrna_prior_covid_infection_ignore_fracture:
@@ -1591,7 +1591,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_unadj/prior_covid_infection/ignore/fracture/*.rds
+        csv: output/mrna/models/cox_unadj/prior_covid_infection/ignore/fracture/*.csv
 
   cox_adj_mrna_prior_covid_infection_ignore_fracture:
     run: r:latest analysis/model/cox.R mrna adj prior_covid_infection ignore fracture
@@ -1599,7 +1599,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_adj/prior_covid_infection/ignore/fracture/*.rds
+        csv: output/mrna/models/cox_adj/prior_covid_infection/ignore/fracture/*.csv
 
   ## # # # # # # # # # # # # # # # # # # # # # # # # # # #  
   ## cohort: mrna; subgroup: vax12_type; variant option: ignore 
@@ -1611,7 +1611,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/vax12_type/ignore/postest/*.rds
+        rds: output/mrna/models/km/vax12_type/ignore/postest/*.csv
         png: output/mrna/models/km/vax12_type/ignore/postest/*.png
 
   cox_unadj_mrna_vax12_type_ignore_postest:
@@ -1620,7 +1620,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_unadj/vax12_type/ignore/postest/*.rds
+        csv: output/mrna/models/cox_unadj/vax12_type/ignore/postest/*.csv
 
   cox_adj_mrna_vax12_type_ignore_postest:
     run: r:latest analysis/model/cox.R mrna adj vax12_type ignore postest
@@ -1628,7 +1628,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_adj/vax12_type/ignore/postest/*.rds
+        csv: output/mrna/models/cox_adj/vax12_type/ignore/postest/*.csv
 
   km_mrna_vax12_type_ignore_covidadmitted:
     run: r:latest analysis/model/km.R mrna vax12_type ignore covidadmitted
@@ -1636,7 +1636,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/vax12_type/ignore/covidadmitted/*.rds
+        rds: output/mrna/models/km/vax12_type/ignore/covidadmitted/*.csv
         png: output/mrna/models/km/vax12_type/ignore/covidadmitted/*.png
 
   cox_unadj_mrna_vax12_type_ignore_covidadmitted:
@@ -1645,7 +1645,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_unadj/vax12_type/ignore/covidadmitted/*.rds
+        csv: output/mrna/models/cox_unadj/vax12_type/ignore/covidadmitted/*.csv
 
   cox_adj_mrna_vax12_type_ignore_covidadmitted:
     run: r:latest analysis/model/cox.R mrna adj vax12_type ignore covidadmitted
@@ -1653,7 +1653,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_adj/vax12_type/ignore/covidadmitted/*.rds
+        csv: output/mrna/models/cox_adj/vax12_type/ignore/covidadmitted/*.csv
 
   km_mrna_vax12_type_ignore_coviddeath:
     run: r:latest analysis/model/km.R mrna vax12_type ignore coviddeath
@@ -1661,7 +1661,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/vax12_type/ignore/coviddeath/*.rds
+        rds: output/mrna/models/km/vax12_type/ignore/coviddeath/*.csv
         png: output/mrna/models/km/vax12_type/ignore/coviddeath/*.png
 
   cox_unadj_mrna_vax12_type_ignore_coviddeath:
@@ -1670,7 +1670,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_unadj/vax12_type/ignore/coviddeath/*.rds
+        csv: output/mrna/models/cox_unadj/vax12_type/ignore/coviddeath/*.csv
 
   cox_adj_mrna_vax12_type_ignore_coviddeath:
     run: r:latest analysis/model/cox.R mrna adj vax12_type ignore coviddeath
@@ -1678,7 +1678,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_adj/vax12_type/ignore/coviddeath/*.rds
+        csv: output/mrna/models/cox_adj/vax12_type/ignore/coviddeath/*.csv
 
   km_mrna_vax12_type_ignore_noncoviddeath:
     run: r:latest analysis/model/km.R mrna vax12_type ignore noncoviddeath
@@ -1686,7 +1686,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/vax12_type/ignore/noncoviddeath/*.rds
+        rds: output/mrna/models/km/vax12_type/ignore/noncoviddeath/*.csv
         png: output/mrna/models/km/vax12_type/ignore/noncoviddeath/*.png
 
   cox_unadj_mrna_vax12_type_ignore_noncoviddeath:
@@ -1695,7 +1695,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_unadj/vax12_type/ignore/noncoviddeath/*.rds
+        csv: output/mrna/models/cox_unadj/vax12_type/ignore/noncoviddeath/*.csv
 
   cox_adj_mrna_vax12_type_ignore_noncoviddeath:
     run: r:latest analysis/model/cox.R mrna adj vax12_type ignore noncoviddeath
@@ -1703,7 +1703,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_adj/vax12_type/ignore/noncoviddeath/*.rds
+        csv: output/mrna/models/cox_adj/vax12_type/ignore/noncoviddeath/*.csv
 
   km_mrna_vax12_type_ignore_fracture:
     run: r:latest analysis/model/km.R mrna vax12_type ignore fracture
@@ -1711,7 +1711,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/vax12_type/ignore/fracture/*.rds
+        rds: output/mrna/models/km/vax12_type/ignore/fracture/*.csv
         png: output/mrna/models/km/vax12_type/ignore/fracture/*.png
 
   cox_unadj_mrna_vax12_type_ignore_fracture:
@@ -1720,7 +1720,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_unadj/vax12_type/ignore/fracture/*.rds
+        csv: output/mrna/models/cox_unadj/vax12_type/ignore/fracture/*.csv
 
   cox_adj_mrna_vax12_type_ignore_fracture:
     run: r:latest analysis/model/cox.R mrna adj vax12_type ignore fracture
@@ -1728,7 +1728,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_adj/vax12_type/ignore/fracture/*.rds
+        csv: output/mrna/models/cox_adj/vax12_type/ignore/fracture/*.csv
 
   ## # # # # # # # # # # # # # # # # # # # # # # # # # # #  
   ## cohort: mrna; subgroup: agegroup; variant option: ignore 
@@ -1740,7 +1740,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/agegroup/ignore/postest/*.rds
+        rds: output/mrna/models/km/agegroup/ignore/postest/*.csv
         png: output/mrna/models/km/agegroup/ignore/postest/*.png
 
   cox_unadj_mrna_agegroup_ignore_postest:
@@ -1749,7 +1749,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_unadj/agegroup/ignore/postest/*.rds
+        csv: output/mrna/models/cox_unadj/agegroup/ignore/postest/*.csv
 
   cox_adj_mrna_agegroup_ignore_postest:
     run: r:latest analysis/model/cox.R mrna adj agegroup ignore postest
@@ -1757,7 +1757,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_adj/agegroup/ignore/postest/*.rds
+        csv: output/mrna/models/cox_adj/agegroup/ignore/postest/*.csv
 
   km_mrna_agegroup_ignore_covidadmitted:
     run: r:latest analysis/model/km.R mrna agegroup ignore covidadmitted
@@ -1765,7 +1765,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/agegroup/ignore/covidadmitted/*.rds
+        rds: output/mrna/models/km/agegroup/ignore/covidadmitted/*.csv
         png: output/mrna/models/km/agegroup/ignore/covidadmitted/*.png
 
   cox_unadj_mrna_agegroup_ignore_covidadmitted:
@@ -1774,7 +1774,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_unadj/agegroup/ignore/covidadmitted/*.rds
+        csv: output/mrna/models/cox_unadj/agegroup/ignore/covidadmitted/*.csv
 
   cox_adj_mrna_agegroup_ignore_covidadmitted:
     run: r:latest analysis/model/cox.R mrna adj agegroup ignore covidadmitted
@@ -1782,7 +1782,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_adj/agegroup/ignore/covidadmitted/*.rds
+        csv: output/mrna/models/cox_adj/agegroup/ignore/covidadmitted/*.csv
 
   km_mrna_agegroup_ignore_coviddeath:
     run: r:latest analysis/model/km.R mrna agegroup ignore coviddeath
@@ -1790,7 +1790,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/agegroup/ignore/coviddeath/*.rds
+        rds: output/mrna/models/km/agegroup/ignore/coviddeath/*.csv
         png: output/mrna/models/km/agegroup/ignore/coviddeath/*.png
 
   cox_unadj_mrna_agegroup_ignore_coviddeath:
@@ -1799,7 +1799,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_unadj/agegroup/ignore/coviddeath/*.rds
+        csv: output/mrna/models/cox_unadj/agegroup/ignore/coviddeath/*.csv
 
   cox_adj_mrna_agegroup_ignore_coviddeath:
     run: r:latest analysis/model/cox.R mrna adj agegroup ignore coviddeath
@@ -1807,7 +1807,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_adj/agegroup/ignore/coviddeath/*.rds
+        csv: output/mrna/models/cox_adj/agegroup/ignore/coviddeath/*.csv
 
   km_mrna_agegroup_ignore_noncoviddeath:
     run: r:latest analysis/model/km.R mrna agegroup ignore noncoviddeath
@@ -1815,7 +1815,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/agegroup/ignore/noncoviddeath/*.rds
+        rds: output/mrna/models/km/agegroup/ignore/noncoviddeath/*.csv
         png: output/mrna/models/km/agegroup/ignore/noncoviddeath/*.png
 
   cox_unadj_mrna_agegroup_ignore_noncoviddeath:
@@ -1824,7 +1824,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_unadj/agegroup/ignore/noncoviddeath/*.rds
+        csv: output/mrna/models/cox_unadj/agegroup/ignore/noncoviddeath/*.csv
 
   cox_adj_mrna_agegroup_ignore_noncoviddeath:
     run: r:latest analysis/model/cox.R mrna adj agegroup ignore noncoviddeath
@@ -1832,7 +1832,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_adj/agegroup/ignore/noncoviddeath/*.rds
+        csv: output/mrna/models/cox_adj/agegroup/ignore/noncoviddeath/*.csv
 
   km_mrna_agegroup_ignore_fracture:
     run: r:latest analysis/model/km.R mrna agegroup ignore fracture
@@ -1840,7 +1840,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/km/agegroup/ignore/fracture/*.rds
+        rds: output/mrna/models/km/agegroup/ignore/fracture/*.csv
         png: output/mrna/models/km/agegroup/ignore/fracture/*.png
 
   cox_unadj_mrna_agegroup_ignore_fracture:
@@ -1849,7 +1849,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_unadj/agegroup/ignore/fracture/*.rds
+        csv: output/mrna/models/cox_unadj/agegroup/ignore/fracture/*.csv
 
   cox_adj_mrna_agegroup_ignore_fracture:
     run: r:latest analysis/model/cox.R mrna adj agegroup ignore fracture
@@ -1857,7 +1857,7 @@ actions:
     - process_controlfinal_mrna
     outputs:
       moderately_sensitive:
-        rds: output/mrna/models/cox_adj/agegroup/ignore/fracture/*.rds
+        csv: output/mrna/models/cox_adj/agegroup/ignore/fracture/*.csv
 
   ## # # # # # # # # # # # # # # # # # # # 
   ## combine all outputs for mrna cohort 

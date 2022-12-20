@@ -262,12 +262,12 @@ if (type == "unadj") {
   
   cat("---- start cox_unadj_contrasts_cuts ----\n")
   cox_unadj_contrasts_cuts <- coxcontrast(data_matched, cuts = postbaselinecuts)
-  write_rds(cox_unadj_contrasts_cuts, fs::path(output_dir, "cox_unadj_contrasts_cuts_rounded.rds"))
+  write_csv(cox_unadj_contrasts_cuts, fs::path(output_dir, "cox_unadj_contrasts_cuts_rounded.csv"))
   cat("---- end cox_unadj_contrasts_cuts ----\n")
   
   # cat("---- start cox_unadj_contrasts_overall ----\n")
   # cox_unadj_contrasts_overall <- coxcontrast(data_matched, cuts = c(0,maxfup))
-  # write_rds(cox_unadj_contrasts_overall, fs::path(output_dir, "cox_unadj_contrasts_overall_rounded.rds"))
+  # write_csv(cox_unadj_contrasts_overall, fs::path(output_dir, "cox_unadj_contrasts_overall_rounded.csv"))
   # cat("---- end cox_unadj_contrasts_overall ----\n")
   
 }
@@ -277,12 +277,12 @@ if (type == "adj") {
   
   cat("---- start cox_adj_contrasts_cuts ----\n")
   cox_adj_contrasts_cuts <- coxcontrast(data_matched, adj = TRUE, cuts = postbaselinecuts)
-  write_rds(cox_adj_contrasts_cuts, fs::path(output_dir, "cox_adj_contrasts_cuts_rounded.rds"))
+  write_csv(cox_adj_contrasts_cuts, fs::path(output_dir, "cox_adj_contrasts_cuts_rounded.csv"))
   cat("---- end cox_adj_contrasts_cuts ----\n")
   
   # cat("---- start cox_adj_contrasts_overall ----\n")
   # cox_adj_contrasts_overall <- coxcontrast(data_matched, adj = TRUE, cuts = c(0,maxfup))
-  # write_rds(cox_adj_contrasts_overall, fs::path(output_dir, "cox_adj_contrasts_overall_rounded.rds"))
+  # write_csv(cox_adj_contrasts_overall, fs::path(output_dir, "cox_adj_contrasts_overall_rounded.csv"))
   # cat("---- end cox_adj_contrasts_overall ----\n")
   
 }

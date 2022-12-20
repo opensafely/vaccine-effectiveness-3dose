@@ -162,12 +162,12 @@ km_process <- function(.data, round_by){
 # apply function
 cat("---- start data_surv_unrounded ----\n")
 data_surv_unrounded <- km_process(data_surv, 1)
-write_rds(data_surv_unrounded, fs::path(output_dir, "km_estimates_unrounded.rds"))
+write_csv(data_surv_unrounded, fs::path(output_dir, "km_estimates_unrounded.csv"))
 cat("---- end data_surv_unrounded ----\n")
 
 cat("---- start data_surv_rounded ----\n")
 data_surv_rounded <- km_process(data_surv, threshold)
-write_rds(data_surv_rounded, fs::path(output_dir, "km_estimates_rounded.rds"))
+write_csv(data_surv_rounded, fs::path(output_dir, "km_estimates_rounded.csv"))
 cat("---- end data_surv_rounded ----\n")
 
 # define km_plot function ----
@@ -397,17 +397,17 @@ kmcontrasts <- function(data, cuts=NULL){
 # apply function
 cat("---- start km_contrasts_rounded_daily ----\n")
 km_contrasts_rounded_daily <- kmcontrasts(data_surv_rounded)
-write_rds(km_contrasts_rounded_daily, fs::path(output_dir, "km_contrasts_daily_rounded.rds"))
+write_csv(km_contrasts_rounded_daily, fs::path(output_dir, "km_contrasts_daily_rounded.csv"))
 cat("---- end km_contrasts_rounded_daily ----\n")
 
 cat("---- start km_contrasts_rounded_cuts ----\n")
 km_contrasts_rounded_cuts <- kmcontrasts(data_surv_rounded, postbaselinecuts)
-write_rds(km_contrasts_rounded_cuts, fs::path(output_dir, "km_contrasts_cuts_rounded.rds"))
+write_csv(km_contrasts_rounded_cuts, fs::path(output_dir, "km_contrasts_cuts_rounded.csv"))
 cat("---- end km_contrasts_rounded_cuts ----\n")
 
 cat("---- start km_contrasts_rounded_overall ----\n")
 km_contrasts_rounded_overall <- kmcontrasts(data_surv_rounded, c(0,maxfup))
-write_rds(km_contrasts_rounded_overall, fs::path(output_dir, "km_contrasts_overall_rounded.rds"))
+write_csv(km_contrasts_rounded_overall, fs::path(output_dir, "km_contrasts_overall_rounded.csv"))
 cat("---- end km_contrasts_rounded_overall ----\n")
 
 cat("script complete")

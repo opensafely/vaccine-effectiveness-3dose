@@ -30,12 +30,12 @@ data_matched <- read_rds(ghere("output", cohort, "match", "data_matched.rds"))
 # identify the patients who died or deregistered before their trial date
 data_diedordereg <- data_matched %>%
   filter(death_date < trial_date | dereg_date < trial_date) %>%
-  select(patient_id, treated, death_date, dereg_date)
+  select(patient_id, treated, trial_date, death_date, dereg_date)
 
 cat("Number of deaths and deregistrations before trial_date in:\n")
 for (m in 1:n_matching_rounds_list[[cohort]]) {
   
-  cat(glue("Matching round {m}"), "\n")
+  cat(glue("Matching round {m}:"), "\n")
   # read in the patients who were successfully matched in this round
   data_matchround <- read_rds(
     ghere("output", cohort, "matchround{m}", "actual", "data_successful_matchedcontrols.rds")

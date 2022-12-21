@@ -56,7 +56,7 @@ data_dose4 <- read_rds(here("output", cohort, "match", "data_matched.rds")) %>%
       dereg_date,
       death_date,
       study_dates$studyend_date,
-      trial_date + maxfup,
+      trial_date -1 + maxfup, # I think the "-1" term is needed here, because time 0 is trial_date-1, and if the -1 is not included time goes up to maxfup+1, which results in an NA row in the contrasts output
       na.rm=TRUE
     ),
     

@@ -85,7 +85,7 @@ data_matched <- data_matched %>%
   mutate(
     
     #trial_date,
-    outcome_date = .data[[glue("{outcome}_date")]],
+    outcome_date = !! sym(glue("{outcome}_date")),
     
     # follow-up time is up to and including censor date
     censor_date = pmin(
@@ -99,6 +99,10 @@ data_matched <- data_matched %>%
     
     matchcensor_date = pmin(censor_date, controlistreated_date -1, na.rm=TRUE), # new censor date based on whether control gets treated or not
     
+    # for debugging
+    tte_censor = tte(trial_date - 1, censor_date, censor_date, na.censor=FALSE),
+    tte_matchcensor = tte(trial_date - 1, matchcensor_date, matchcensor_date, na.censor=FALSE),
+    
     tte_outcome = tte(trial_date - 1, outcome_date, matchcensor_date, na.censor=FALSE), # -1 because we assume vax occurs at the start of the day, and so outcomes occurring on the same day as treatment are assumed "1 day" long
     ind_outcome = censor_indicator(outcome_date, matchcensor_date),
     
@@ -110,14 +114,24 @@ cat("check for duplicate new_id:\n")
 data_matched %>% group_by(new_id) %>% count() %>% filter(n>1) %>% nrow() %>% print()
 # should always be 0
 
-# outcome frequency
-outcomes_per_treated <- table(outcome=data_matched$ind_outcome, treated=data_matched$treated)
-
+# check for non-positive event times
 cat("check for non-positive tte_outcome (should be c(0, 0, nrow(data_matched)):\n")
-table_tte_outcome <- table(
-  cut(data_matched$tte_outcome, c(-Inf, 0, 1, Inf), right=FALSE, labels= c("<0", "0", ">0"))
-)
-print(table_tte_outcome)
+for (t in c(0,1)) {
+  for(x in c("tte_censor", "tte_matchcensor", "tte_outcome")) {
+    cat(glue("treated={t}; event={x}:\n"))
+    print(
+      table(
+        cut(
+          data_matched[[x]][data_matched[["treated"]] == t],
+          c(-Inf, 0, 1, Inf),
+          right=FALSE,
+          labels= c("<0", "0", ">0")
+          )
+      )
+    )
+  }
+  
+}
 
 cat("---- end process_data_matched ---- \n")
 

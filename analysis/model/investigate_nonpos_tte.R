@@ -32,10 +32,10 @@ data_diedordereg <- data_matched %>%
   filter(death_date < trial_date | dereg_date < trial_date) %>%
   select(patient_id, treated, death_date, dereg_date)
 
-#
+cat("Number of deaths and deregistrations before trial_date in:\n")
 for (m in 1:n_matching_rounds_list[[cohort]]) {
   
-  cat(glue("Number of deaths and deregistrations before trial_date in matichin round {m}"), "\n")
+  cat(glue("Matching round {m}"), "\n")
   # read in the patients who were successfully matched in this round
   data_matchround <- read_rds(
     ghere("output", cohort, "matchround{m}", "actual", "data_successful_matchedcontrols.rds")
@@ -46,8 +46,8 @@ for (m in 1:n_matching_rounds_list[[cohort]]) {
     group_by(treated) %>%
     # summarise number of deaths and deregistrations by treatment group
     summarise(
-      death = sum(!is.na(death_date)), 
-      dereg = sum(!is.na(dereg_date)),
+      death = sum(death_date < trial_date), 
+      dereg = sum(dereg_date < trial_date),
       .groups="keep"
     ) %>% 
     print()

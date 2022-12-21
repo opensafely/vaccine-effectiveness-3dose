@@ -46,8 +46,8 @@ for (m in 1:n_matching_rounds_list[[cohort]]) {
     group_by(treated) %>%
     # summarise number of deaths and deregistrations by treatment group
     summarise(
-      death = sum(death_date < trial_date), 
-      dereg = sum(dereg_date < trial_date),
+      death = sum(death_date < trial_date, na.rm=TRUE), 
+      dereg = sum(dereg_date < trial_date, na.rm=TRUE),
       .groups="keep"
     ) %>% 
     print()

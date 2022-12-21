@@ -100,8 +100,9 @@ data_matched <- data_matched %>%
     matchcensor_date = pmin(censor_date, controlistreated_date -1, na.rm=TRUE), # new censor date based on whether control gets treated or not
     
     # for debugging
-    tte_censor = tte(trial_date - 1, censor_date, censor_date, na.censor=FALSE),
-    tte_matchcensor = tte(trial_date - 1, matchcensor_date, matchcensor_date, na.censor=FALSE),
+    tte_dereg = tte(trial_date - 1, dereg_date, dereg_date, na.censor=FALSE),
+    tte_death = tte(trial_date - 1, death_date, death_date, na.censor=FALSE),
+    tte_variantend = tte(trial_date - 1, variantend_date, variantend_date, na.censor=FALSE),
     
     tte_outcome = tte(trial_date - 1, outcome_date, matchcensor_date, na.censor=FALSE), # -1 because we assume vax occurs at the start of the day, and so outcomes occurring on the same day as treatment are assumed "1 day" long
     ind_outcome = censor_indicator(outcome_date, matchcensor_date),
@@ -117,12 +118,12 @@ data_matched %>% group_by(new_id) %>% count() %>% filter(n>1) %>% nrow() %>% pri
 # check for non-positive event times
 cat("check for non-positive tte_outcome (should be c(0, 0, nrow(data_matched)):\n")
 for (t in c(0,1)) {
-  for(x in c("tte_censor", "tte_matchcensor", "tte_outcome")) {
+  for(x in c("dereg", "death", "variantend")) {
     cat(glue("treated={t}; event={x}:\n"))
     print(
       table(
         cut(
-          data_matched[[x]][data_matched[["treated"]] == t],
+          data_matched[[glue("tte_{x}")]][data_matched[["treated"]] == t],
           c(-Inf, 0, 1, Inf),
           right=FALSE,
           labels= c("<0", "0", ">0")

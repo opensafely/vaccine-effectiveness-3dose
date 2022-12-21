@@ -47,7 +47,7 @@ data_dose4 <- read_rds(here("output", cohort, "match", "data_matched.rds")) %>%
       as.character(.x) %in% c("08", "09", "10", "11", "12") ~ "08+",
       TRUE ~ as.character(.x)
     ),
-    levels = c(as.character(1:7), "08+"))
+    levels = c("01", "02", "03", "04a", "04b", "05", "06", "07", "08+"))
       )) %>%
   mutate(
     

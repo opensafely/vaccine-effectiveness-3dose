@@ -113,15 +113,16 @@ data_matched %>% group_by(new_id) %>% count() %>% filter(n>1) %>% nrow() %>% pri
 # outcome frequency
 outcomes_per_treated <- table(outcome=data_matched$ind_outcome, treated=data_matched$treated)
 
-table(
+cat("check for non-positive tte_outcome (should be c(0, 0, nrow(data_matched)):\n")
+table_tte_outcome <- table(
   cut(data_matched$tte_outcome, c(-Inf, 0, 1, Inf), right=FALSE, labels= c("<0", "0", ">0"))
 )
-# should be c(0, 0, nrow(data_matched))
+print(table_tte_outcome)
 
 cat("---- end process_data_matched ---- \n")
 
 # preprocessing for data_surv ----
-cat("---- start data_split ----\n")
+cat("---- start data_surv ----\n")
 if (variant_option == "split") {
   
   # split follow-up time according to variant era
@@ -184,5 +185,4 @@ if (variant_option == "split") {
   surv_formula <- formula(Surv(tte_outcome, ind_outcome) ~ 1)
   
 }
-
-cat("---- end data_split ----\n")
+cat("---- end data_surv ----\n")

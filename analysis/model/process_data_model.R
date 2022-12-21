@@ -7,6 +7,18 @@ cat("---- start process_data_matched\n")
 # read data
 data_matched <- read_rds(ghere("output", cohort, "match", "data_matched.rds"))
 
+#### TEMPORARY FIX
+nrow_before <- nrow(data_matched)
+data_matched <- data_matched %>%
+  filter(is.na(death_date) | trial_date <= death_date)
+nrow_after <- nrow(data_matched)
+cat(
+  "Remove patients with death_date < trial_date:\n",
+  glue("{nrow_before-nrow_after} patients removed."),
+  "\n"
+  )
+#### TEMPORARY FIX
+
 # set study end date ----
 if (outcome == "postest") {
   study_dates$modelend_date <- study_dates$testend_date

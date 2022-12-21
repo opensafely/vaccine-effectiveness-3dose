@@ -280,7 +280,25 @@ action_extract_and_match <- function(cohort){
         input_controlfinal_skim = glue("output/{cohort}/extract/*.txt"),
         data_matched_skim = glue("output/{cohort}/match/*.txt")
       )
+    ),
+    
+    action(
+      name = glue("investigate_nonpos_tte_{cohort}"),
+      run = "r:latest analysis/model/investigate_nonpos_tte.R",
+      arguments = cohort,
+      needs = c(
+        map(
+          seq_len(n_matching_rounds),
+          ~glue("process_controlactual_{cohort}_",.x)
+        ),
+        glue("process_controlfinal_{cohort}")
+      ),
+      moderately_sensitive = lst(
+        tmp = "output/mrna/models/tmp.csv" # empty output so action runs
+      )
     )
+    
+    
   )
   
 }

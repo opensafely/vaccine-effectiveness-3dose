@@ -877,6 +877,26 @@ actions:
         input_controlfinal_skim: output/mrna/extract/*.txt
         data_matched_skim: output/mrna/match/*.txt
 
+  investigate_nonpos_tte_mrna:
+    run: r:latest analysis/model/investigate_nonpos_tte.R mrna
+    needs:
+    - process_controlactual_mrna_1
+    - process_controlactual_mrna_2
+    - process_controlactual_mrna_3
+    - process_controlactual_mrna_4
+    - process_controlactual_mrna_5
+    - process_controlactual_mrna_6
+    - process_controlactual_mrna_7
+    - process_controlactual_mrna_8
+    - process_controlactual_mrna_9
+    - process_controlactual_mrna_10
+    - process_controlactual_mrna_11
+    - process_controlactual_mrna_12
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        tmp: output/mrna/models/tmp.csv
+
   table1_mrna:
     run: r:latest analysis/matching/table1.R mrna
     needs:

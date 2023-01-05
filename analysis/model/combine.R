@@ -53,7 +53,11 @@ combine_and_save <- function(model, filename) {
         list(cohort, subgroup, variant_option, outcome), 
         function(cohort, subgroup, variant_option, outcome)  {
           dat <- try(read_csv(here("output", cohort, "models", model, subgroup, variant_option, outcome, glue("{filename_full}.csv")))) 
-          if (inherits(dat, "try-error")) {
+          if (
+            inherits(dat, "try-error") 
+            # add the following line for now as the adjusted cox models with split follow-up time having memory issues
+            | (model == "cox_adj" & variant_option == "split") 
+            ) {
             dat <- tibble()
           } else {
             dat <- dat %>%

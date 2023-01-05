@@ -353,7 +353,7 @@ action_combine <- function(
     needs = splice(
       as.list(
         glue_data(
-          .x=km_args,
+          .x=km_args %>% filter(!(model == "cox_adj" & variant_option == "split")),
           "{model}_{cohort}_{subgroup}_{variant_option}_{outcome}"
         )
       )

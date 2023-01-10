@@ -41,7 +41,7 @@ dates <- study_dates[[cohort]]
 if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("")) {
   
   ## Import released data ----
-  release_dir <- "release20221202"
+  release_dir <- "release20230105"
   
   output_dir <- here(release_dir, "figures")
   fs::dir_create(output_dir)

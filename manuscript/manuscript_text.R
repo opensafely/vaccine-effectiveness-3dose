@@ -7,12 +7,33 @@ library(flextable)
 source(here("analysis", "design.R"))
 source(here("lib", "functions", "utility.R"))
 
-# STUDY POPULATION
+source(here("manuscript", "functions.R"))
+
+# import data
+
 table1_rounded <- read_delim(
   here("release20230105", "matching", "table1_rounded.csv"),
   delim = "\t", escape_double = FALSE, trim_ws = TRUE
+)
+
+km_contrasts_overall_rounded <- read_csv(
+  here("release20230105", "estimates", "km_contrasts_overall_rounded.csv")
   )
 
+km_estimates_rounded <- read_csv(
+  here("release20230105", "estimates", "km_estimates_rounded.csv")
+)
+
+cox_unadj_contrasts_cuts_rounded <- read_csv(
+  here("release20230105", "estimates", "cox_unadj_contrasts_cuts_rounded.csv")
+  )
+
+cox_adj_contrasts_cuts_rounded <- read_csv(
+  here("release20230105", "estimates", "cox_adj_contrasts_cuts_rounded.csv")
+  )
+
+
+# STUDY POPULATION
 table1_rounded %>%
   filter(variable=="N", by == "Three doses") %>%
   pull(n) %>%
@@ -48,7 +69,6 @@ doc <- print(doc, target = here("manuscript", "table1.docx"))
 
 
 # MAIN ANALYSIS
-km_contrasts_overall_rounded <- read_csv(here("release20230105", "estimates", "km_contrasts_overall_rounded.csv"))
 
 # event counts and persontime
 table_fu <- km_contrasts_overall_rounded %>%
@@ -123,121 +143,14 @@ doc <- flextable::body_add_flextable(doc, value = table_6month_out, split = FALS
 
 doc <- print(doc, target = here("manuscript", "table_6month.docx"))
 
+# plots of hazard ratios
+combine_plot(subgroup_select = "all", variant_option_select = "ignore")
+combine_plot(subgroup_select = "all", variant_option_select = "split")
+combine_plot(subgroup_select = "agegroup", variant_option_select = "ignore")
+combine_plot(subgroup_select = "prior_covid_infection", variant_option_select = "ignore")
 
-# cox model estimates
-cox_adj_contrasts_cuts_rounded <- read_csv(here("release20230105", "estimates", "cox_adj_contrasts_cuts_rounded.csv"))
-
-cox_adj_contrasts_cuts_rounded %>%
-  filter(subgroup=="all", variant_option == "ignore") %>%
-  filter(str_detect(term, "^treated")) %>%
-  mutate(across(term, ~str_remove(.x, "treated:strata\\(period\\_id\\)"))) %>%
-  # transform to ve
-  mutate(across(starts_with("cox"), ~format(round(100*(1-.x), 1), nsmall=1, trim=TRUE))) %>%
-  transmute(
-    outcome, term,
-    value = paste0(coxhr, "% (", coxhr.ul, ", ", coxhr.ll, ")")
-  ) %>%
-  pivot_wider(
-    names_from = outcome,
-    values_from = value
-  )
-
-doc <- officer::read_docx() 
-
-table_hrs_all <- cox_adj_contrasts_cuts_rounded %>%
-  filter(subgroup=="all", variant_option == "ignore") %>%
-  filter(str_detect(term, "^treated")) %>%
-  add_descr() %>%
-  mutate(across(term, ~str_remove(.x, "treated:strata\\(period\\_id\\)"))) %>%
-  mutate(across(starts_with("cox"), ~round(.x, 2))) %>%
-  mutate(across(starts_with("cox"), ~format(.x, nsmall=2))) %>%
-  transmute(
-    outcome_descr, 
-    `Days since booster` = term,
-    value = paste0(coxhr, " (", coxhr.ll, ", ", coxhr.ul, ")")
-  ) %>%
-  pivot_wider(
-    names_from = outcome_descr,
-    values_from = value
-  ) %>%
-  flextable() %>%
-  width(j=1:6, width=15/6, unit="cm") 
-
-doc <- flextable::body_add_flextable(doc, value = table_hrs_all, split = FALSE)  
-
-doc <- print(doc, target = here("manuscript", "table_hrs_all.docx"))
-
-# figure
-# A
-km_estimates_rounded <- read_csv(here("release20230105", "estimates", "km_estimates_rounded.csv"))
-
-A <- km_estimates_rounded %>%
-  filter(subgroup == "all", variant_option == "ignore") %>%
-  add_descr() %>%
-  mutate(
-    variant_descr = factor(
-      variant,
-      levels = c("ignore", "delta", "transition", "omicron"),
-      labels = c("all variants", "delta variant", "delta-omicron transition", "omicron variant")
-    )) %>%
-  km_plot("variant_descr") +
-  theme(legend.position = "none")
-
-B <- cox_adj_contrasts_cuts_rounded %>%
-  filter(
-    subgroup == "all",
-    variant_option == "ignore",
-    str_detect(term, "^treated")
-    ) %>%
-  add_descr() %>%
-  mutate(
-    period_start = as.integer(str_extract(term, "\\d+")),
-    period_end = as.integer(str_extract(term, "\\d+$")),
-    midpoint = (period_start + period_end)/2,
-    variant_descr = "all variants",
-    model = "adjusted"
-    ) %>%
-  hr_plot() +
-  theme(legend.position = "none")
-  
-
-cowplot::plot_grid(
-  A, B,
-  labels = c("A", "B"), align = "v"
-  )
-
-ggsave(
-  here("manuscript", "main_analysis_plot.png"),
-  width = 24, height = 15, units = "cm"
-)
-
-
-# VARIANT ANALYSIS
-cox_unadj_contrasts_cuts_rounded <- read_csv(here("release20230105", "estimates", "cox_unadj_contrasts_cuts_rounded.csv"))
-
-cox_unadj_contrasts_cuts_rounded %>%
-  filter(subgroup=="all", variant_option == "split") %>%
-  filter(str_detect(term, "^treated")) %>%
-  mutate(variant = str_extract(term, "\\w+$")) %>%
-  mutate(across(term, ~str_extract(.x, "\\d+-\\d+"))) %>%
-  # transform to ve
-  mutate(across(starts_with("cox"), ~signif(100*(1-.x), 3))) %>%
-  transmute(
-    outcome, variant, term,
-    value = paste0(coxhr, "% (", coxhr.ul, ", ", coxhr.ll, ")")
-  ) %>%
-  pivot_wider(
-    names_from = variant,
-    values_from = value
-  ) %>% print(n=Inf)
-
-
-km_estimates_rounded <- read_csv(here("release20230105", "estimates", "km_estimates_rounded.csv"))
-
-km_estimates_rounded %>%
-  filter(subgroup=="all", variant_option=="split", outcome == "postest") %>%
-  group_by(variant) %>%
-  summarise(max(time))
-
-
-
+# tables of hazard ratios
+hr_table(subgroup_select = "all", variant_option_select = "ignore")
+hr_table(subgroup_select = "all", variant_option_select = "split")
+hr_table(subgroup_select = "agegroup", variant_option_select = "ignore")
+hr_table(subgroup_select = "prior_covid_infection", variant_option_select = "ignore")

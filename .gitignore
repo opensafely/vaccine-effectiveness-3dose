@@ -12,3 +12,6 @@ venv/
 
 release*/*
 report/*
+
+manuscript/*.docx
+manuscript/*.png

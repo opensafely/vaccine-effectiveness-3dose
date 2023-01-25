@@ -341,6 +341,90 @@
       "url": "https://codelists.opensafely.org/codelist/opensafely/fractures/086e92fc/",
       "downloaded_at": "2022-12-07 16:35:24.226244Z",
       "sha": "0c73d4faea48e0e5cc410cc8a4373e287196dcdc"
+    },
+    "user-RochelleKnight-ami_icd10.csv": {
+      "id": "user/RochelleKnight/ami_icd10/3dea268d",
+      "url": "https://codelists.opensafely.org/codelist/user/RochelleKnight/ami_icd10/3dea268d/",
+      "downloaded_at": "2023-01-25 07:13:51.284922Z",
+      "sha": "5152287e39c99ceed1fee19ac5a742b66f2bb3de"
+    },
+    "user-RochelleKnight-stroke_isch_icd10.csv": {
+      "id": "user/RochelleKnight/stroke_isch_icd10/278d734e",
+      "url": "https://codelists.opensafely.org/codelist/user/RochelleKnight/stroke_isch_icd10/278d734e/",
+      "downloaded_at": "2023-01-25 07:13:51.507334Z",
+      "sha": "a4564a582dabdb385a2caf6bb6a24e4bfcaf92dc"
+    },
+    "user-RochelleKnight-dvt_dvt_icd10.csv": {
+      "id": "user/RochelleKnight/dvt_dvt_icd10/24dab358",
+      "url": "https://codelists.opensafely.org/codelist/user/RochelleKnight/dvt_dvt_icd10/24dab358/",
+      "downloaded_at": "2023-01-25 07:13:51.741424Z",
+      "sha": "a58107609d45a2400d985a7f45ba03ea218a3a31"
+    },
+    "user-elsie_horne-dvt_pregnancy_icd10.csv": {
+      "id": "user/elsie_horne/dvt_pregnancy_icd10/6576830d",
+      "url": "https://codelists.opensafely.org/codelist/user/elsie_horne/dvt_pregnancy_icd10/6576830d/",
+      "downloaded_at": "2023-01-25 07:13:51.944100Z",
+      "sha": "9d329a04c29cb4bbe16e7685c8e8b223e3d1eef1"
+    },
+    "user-RochelleKnight-pe_icd10.csv": {
+      "id": "user/RochelleKnight/pe_icd10/59ac59b8",
+      "url": "https://codelists.opensafely.org/codelist/user/RochelleKnight/pe_icd10/59ac59b8/",
+      "downloaded_at": "2023-01-25 07:13:52.161318Z",
+      "sha": "066b79182d212664aff52aa293ba048295499eb9"
+    },
+    "user-RochelleKnight-tia_icd10.csv": {
+      "id": "user/RochelleKnight/tia_icd10/5c5f19ae",
+      "url": "https://codelists.opensafely.org/codelist/user/RochelleKnight/tia_icd10/5c5f19ae/",
+      "downloaded_at": "2023-01-25 07:13:52.388474Z",
+      "sha": "58e84d7962edf98d855ca79dd404d638c751aef3"
+    },
+    "user-RochelleKnight-stroke_sah_hs_icd10.csv": {
+      "id": "user/RochelleKnight/stroke_sah_hs_icd10/0e7e0019",
+      "url": "https://codelists.opensafely.org/codelist/user/RochelleKnight/stroke_sah_hs_icd10/0e7e0019/",
+      "downloaded_at": "2023-01-25 07:13:52.605944Z",
+      "sha": "5b89d97b42ad643add51f045c847728a61d0c91e"
+    },
+    "user-RochelleKnight-hf_icd10.csv": {
+      "id": "user/RochelleKnight/hf_icd10/72bbcced",
+      "url": "https://codelists.opensafely.org/codelist/user/RochelleKnight/hf_icd10/72bbcced/",
+      "downloaded_at": "2023-01-25 07:13:52.827799Z",
+      "sha": "6b98f3f1c343f87e39de5b9b0f6d6f805a3fdd3d"
+    },
+    "user-RochelleKnight-angina_icd10.csv": {
+      "id": "user/RochelleKnight/angina_icd10/756e8ce3",
+      "url": "https://codelists.opensafely.org/codelist/user/RochelleKnight/angina_icd10/756e8ce3/",
+      "downloaded_at": "2023-01-25 07:13:53.036269Z",
+      "sha": "ac68628572a80c270f36bc9c2744e83c1cb2f3a6"
+    },
+    "user-elsie_horne-other_arterial_embolism_icd10.csv": {
+      "id": "user/elsie_horne/other_arterial_embolism_icd10/463adc5d",
+      "url": "https://codelists.opensafely.org/codelist/user/elsie_horne/other_arterial_embolism_icd10/463adc5d/",
+      "downloaded_at": "2023-01-25 07:13:53.250429Z",
+      "sha": "1400d26dcbdabfd0920bc61da9e39a66e111e19d"
+    },
+    "user-elsie_horne-portal_vein_thrombosis_icd10.csv": {
+      "id": "user/elsie_horne/portal_vein_thrombosis_icd10/22606950",
+      "url": "https://codelists.opensafely.org/codelist/user/elsie_horne/portal_vein_thrombosis_icd10/22606950/",
+      "downloaded_at": "2023-01-25 07:13:53.469795Z",
+      "sha": "68ab66c54a622d81330d8cb718422fa4554e1560"
+    },
+    "user-elsie_horne-dvt_icvt_icd10.csv": {
+      "id": "user/elsie_horne/dvt_icvt_icd10/30a4dcad",
+      "url": "https://codelists.opensafely.org/codelist/user/elsie_horne/dvt_icvt_icd10/30a4dcad/",
+      "downloaded_at": "2023-01-25 07:13:53.700759Z",
+      "sha": "5c1f4d677b9411b6b52d5da8d9c234baf45d0d02"
+    },
+    "user-elsie_horne-other_dvt_icd10.csv": {
+      "id": "user/elsie_horne/other_dvt_icd10/547f4fba",
+      "url": "https://codelists.opensafely.org/codelist/user/elsie_horne/other_dvt_icd10/547f4fba/",
+      "downloaded_at": "2023-01-25 07:13:53.940946Z",
+      "sha": "c3d8dbfd49282af699396b8996c9d46d74e8723d"
+    },
+    "user-elsie_horne-icvt_pregnancy_icd10.csv": {
+      "id": "user/elsie_horne/icvt_pregnancy_icd10/3b6fdc85",
+      "url": "https://codelists.opensafely.org/codelist/user/elsie_horne/icvt_pregnancy_icd10/3b6fdc85/",
+      "downloaded_at": "2023-01-25 07:13:54.172592Z",
+      "sha": "5549985dd9f06c465df3a32f935a60d5578c1835"
     }
   }
 }

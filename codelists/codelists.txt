@@ -55,3 +55,17 @@ opensafely/influenza-vaccination/2020-05-12
 opensafely/influenza-vaccination-clinical-codes-given/2020-05-21
 opensafely/influenza-vaccination-clinical-codes-not-given/2020-05-19
 opensafely/fractures/086e92fc
+user/RochelleKnight/ami_icd10/3dea268d
+user/RochelleKnight/stroke_isch_icd10/278d734e
+user/RochelleKnight/dvt_dvt_icd10/24dab358
+user/elsie_horne/dvt_pregnancy_icd10/6576830d
+user/RochelleKnight/pe_icd10/59ac59b8
+user/RochelleKnight/tia_icd10/5c5f19ae
+user/RochelleKnight/stroke_sah_hs_icd10/0e7e0019
+user/RochelleKnight/hf_icd10/72bbcced
+user/RochelleKnight/angina_icd10/756e8ce3
+user/elsie_horne/other_arterial_embolism_icd10/463adc5d
+user/elsie_horne/portal_vein_thrombosis_icd10/22606950
+user/elsie_horne/dvt_icvt_icd10/30a4dcad
+user/elsie_horne/other_dvt_icd10/547f4fba
+user/elsie_horne/icvt_pregnancy_icd10/3b6fdc85

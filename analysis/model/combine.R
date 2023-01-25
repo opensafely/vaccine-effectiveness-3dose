@@ -82,7 +82,7 @@ for (i in c("estimates", "contrasts_daily", "contrasts_cuts", "contrasts_overall
   combine_and_save(model="km", filename = i) 
 }
 # cox outputs
-for (i in c("contrasts_cuts")) {#, "contrasts_overall")) {
+for (i in c("contrasts_cuts", "contrasts_overall")) {
   for (m in c("unadj", "adj")) {
     combine_and_save(model=glue("cox_{m}"), filename = i) 
     combine_and_save(model=glue("cox_{m}"), filename = i) 
@@ -176,14 +176,14 @@ km_contrasts_overall %>% plot_estimates(rd, rd.ll, rd.ul, "km_rd")
 km_contrasts_overall %>% plot_estimates(rr, rr.ll, rr.ul, "km_rr")
 
 
-# cox_unadj_contrasts_overall <- read_csv(fs::path(output_dir, glue("cox_unadj_contrasts_overall_rounded.csv"))) %>%
-#   mutate(variant=str_extract(term, str_c(variant_dates$variant, collapse = "|"))) %>%
-#   mutate(across(variant, ~if_else(is.na(.x), "ignore", .x)))
-# cox_unadj_contrasts_overall %>% plot_estimates(coxhr, coxhr.ll, coxhr.ul, "cox_unadj")
-# 
-# cox_adj_contrasts_overall <- read_csv(fs::path(output_dir, glue("cox_adj_contrasts_overall_rounded.csv"))) %>%
-#   filter(str_detect(term, "^treated")) %>%
-#   mutate(variant=str_extract(term, str_c(variant_dates$variant, collapse = "|"))) %>%
-#   mutate(across(variant, ~if_else(is.na(.x), "ignore", .x)))
-# cox_adj_contrasts_overall %>% plot_estimates(coxhr, coxhr.ll, coxhr.ul, "cox_adj")
+cox_unadj_contrasts_overall <- read_csv(fs::path(output_dir, glue("cox_unadj_contrasts_overall_rounded.csv"))) %>%
+  mutate(variant=str_extract(term, str_c(variant_dates$variant, collapse = "|"))) %>%
+  mutate(across(variant, ~if_else(is.na(.x), "ignore", .x)))
+cox_unadj_contrasts_overall %>% plot_estimates(coxhr, coxhr.ll, coxhr.ul, "cox_unadj")
+
+cox_adj_contrasts_overall <- read_csv(fs::path(output_dir, glue("cox_adj_contrasts_overall_rounded.csv"))) %>%
+  filter(str_detect(term, "^treated")) %>%
+  mutate(variant=str_extract(term, str_c(variant_dates$variant, collapse = "|"))) %>%
+  mutate(across(variant, ~if_else(is.na(.x), "ignore", .x)))
+cox_adj_contrasts_overall %>% plot_estimates(coxhr, coxhr.ll, coxhr.ul, "cox_adj")
 

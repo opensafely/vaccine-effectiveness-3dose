@@ -89,11 +89,13 @@ events_lookup <- tribble(
   "covidemergency", "covidemergency_date", "COVID-19 A&E attendance",
   "covidemergencyhosp", "covidemergencyhosp_date", "COVID-19 A&E attendance with disharge to hospital",
   "noncoviddeath", "noncoviddeath_date", "Non-COVID-19 death",
+  "cvddeath", "cvddeath_date", "CVD-related non-COVID-19 death",
+  "cancerdeath", "cancerdeath_date", "Cancer-related non-COVID-19 death",
   "death", "death_date", "Any death",
   "fracture", "fracture_date", "Fracture"
 )
 
-outcomes <- c("postest",  "covidadmitted", "coviddeath", "noncoviddeath", "fracture")
+outcomes <- c("postest",  "covidadmitted", "coviddeath", "noncoviddeath", "cvddeath", "cancerdeath", "fracture")
 
 # define treatments ----
 

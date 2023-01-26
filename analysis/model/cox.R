@@ -41,9 +41,9 @@ if(length(args)==0){
   # use for interactive testing
   cohort <- "mrna"
   type <- "unadj"
-  subgroup <- "all"
+  subgroup <- "vax3_type"
   variant_option <- "ignore" # ignore, split, restrict (delta, transition, omicron)
-  outcome <- "postest"
+  outcome <- "cvddeath"
   cuts <- "cuts"
   
 } else {
@@ -172,7 +172,7 @@ coxcontrast <- function(data, adj = FALSE, cuts=NULL){
   cox_formula_string <- "Surv(tstart, tstop, ind_outcome) ~ treated"
   
   # only keep periods with >2 events per level of exposure
-  data_split <- data_split %>%
+  data_cox <- data_split %>%
     group_by(!!subgroup_sym, period_id, treated, ind_outcome) %>%
     mutate(n_events = n()) %>%
     ungroup(treated, ind_outcome) %>%
@@ -243,12 +243,26 @@ coxcontrast <- function(data, adj = FALSE, cuts=NULL){
     data_cox %>%
     mutate(
       cox_obj = map(data, ~{
-        coxph(as.formula(cox_formula), data = .x, y=FALSE, robust=TRUE, id=patient_id, na.action="na.fail")
+        coxph(
+          as.formula(cox_formula), 
+          data = .x, 
+          y=FALSE, 
+          robust=TRUE, 
+          id=patient_id, 
+          na.action="na.fail"
+          )
       }),
       cox_obj_tidy = map(cox_obj, ~broom::tidy(.x)),
     ) %>%
     select(!!subgroup_sym, cox_obj_tidy) %>%
-    unnest(cox_obj_tidy) %>%
+    unnest(cox_obj_tidy) 
+  
+  if (!("robust.se" %in% names(data_cox))) {
+    # because robust.se column not created when all estimates are NA
+    data_cox <- data_cox %>% mutate(robust.se=NA_real_)
+  }
+  
+  data_cox %>%
     transmute(
       !!subgroup_sym,
       term,
@@ -257,7 +271,7 @@ coxcontrast <- function(data, adj = FALSE, cuts=NULL){
       coxhr.ll = exp(estimate + qnorm(0.025)*robust.se),
       coxhr.ul = exp(estimate + qnorm(0.975)*robust.se),
     )
-  data_cox
+  
   
 }
 

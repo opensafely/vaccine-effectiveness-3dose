@@ -36,14 +36,14 @@ study = StudyDefinition(
     "float": {"distribution": "normal", "mean": 25, "stddev": 5},
   },
   
-  # This line defines the study population (TODO update to include treated!)
+  # This line defines the study population
   population = patients.which_exist_in_file(f_path=f"output/{cohort}/match/data_matched_{arm}.csv.gz"),
 
   trial_date = patients.with_value_from_file(f_path=f"output/{cohort}/match/data_matched_{arm}.csv.gz", returning="trial_date", returning_type="date", date_format='YYYY-MM-DD'),
   
 
   ###############################################################################
-  # covariates
+  # covid test variables
   ##############################################################################
   **covidtests_variables,  
   

@@ -332,12 +332,9 @@ process_outcome <- function(.data) {
       anycovid_date = pmin(postest_date, covidemergency_date, covidadmitted_date, covidcritcare_date, coviddeath_date, na.rm=TRUE),
       
       noncoviddeath_date = if_else(!is.na(death_date) & is.na(coviddeath_date), death_date, as.Date(NA_character_)),
-      
-      cause_of_death = fct_case_when(
-        !is.na(coviddeath_date) ~ "covid-related",
-        !is.na(death_date) ~ "not covid-related",
-        TRUE ~ NA_character_
-      ),
+      # cvd or cancer deaths must be non-covid
+      # cvddeath_date = if_else(!is.na(cvddeath_date) & is.na(coviddeath_date), death_date, as.Date(NA_character_)),
+      # cancerdeath_date = if_else(!is.na(cancerdeath_date) & is.na(coviddeath_date), death_date, as.Date(NA_character_)),
       
       covidcritcareordeath_date = pmin(covidcritcare_date, coviddeath_date, na.rm=TRUE),
       

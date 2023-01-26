@@ -85,7 +85,6 @@ for (i in c("estimates", "contrasts_daily", "contrasts_cuts", "contrasts_overall
 for (i in c("contrasts_cuts", "contrasts_overall")) {
   for (m in c("unadj", "adj")) {
     combine_and_save(model=glue("cox_{m}"), filename = i) 
-    combine_and_save(model=glue("cox_{m}"), filename = i) 
   }
 }
 

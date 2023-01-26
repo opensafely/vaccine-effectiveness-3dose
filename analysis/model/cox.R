@@ -12,6 +12,7 @@
 #    `variant_option` - ignore (ignore variant era), 
 #                     - split (split fup according to variant era), 
 #                     - restrict (restrict fup to each variant era)
+#    `cuts` - the follow-up periods during which to estimate HRs
 
 # # # # # # # # # # # # # # # # # # # # #
 

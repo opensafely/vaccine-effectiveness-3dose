@@ -40,9 +40,9 @@ args <- commandArgs(trailingOnly=TRUE)
 if(length(args)==0){
   # use for interactive testing
   cohort <- "mrna"
-  type <- "unadj"
-  subgroup <- "agegroup"
-  variant_option <- "ignore" # ignore, split, restrict (delta, transition, omicron)
+  type <- "adj"
+  subgroup <- "all"
+  variant_option <- "split" # ignore, split, restrict (delta, transition, omicron)
   outcome <- "covidadmitted"
   
 } else {
@@ -68,6 +68,8 @@ subgroup_sym <- sym(subgroup)
 # read and process data_matched ----
 source(here("analysis", "model", "process_data_model.R"))
 source(here("analysis", "model", "merge_or_drop.R"))
+
+rm(data_surv)
 
 # cox models ----
 
@@ -168,7 +170,7 @@ coxcontrast <- function(data, adj = FALSE, cuts=NULL){
   cox_formula_string <- "Surv(tstart, tstop, ind_outcome) ~ treated"
   
   # only keep periods with >2 events per level of exposure
-  data_cox_nested <- data_split %>%
+  data_cox <- data_split %>%
     group_by(!!subgroup_sym, period_id, treated, ind_outcome) %>%
     mutate(n_events = n()) %>%
     ungroup(treated, ind_outcome) %>%
@@ -188,8 +190,10 @@ coxcontrast <- function(data, adj = FALSE, cuts=NULL){
     })) %>%
     unnest(cox_formula)
   
+  rm(data, fup_split, data_split)
   
-  if (nrow(data_cox_nested) == 0) {
+  
+  if (nrow(data_cox) == 0) {
     cat("Not enough events to fit Cox model.\n")
     # return emtpy tibble so that script doesn't fail
     return(tibble())
@@ -198,7 +202,7 @@ coxcontrast <- function(data, adj = FALSE, cuts=NULL){
   # add covariates if fitting adjusted model
   if (adj) {
     
-    data_cox_nested <- data_cox_nested %>%
+    data_cox <- data_cox %>%
       mutate(
         
         # merge covariate levels until at least `event_threshold` events per expo/outcome/covariate level combo
@@ -234,7 +238,7 @@ coxcontrast <- function(data, adj = FALSE, cuts=NULL){
   
   # fit the models
   data_cox <-
-    data_cox_nested %>%
+    data_cox %>%
     mutate(
       cox_obj = map(data, ~{
         coxph(as.formula(cox_formula), data = .x, y=FALSE, robust=TRUE, id=patient_id, na.action="na.fail")

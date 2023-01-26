@@ -157,7 +157,7 @@ recoder <-
     )
   )
 
-subgroups <- c("all", "vax3_type", "prior_covid_infection", "vax12_type", "agegroup", "cev_cv")
+subgroups <- c("all", "prior_covid_infection", "vax12_type", "agegroup", "cev_cv") # , "vax3_type")
 
 
 ## follow-up time ----

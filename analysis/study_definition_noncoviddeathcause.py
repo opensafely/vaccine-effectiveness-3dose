@@ -22,10 +22,7 @@ study = StudyDefinition(
   # Configure the expectations framework
   default_expectations={
     "date": {"earliest": "2020-01-01", "latest": "today"},
-    "rate": "uniform",
-    "incidence": 0.2,
-    "int": {"distribution": "normal", "mean": 1000, "stddev": 100},
-    "float": {"distribution": "normal", "mean": 25, "stddev": 5},
+    "incidence": 1,
   },
   
   # This line defines the study population 

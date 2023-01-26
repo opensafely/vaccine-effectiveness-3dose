@@ -376,8 +376,12 @@ action_combine <- function(
     needs = splice(
       as.list(
         glue_data(
-          .x=km_args %>% filter(!(model == "cox_adj" & variant_option == "split")),
-          "{model}_{cohort}_{subgroup}_{variant_option}_{outcome}"
+          .x=bind_rows(
+            km_args %>% filter(model=="km") %>% mutate(suffix=""),
+            km_args %>% filter(str_detect(model,"cox")) %>% mutate(suffix=""),
+            km_args %>% filter(str_detect(model,"cox")) %>% mutate(suffix="_overall")
+            ),
+          "{model}_{cohort}_{subgroup}_{variant_option}_{outcome}{suffix}"
         )
       )
     ),
@@ -528,7 +532,7 @@ actions_list <- splice(
           name = glue("extract_noncoviddeathcause_{x}"),
           run = glue(
             "cohortextractor:latest generate_cohort", 
-            " --study-definition study_definition_covidtests", 
+            " --study-definition study_definition_noncoviddeathcause", 
             " --output-file output/{x}/noncoviddeathcause/extract/input_noncoviddeathcause.feather",
             " --param cohort={x}"
           ),

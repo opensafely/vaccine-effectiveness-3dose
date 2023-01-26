@@ -23,6 +23,14 @@ data_matched <- read_rds(here("output", cohort, "match", "data_matched.rds")) %>
       )
   ))
 
+if (subgroup == "vax12_type") {
+  
+  data_matched <- data_matched %>%
+    # restrict to jcvi groups that received a roughly event split of pfizer and az
+    filter(jcvi_group %in% c("03", "04a", "04b", "05", "06"))
+  
+}
+
 
 #### TEMPORARY FIX
 nrow_before <- nrow(data_matched)

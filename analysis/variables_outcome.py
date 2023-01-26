@@ -119,20 +119,6 @@ def generate_outcome_variables(index_date):
     date_format="YYYY-MM-DD",
   ),
 
-  # deaths with a cardiovascular icd10 code
-  cvddeath_date=patients.with_these_codes_on_death_certificate(
-    codelists.cvd_combined,
-    returning="date_of_death",
-    date_format="YYYY-MM-DD",
-  ),
-
-  # # death with a cancer icd10 code
-  # cancerdeath_date=patients.with_these_codes_on_death_certificate(
-  #   codelists.cancer_icd10,
-  #   returning="date_of_death",
-  #   date_format="YYYY-MM-DD",
-  # ),
-
   )
   
   return outcome_variables

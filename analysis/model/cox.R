@@ -29,7 +29,6 @@ library('survival')
 
 source(here("analysis", "design.R"))
 source(here("lib", "functions", "utility.R"))
-source(here("lib", "functions", "sampling.R"))
 source(here("lib", "functions", "survival.R"))
 
 
@@ -41,11 +40,10 @@ args <- commandArgs(trailingOnly=TRUE)
 if(length(args)==0){
   # use for interactive testing
   cohort <- "mrna"
-  type <- "adj"
-  subgroup <- "all"
-  variant_option <- "split" # ignore, split, restrict (delta, transition, omicron)
-  outcome <- "postest"
-  cuts <- "cuts"
+  type <- "unadj"
+  subgroup <- "agegroup"
+  variant_option <- "ignore" # ignore, split, restrict (delta, transition, omicron)
+  outcome <- "covidadmitted"
   
 } else {
   cohort <- args[[1]]
@@ -53,7 +51,6 @@ if(length(args)==0){
   subgroup <- args[[3]]
   variant_option <- args[[4]]
   outcome <- args[[5]]
-  cuts <- args[[6]]
 }
 
 if (subgroup!="all" & variant_option != "ignore") 
@@ -170,48 +167,17 @@ coxcontrast <- function(data, adj = FALSE, cuts=NULL){
       period_id = tdc(fupstart_time, period_id)
     ) 
   
+  cox_formula_string <- "Surv(tstart, tstop, ind_outcome) ~ treated"
+  
   # only keep periods with >2 events per level of exposure
-  data_cox <- data_split %>%
+  data_split <- data_split %>%
     group_by(!!subgroup_sym, period_id, treated, ind_outcome) %>%
     mutate(n_events = n()) %>%
     ungroup(treated, ind_outcome) %>%
     mutate(min_events = min(n_events)) %>%
     ungroup() %>%
     filter(min_events>2) %>%
-    select(-n_events, -min_events) 
-  
-  if (variant_option == "split" & adj & (length(cuts) > 2)) {
-    
-    # sample 50% of non-events for adjusted models when variant_option = "split" & length(cuts) > 2
-    # these models fail due to memory constraints when run on the full dataset
-    sample_amount <- 0.5
-    
-    data_sample <- data_split %>%
-      distinct(new_id, ind_outcome) %>%
-      transmute(
-        new_id,
-        sample_event = sample_nonoutcomes_prop(as.logical(ind_outcome), new_id, sample_amount),
-        sample_weights_event = sample_weights(as.logical(ind_outcome), sample_event)#,
-      )  
-    
-  } else {
-    
-    # otherwise sample_weights_event=1
-    data_sample <- data_split %>%
-      distinct(new_id) %>%
-      transmute(
-        new_id,
-        sample_event = TRUE,
-        sample_weights_event = 1
-      )  
-    
-  }
-  
-  cox_formula_string <- "Surv(tstart, tstop, ind_outcome) ~ treated"
-  
-  data_cox_nested <- data_split %>%
-    left_join(data_sample, by = "new_id") %>%
-    filter(sample_event) %>%
+    select(-n_events, -min_events) %>%
     group_by(!!subgroup_sym) %>%
     nest() %>%
     # add strata(period_id) to cox_formula if period_id has more than one distinct values
@@ -232,7 +198,7 @@ coxcontrast <- function(data, adj = FALSE, cuts=NULL){
     # return emtpy tibble so that script doesn't fail
     return(tibble())
   }
-  
+    
   # add covariates if fitting adjusted model
   if (adj) {
     
@@ -275,22 +241,7 @@ coxcontrast <- function(data, adj = FALSE, cuts=NULL){
     data_cox %>%
     mutate(
       cox_obj = map(data, ~{
-        coxph(
-          as.formula(cox_formula), 
-          data = .x, 
-          weights = sample_weights_event,
-          y=FALSE, 
-          robust=TRUE, 
-          # id=patient_id because patients occur multiple time in data and 
-          # timescale is time since trial start date, so follow-up time can overlap 
-          # this is very unusual, come about due to the sequential trial deisgn?
-          id=patient_id, 
-          # cluster=new_id because new_id was used for sampling 
-          # (the same patient is treated separately when control and treated in sampling)
-          # cluster=new_id is equivalent top having cluster(new_id) in the formula
-          cluster=new_id, 
-          na.action="na.fail"
-          )
+        coxph(as.formula(cox_formula), data = .x, y=FALSE, robust=TRUE, id=patient_id, na.action="na.fail")
       }),
       cox_obj_tidy = map(cox_obj, ~broom::tidy(.x)),
     ) %>%
@@ -308,34 +259,36 @@ coxcontrast <- function(data, adj = FALSE, cuts=NULL){
   
 }
 
-# apply contrast function ----
+# apply contrast functions ----
 
 # cox unadjusted
 if (type == "unadj") {
-
+  
   cat("---- start cox_unadj_contrasts_cuts ----\n")
   cox_unadj_contrasts_cuts <- coxcontrast(data_matched, cuts = postbaselinecuts)
   write_csv(cox_unadj_contrasts_cuts, fs::path(output_dir, "cox_unadj_contrasts_cuts_rounded.csv"))
   cat("---- end cox_unadj_contrasts_cuts ----\n")
-
+  
   cat("---- start cox_unadj_contrasts_overall ----\n")
   cox_unadj_contrasts_overall <- coxcontrast(data_matched, cuts = c(0,maxfup))
   write_csv(cox_unadj_contrasts_overall, fs::path(output_dir, "cox_unadj_contrasts_overall_rounded.csv"))
   cat("---- end cox_unadj_contrasts_overall ----\n")
-
+  
 }
 
 # cox adjusted
 if (type == "adj") {
-
+  
   cat("---- start cox_adj_contrasts_cuts ----\n")
   cox_adj_contrasts_cuts <- coxcontrast(data_matched, adj = TRUE, cuts = postbaselinecuts)
   write_csv(cox_adj_contrasts_cuts, fs::path(output_dir, "cox_adj_contrasts_cuts_rounded.csv"))
   cat("---- end cox_adj_contrasts_cuts ----\n")
-
+  
   cat("---- start cox_adj_contrasts_overall ----\n")
   cox_adj_contrasts_overall <- coxcontrast(data_matched, adj = TRUE, cuts = c(0,maxfup))
   write_csv(cox_adj_contrasts_overall, fs::path(output_dir, "cox_adj_contrasts_overall_rounded.csv"))
   cat("---- end cox_adj_contrasts_overall ----\n")
-
+  
 }
+
+cat("script complete")

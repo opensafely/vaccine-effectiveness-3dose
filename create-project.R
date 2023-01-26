@@ -307,6 +307,17 @@ action_extract_and_match <- function(cohort){
 # action_extract_and_match("pfizer", 2)
 
 actions_model <- function(cohort, subgroup, variant_option, outcome){
+  
+  model_needs <- namelesslst(
+    glue("process_controlfinal_{cohort}")
+  )
+  if (outcome %in% c("cvddeath", "cancerdeath")) {
+    model_needs <- namelesslst(
+      glue("process_controlfinal_{cohort}"),
+      glue("extract_noncoviddeathcause_{cohort}")
+    )
+  }
+  
   splice(
     
     comment("# # # # # # # # # # # # # # # # # # # # # # # # # # # ",
@@ -319,10 +330,7 @@ actions_model <- function(cohort, subgroup, variant_option, outcome){
       name = glue("km_{cohort}_{subgroup}_{variant_option}_{outcome}"),
       run = glue("r:latest analysis/model/km.R"),
       arguments = c(cohort, subgroup, variant_option, outcome),
-      needs = namelesslst(
-        glue("process_controlfinal_{cohort}"),
-        glue("extract_noncoviddeathcause_{cohort}")
-      ),
+      needs = model_needs,
       moderately_sensitive= lst(
         rds = glue("output/{cohort}/models/km/{subgroup}/{variant_option}/{outcome}/*.csv"),
         png = glue("output/{cohort}/models/km/{subgroup}/{variant_option}/{outcome}/*.png")
@@ -348,10 +356,7 @@ actions_model <- function(cohort, subgroup, variant_option, outcome){
             name = glue("cox_{type}_{cohort}_{subgroup}_{variant_option}_{outcome}", name_suffix),
             run = glue("r:latest analysis/model/cox.R"),
             arguments = c(cohort, type, subgroup, variant_option, outcome, cuts),
-            needs = namelesslst(
-              glue("process_controlfinal_{cohort}"),
-              glue("extract_noncoviddeathcause_{cohort}")
-            ),
+            needs = model_needs,
             moderately_sensitive= lst(
               csv = glue("output/{cohort}/models/cox_{type}/{subgroup}/{variant_option}/{outcome}/cox_{type}_contrasts_{cuts}_*.csv")
             )

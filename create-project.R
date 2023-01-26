@@ -131,7 +131,7 @@ action_1matchround <- function(cohort, matching_round){
     
     action(
       name = glue("process_controlpotential_{cohort}_{matching_round}"),
-      run = glue("r:latest analysis/process_data.R"),
+      run = glue("r:latest analysis/process/process_data.R"),
       arguments = c("potential", cohort, matching_round),
       needs = namelesslst(
         glue("extract_controlpotential_{cohort}_{matching_round}"),
@@ -185,7 +185,7 @@ action_1matchround <- function(cohort, matching_round){
     
     action(
       name = glue("process_controlactual_{cohort}_{matching_round}"),
-      run = glue("r:latest analysis/process_data.R"),
+      run = glue("r:latest analysis/process/process_data.R"),
       arguments = c("actual", cohort, matching_round),
       needs = c(
         glue("process_treated"),
@@ -261,7 +261,7 @@ action_extract_and_match <- function(cohort){
     
     action(
       name = glue("process_controlfinal_{cohort}"),
-      run = glue("r:latest analysis/process_data.R"),
+      run = glue("r:latest analysis/process/process_data.R"),
       arguments = c("final", cohort),
       needs = c(
         map(
@@ -308,13 +308,20 @@ action_extract_and_match <- function(cohort){
 
 actions_model <- function(cohort, subgroup, variant_option, outcome){
   splice(
+    
+    comment("# # # # # # # # # # # # # # # # # # # # # # # # # # # ",
+            glue("cohort={cohort}; subgroup={subgroup};"),
+            glue("variant option={variant_option}; outcome={outcome};"),
+            "# # # # # # # # # # # # # # # # # # # # # # # # # # # "),
+    
     # km
     action(
       name = glue("km_{cohort}_{subgroup}_{variant_option}_{outcome}"),
       run = glue("r:latest analysis/model/km.R"),
       arguments = c(cohort, subgroup, variant_option, outcome),
       needs = namelesslst(
-        glue("process_controlfinal_{cohort}")
+        glue("process_controlfinal_{cohort}"),
+        glue("extract_noncoviddeathcause_{cohort}")
       ),
       moderately_sensitive= lst(
         rds = glue("output/{cohort}/models/km/{subgroup}/{variant_option}/{outcome}/*.csv"),
@@ -322,21 +329,37 @@ actions_model <- function(cohort, subgroup, variant_option, outcome){
       )
     ),
     # cox
-    lapply_actions(
-      c("unadj", "adj"),
-      function(type)
-        action(
-          name = glue("cox_{type}_{cohort}_{subgroup}_{variant_option}_{outcome}"),
-          run = glue("r:latest analysis/model/cox.R"),
-          arguments = c(cohort, type, subgroup, variant_option, outcome),
-          needs = namelesslst(
-            glue("process_controlfinal_{cohort}")
-          ),
-          moderately_sensitive= lst(
-            csv = glue("output/{cohort}/models/cox_{type}/{subgroup}/{variant_option}/{outcome}/*.csv")
+    expand_grid(
+      cohort=cohort,
+      subgroup=subgroup,
+      variant_option=variant_option,
+      outcome=outcome,
+      type=c("unadj", "adj"),
+      cuts=c("cuts", "overall")
+    ) %>%
+      pmap(
+        function(type, cohort, subgroup, variant_option, outcome, cuts) {
+          
+          # don't add suffix when cuts="cuts" to avoid having to rerun models that
+          # have already completed
+          name_suffix <- if_else(cuts == "cuts", "", paste0("_", cuts))
+          
+          action(
+            name = glue("cox_{type}_{cohort}_{subgroup}_{variant_option}_{outcome}", name_suffix),
+            run = glue("r:latest analysis/model/cox.R"),
+            arguments = c(cohort, type, subgroup, variant_option, outcome, cuts),
+            needs = namelesslst(
+              glue("process_controlfinal_{cohort}"),
+              glue("extract_noncoviddeathcause_{cohort}")
+            ),
+            moderately_sensitive= lst(
+              csv = glue("output/{cohort}/models/cox_{type}/{subgroup}/{variant_option}/{outcome}/cox_{type}_contrasts_{cuts}_*.csv")
+            )
           )
-        )
-    )
+        }
+      ) %>%
+      unlist(recursive = FALSE)
+    
   )
 }
 
@@ -462,7 +485,7 @@ actions_list <- splice(
   # all treated people
   action(
     name = "process_treated",
-    run = "r:latest analysis/process_data.R",
+    run = "r:latest analysis/process/process_data.R",
     arguments = "treated",
     needs = namelesslst(
       "extract_treated"
@@ -498,6 +521,27 @@ actions_list <- splice(
         action_coverage(x),
         
         comment("# # # # # # # # # # # # # # # # # # #",
+                "Causes of non-COVID death data",
+                "# # # # # # # # # # # # # # # # # # #"),
+        
+        action(
+          name = glue("extract_noncoviddeathcause_{x}"),
+          run = glue(
+            "cohortextractor:latest generate_cohort", 
+            " --study-definition study_definition_covidtests", 
+            " --output-file output/{x}/noncoviddeathcause/extract/input_noncoviddeathcause.feather",
+            " --param cohort={x}"
+          ),
+          needs = namelesslst(
+            "design",
+            glue("process_controlfinal_{x}")
+          ),
+          highly_sensitive = lst(
+            extract = glue("output/{x}/noncoviddeathcause/extract/input_noncoviddeathcause.feather")
+          )
+        ),
+        
+        comment("# # # # # # # # # # # # # # # # # # #",
                 "Covid tests data",
                 "# # # # # # # # # # # # # # # # # # #"),
         
@@ -518,7 +562,7 @@ actions_list <- splice(
               ),
               needs = namelesslst(
                 "design",
-                "process_controlfinal_mrna"
+                glue("process_controlfinal_{x}")
               ),
               highly_sensitive = lst(
                 extract = glue("output/{x}/covidtests/extract/input_covidtests_{y}.feather")
@@ -529,7 +573,7 @@ actions_list <- splice(
         action(
           name = glue("process_covidtests_{x}"),
           run = "r:latest analysis/covidtests/process_covidtests.R",
-          arguments = "mrna",
+          arguments = x,
           needs = namelesslst(
             "process_controlfinal_mrna",
             glue("extract_covidtests_{x}_treated"),
@@ -572,14 +616,9 @@ actions_list <- splice(
                 distinct(variant_option) %>%
                 unlist() %>% unname(),
               function(v) {
-                c(
-                  comment("# # # # # # # # # # # # # # # # # # # # # # # # # # # ",
-                          glue("cohort: {x}; subgroup: {y}; variant option: {v}"),
-                          "# # # # # # # # # # # # # # # # # # # # # # # # # # # "),
                   lapply_actions(
                     outcomes,
                     function(z) actions_model(cohort=x, subgroup=y, variant_option=v, outcome=z)
-                  )
                 )
               }
             )

@@ -425,6 +425,12 @@
       "url": "https://codelists.opensafely.org/codelist/user/elsie_horne/icvt_pregnancy_icd10/3b6fdc85/",
       "downloaded_at": "2023-01-25 07:13:54.172592Z",
       "sha": "5549985dd9f06c465df3a32f935a60d5578c1835"
+    },
+    "user-elsie_horne-cancer_icd10.csv": {
+      "id": "user/elsie_horne/cancer_icd10/72c5c151",
+      "url": "https://codelists.opensafely.org/codelist/user/elsie_horne/cancer_icd10/72c5c151/",
+      "downloaded_at": "2023-01-26 10:06:13.919365Z",
+      "sha": "d9e41efec81c5d1c839010cdb9953ee77a5d8079"
     }
   }
 }

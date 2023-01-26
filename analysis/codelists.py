@@ -507,3 +507,10 @@ cvd_combined = combine_codelists(
     # Cerebral vein thrombosis in pregnancy
     icvt_pregnancy_icd10, 
 )
+
+# cancer (any malignant neoplasm icd 10 code)
+cancer = codelist_from_csv(
+    "codelists/user-elsie_horne-cancer_icd10.csv",
+    system="icd10",
+    column="code",
+)

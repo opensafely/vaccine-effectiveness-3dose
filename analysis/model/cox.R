@@ -41,9 +41,10 @@ if(length(args)==0){
   # use for interactive testing
   cohort <- "mrna"
   type <- "unadj"
-  subgroup <- "agegroup"
+  subgroup <- "all"
   variant_option <- "ignore" # ignore, split, restrict (delta, transition, omicron)
-  outcome <- "covidadmitted"
+  outcome <- "postest"
+  cuts <- "cuts"
   
 } else {
   cohort <- args[[1]]
@@ -51,6 +52,7 @@ if(length(args)==0){
   subgroup <- args[[3]]
   variant_option <- args[[4]]
   outcome <- args[[5]]
+  cuts <- args[[6]]
 }
 
 if (subgroup!="all" & variant_option != "ignore") 
@@ -260,35 +262,17 @@ coxcontrast <- function(data, adj = FALSE, cuts=NULL){
 }
 
 # apply contrast functions ----
+cat(glue("---- Start fitting Cox model ----"), "\n")
 
-# cox unadjusted
-if (type == "unadj") {
-  
-  cat("---- start cox_unadj_contrasts_cuts ----\n")
-  cox_unadj_contrasts_cuts <- coxcontrast(data_matched, cuts = postbaselinecuts)
-  write_csv(cox_unadj_contrasts_cuts, fs::path(output_dir, "cox_unadj_contrasts_cuts_rounded.csv"))
-  cat("---- end cox_unadj_contrasts_cuts ----\n")
-  
-  cat("---- start cox_unadj_contrasts_overall ----\n")
-  cox_unadj_contrasts_overall <- coxcontrast(data_matched, cuts = c(0,maxfup))
-  write_csv(cox_unadj_contrasts_overall, fs::path(output_dir, "cox_unadj_contrasts_overall_rounded.csv"))
-  cat("---- end cox_unadj_contrasts_overall ----\n")
-  
-}
+if (cuts == "cuts") cuts_arg <- postbaselinecuts 
+if (cuts == "overall") cuts_arg <- c(0,maxfup)
 
-# cox adjusted
-if (type == "adj") {
-  
-  cat("---- start cox_adj_contrasts_cuts ----\n")
-  cox_adj_contrasts_cuts <- coxcontrast(data_matched, adj = TRUE, cuts = postbaselinecuts)
-  write_csv(cox_adj_contrasts_cuts, fs::path(output_dir, "cox_adj_contrasts_cuts_rounded.csv"))
-  cat("---- end cox_adj_contrasts_cuts ----\n")
-  
-  cat("---- start cox_adj_contrasts_overall ----\n")
-  cox_adj_contrasts_overall <- coxcontrast(data_matched, adj = TRUE, cuts = c(0,maxfup))
-  write_csv(cox_adj_contrasts_overall, fs::path(output_dir, "cox_adj_contrasts_overall_rounded.csv"))
-  cat("---- end cox_adj_contrasts_overall ----\n")
-  
-}
+cox_out <- coxcontrast(
+  data_matched, 
+  adj = type == "adj",
+  cuts = cuts_arg
+)
 
-cat("script complete")
+write_csv(cox_out, fs::path(output_dir, glue("cox_{type}_contrasts_{cuts}_rounded.csv")))
+
+cat(glue("---- Cox model complete! ----"), "\n")

@@ -23,7 +23,7 @@ source(here("analysis", "design.R"))
 
 source(here("lib", "functions", "utility.R"))
 
-source(here("analysis", "process_functions.R"))
+source(here("analysis", "process", "process_functions.R"))
 
 ## import command-line arguments ----
 
@@ -318,11 +318,15 @@ if (stage == "final") {
     filter(treated==1) %>%
     select(patient_id, trial_date) %>%
     write_csv(here("output", cohort, "match", "data_matched_treated.csv.gz"))
-  
+  # control
   data_matched %>%
     filter(treated==0) %>%
     select(patient_id, trial_date) %>%
     write_csv(here("output", cohort, "match", "data_matched_control.csv.gz"))
+  # unique patient ids for reading into noncoviddeathcause project yaml
+  data_matched %>%
+    distinct(patient_id) %>%
+    write_csv(here("output", cohort, "match", "data_matched_unique.csv.gz"))
   
   # summarise matched data by treatment group
   data_matched %>% filter(treated==0) %>%

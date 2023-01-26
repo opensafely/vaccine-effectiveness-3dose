@@ -40,10 +40,11 @@ args <- commandArgs(trailingOnly=TRUE)
 if(length(args)==0){
   # use for interactive testing
   cohort <- "mrna"
-  type <- "adj"
-  subgroup <- "all"
-  variant_option <- "split" # ignore, split, restrict (delta, transition, omicron)
-  outcome <- "covidadmitted"
+  type <- "unadj"
+  subgroup <- "vax3_type"
+  variant_option <- "ignore" # ignore, split, restrict (delta, transition, omicron)
+  outcome <- "cvddeath"
+  cuts <- "cuts"
   
 } else {
   cohort <- args[[1]]
@@ -51,6 +52,7 @@ if(length(args)==0){
   subgroup <- args[[3]]
   variant_option <- args[[4]]
   outcome <- args[[5]]
+  cuts <- args[[6]]
 }
 
 if (subgroup!="all" & variant_option != "ignore") 
@@ -241,12 +243,26 @@ coxcontrast <- function(data, adj = FALSE, cuts=NULL){
     data_cox %>%
     mutate(
       cox_obj = map(data, ~{
-        coxph(as.formula(cox_formula), data = .x, y=FALSE, robust=TRUE, id=patient_id, na.action="na.fail")
+        coxph(
+          as.formula(cox_formula), 
+          data = .x, 
+          y=FALSE, 
+          robust=TRUE, 
+          id=patient_id, 
+          na.action="na.fail"
+          )
       }),
       cox_obj_tidy = map(cox_obj, ~broom::tidy(.x)),
     ) %>%
     select(!!subgroup_sym, cox_obj_tidy) %>%
-    unnest(cox_obj_tidy) %>%
+    unnest(cox_obj_tidy) 
+  
+  if (!("robust.se" %in% names(data_cox))) {
+    # because robust.se column not created when all estimates are NA
+    data_cox <- data_cox %>% mutate(robust.se=NA_real_)
+  }
+  
+  data_cox %>%
     transmute(
       !!subgroup_sym,
       term,
@@ -255,40 +271,22 @@ coxcontrast <- function(data, adj = FALSE, cuts=NULL){
       coxhr.ll = exp(estimate + qnorm(0.025)*robust.se),
       coxhr.ul = exp(estimate + qnorm(0.975)*robust.se),
     )
-  data_cox
+  
   
 }
 
 # apply contrast functions ----
+cat(glue("---- Start fitting Cox model ----"), "\n")
 
-# cox unadjusted
-if (type == "unadj") {
-  
-  cat("---- start cox_unadj_contrasts_cuts ----\n")
-  cox_unadj_contrasts_cuts <- coxcontrast(data_matched, cuts = postbaselinecuts)
-  write_csv(cox_unadj_contrasts_cuts, fs::path(output_dir, "cox_unadj_contrasts_cuts_rounded.csv"))
-  cat("---- end cox_unadj_contrasts_cuts ----\n")
-  
-  # cat("---- start cox_unadj_contrasts_overall ----\n")
-  # cox_unadj_contrasts_overall <- coxcontrast(data_matched, cuts = c(0,maxfup))
-  # write_csv(cox_unadj_contrasts_overall, fs::path(output_dir, "cox_unadj_contrasts_overall_rounded.csv"))
-  # cat("---- end cox_unadj_contrasts_overall ----\n")
-  
-}
+if (cuts == "cuts") cuts_arg <- postbaselinecuts 
+if (cuts == "overall") cuts_arg <- c(0,maxfup)
 
-# cox adjusted
-if (type == "adj") {
-  
-  cat("---- start cox_adj_contrasts_cuts ----\n")
-  cox_adj_contrasts_cuts <- coxcontrast(data_matched, adj = TRUE, cuts = postbaselinecuts)
-  write_csv(cox_adj_contrasts_cuts, fs::path(output_dir, "cox_adj_contrasts_cuts_rounded.csv"))
-  cat("---- end cox_adj_contrasts_cuts ----\n")
-  
-  # cat("---- start cox_adj_contrasts_overall ----\n")
-  # cox_adj_contrasts_overall <- coxcontrast(data_matched, adj = TRUE, cuts = c(0,maxfup))
-  # write_csv(cox_adj_contrasts_overall, fs::path(output_dir, "cox_adj_contrasts_overall_rounded.csv"))
-  # cat("---- end cox_adj_contrasts_overall ----\n")
-  
-}
+cox_out <- coxcontrast(
+  data_matched, 
+  adj = type == "adj",
+  cuts = cuts_arg
+)
 
-cat("script complete")
+write_csv(cox_out, fs::path(output_dir, glue("cox_{type}_contrasts_{cuts}_rounded.csv")))
+
+cat(glue("---- Cox model complete! ----"), "\n")

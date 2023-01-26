@@ -84,14 +84,14 @@ merge_or_drop <- function(
        expo = expo_col
      )
      
-       df %>%
-        group_by(expo, outcome, covariate) %>%
-        count() %>%
-        ungroup() %>%
-         # expand the df to make sure 0 counts are captured
-complete(expo, outcome, covariate, fill = list(n = 0)) %>%
-        summarise(min_events = min(n)) %>%
-        pull(min_events)
+     df %>%
+       group_by(expo, outcome, covariate) %>%
+       count() %>%
+       ungroup() %>%
+       # expand the df to make sure 0 counts are captured
+       complete(expo, outcome, covariate, fill = list(n = 0)) %>%
+       summarise(min_events = min(n)) %>%
+       pull(min_events)
         
     }
     

@@ -89,11 +89,13 @@ events_lookup <- tribble(
   "covidemergency", "covidemergency_date", "COVID-19 A&E attendance",
   "covidemergencyhosp", "covidemergencyhosp_date", "COVID-19 A&E attendance with disharge to hospital",
   "noncoviddeath", "noncoviddeath_date", "Non-COVID-19 death",
+  "cvddeath", "cvddeath_date", "CVD-related non-COVID-19 death",
+  "cancerdeath", "cancerdeath_date", "Cancer-related non-COVID-19 death",
   "death", "death_date", "Any death",
   "fracture", "fracture_date", "Fracture"
 )
 
-outcomes <- c("postest",  "covidadmitted", "coviddeath", "noncoviddeath", "fracture")
+outcomes <- c("postest",  "covidadmitted", "coviddeath", "noncoviddeath", "cvddeath", "cancerdeath", "fracture")
 
 # define treatments ----
 
@@ -117,7 +119,8 @@ recoder <-
       `Third dose brand` = "vax3_type",
       `Prior SARS-CoV-2 infection` = "prior_covid_infection",
       `Primary course vaccine brand` = "vax12_type",
-      `Age` = "agegroup"
+      `Age` = "agegroup",
+      `Clinical vulnerability` = "cev_cv"
     ),
     status = c(
       `Unmatched`= "unmatched",
@@ -146,10 +149,15 @@ recoder <-
       `50-64 years` = "50-64",
       `65-79 years` = "65-79",
       `80+ years` = "80+"
+    ),
+    cev_cv = c(
+      `Not clinically at-risk` = "Not clinically at-risk",
+      `Clinically at-risk` = "Clinically at-risk",
+      `Clinically extremely vulnerable` = "Clinically extremely vulnerable"
     )
   )
 
-subgroups <- c("all", "vax3_type", "prior_covid_infection", "vax12_type", "agegroup")
+subgroups <- c("all", "prior_covid_infection", "vax12_type", "agegroup", "cev_cv") # , "vax3_type")
 
 
 ## follow-up time ----

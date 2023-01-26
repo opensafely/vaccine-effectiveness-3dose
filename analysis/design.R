@@ -117,7 +117,8 @@ recoder <-
       `Third dose brand` = "vax3_type",
       `Prior SARS-CoV-2 infection` = "prior_covid_infection",
       `Primary course vaccine brand` = "vax12_type",
-      `Age` = "agegroup"
+      `Age` = "agegroup",
+      `Clinical vulnerability` = "cev_cv"
     ),
     status = c(
       `Unmatched`= "unmatched",
@@ -146,10 +147,15 @@ recoder <-
       `50-64 years` = "50-64",
       `65-79 years` = "65-79",
       `80+ years` = "80+"
+    ),
+    cev_cv = c(
+      `Not clinically at-risk` = "Not clinically at-risk",
+      `Clinically at-risk` = "Clinically at-risk",
+      `Clinically extremely vulnerable` = "Clinically extremely vulnerable"
     )
   )
 
-subgroups <- c("all", "vax3_type", "prior_covid_infection", "vax12_type", "agegroup")
+subgroups <- c("all", "vax3_type", "prior_covid_infection", "vax12_type", "agegroup", "cev_cv")
 
 
 ## follow-up time ----

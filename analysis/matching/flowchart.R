@@ -113,16 +113,25 @@ flow_match_final <- flow_boxes %>%
   group_by(box_crit, box_descr) %>%
   summarise(n = sum(n), .groups = "keep")  %>%
   ungroup() %>%
-  transmute(
+  mutate(across(n, roundmid_any, to=threshold)) %>%
+  rename(
     # rename to match flowcharttreatedeligible
     criteria = box_descr,
-    crit = box_crit,
-    # round counts
-    n = roundmid_any(n, to=threshold)
+    crit = box_crit
   )
 
 flowchart_final_rounded <- bind_rows(
-  read_rds(here("output", "treated", "eligible", "flowchart_treatedeligible.rds")),
+  # read unrounded as rounding different (using ceiling_any in process_data.R)
+  read_rds(here("output", "treated", "eligible", "flowchart_treatedeligible.rds"))  %>%
+    # round to match flow_match_final
+    transmute(
+      criteria, crit, 
+      n = roundmid_any(n, to=threshold),
+      n_exclude = lag(n) - n,
+      pct_exclude = n_exclude/lag(n),
+      pct_all = n / first(n),
+      pct_step = n / lag(n),
+    ),
   flow_match_final
 ) %>%
   # for easy review, join back after release

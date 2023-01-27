@@ -73,6 +73,10 @@ combine_and_save <- function(model, filename) {
     ) %>%
     unnest(data) %>%
     select(-any_of(subgroups)) %>%
+    mutate(across(
+      starts_with(c("surv", "risk", "inc", "cml.rate", "irr", "cmlirr", "sr", "rd", "rr", "cox")),
+      round, digits=5
+    ))
     write_csv(fs::path(output_dir, glue("{filename_full}.csv")))
 }
 

@@ -138,7 +138,8 @@ flowchart_final_rounded <- bind_rows(
       pct_exclude = n_exclude/lag(n),
       pct_all = n / first(n),
       pct_step = n / lag(n),
-    ),
+    ) %>%
+    mutate(across(starts_with("pct_"), round, 3)),
   flow_match_final
 ) %>%
   # for easy review, join back after release

@@ -114,10 +114,6 @@ km_process <- function(.data, round_by){
     surv.se = surv * sqrt(cumsum(summand)), #greenwood's formula
     surv.ln.se = surv.se/surv,
     
-    ## standard errors on log scale
-    #surv.ll = exp(log(surv) + qnorm(0.025)*surv.ln.se),
-    #surv.ul = exp(log(surv) + qnorm(0.975)*surv.ln.se),
-    
     llsurv = log(-log(surv)),
     llsurv.se = sqrt((1 / log(surv)^2) * cumsum(summand)),
     
@@ -134,9 +130,10 @@ km_process <- function(.data, round_by){
     jcvi_group, time, lagtime, leadtime, interval,
     cml.event, cml.censor,
     n.risk, n.event, n.censor,
-    surv, surv.se, surv.ll, surv.ul,
     risk, risk.se, risk.ll, risk.ul
-  ) 
+  ) %>%
+    mutate(across(starts_with("risk"), round, 5))
+    
 }
 
 ## apply km_process ----
@@ -154,10 +151,6 @@ km_plot <- function(.data) {
         time=0,
         lagtime=0,
         leadtime=1,
-        #interval=1,
-        surv=1,
-        surv.ll=1,
-        surv.ul=1,
         risk=0,
         risk.ll=0,
         risk.ul=0,

@@ -56,7 +56,7 @@ for (c in cohorts) {
 }
 
 # reduce the matching rounds for testing
-# study_dates[["mrna"]]$control_extract_dates <- study_dates[["mrna"]]$control_extract_dates[1:2]
+# study_dates[["mrna"]]$control_extract_dates <- study_dates[["mrna"]]$control_extract_dates[1]
 
 # number of matching rounds to perform for each cohort
 

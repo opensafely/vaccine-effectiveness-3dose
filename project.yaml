@@ -915,6 +915,15 @@ actions:
         csv: output/mrna/match/coverage/*.csv
         png: output/mrna/match/coverage/*.png
 
+  flowchart:
+    run: r:latest analysis/matching/flowchart.R
+    needs:
+    - process_treated
+    - process_controlfinal_mrna
+    outputs:
+      moderately_sensitive:
+        flowchart_final: output/mrna/flowchart/flowchart_final_rounded.csv
+
   ## # # # # # # # # # # # # # # # # # # # 
   ## Causes of non-COVID death data 
   ## # # # # # # # # # # # # # # # # # # # 

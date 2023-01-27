@@ -529,6 +529,18 @@ actions_list <- splice(
         
         action_coverage(x),
         
+        action(
+          name = "flowchart",
+          run = glue("r:latest analysis/matching/flowchart.R"),
+          needs = namelesslst(
+            "process_treated",
+            "process_controlfinal_mrna"
+            ),
+          moderately_sensitive = lst(
+            flowchart_final = "output/mrna/flowchart/flowchart_final_rounded.csv"
+          )
+        ),
+        
         comment("# # # # # # # # # # # # # # # # # # #",
                 "Causes of non-COVID death data",
                 "# # # # # # # # # # # # # # # # # # #"),

@@ -58,15 +58,23 @@ flow_boxes <- tribble(
   "H", "Unboosted up to recruitment end, matched as control",
 )
 
+# read data_treatedeligible_matchstatus to count unmatched treated individuals (we don't count unmatched controls)
+data_treatedeligible_matchstatus <- readr::read_rds(here("output", cohort, "match", "data_treatedeligible_matchstatus.rds")) %>%
+  select(patient_id, treated, matched, vax3_date)
+
 # reshape so one row per patient, and logical columns to indicate if matched as treated, control or both
 data_matched <- readr::read_rds(here("output", cohort, "match", "data_matched.rds")) %>%
-  select(patient_id, treated, vax3_date) %>%
+  select(patient_id, treated) %>%
   mutate(matched = 1) %>%
   pivot_wider(
     names_from = treated,
     values_from = matched
   ) %>%
-  rename("treated" = "1", "control" = "0") 
+  rename("treated" = "1", "control" = "0") %>%
+  full_join(data_treatedeligible_matchstatus, by = c("patient_id", "treated")) %>%
+  mutate(across(c(treated, control, matched), ~ replace_na(as.logical(.x), replace=FALSE))) %>%
+  mutate(treated=matched) %>%
+  select(-matched)
 
 cat("Check there are the same number of treated and control:\n")
 data_matched %>%
@@ -77,8 +85,7 @@ data_matched %>%
   print()
 
 # categorise individuals
-data_match_flow  <- data_matched %>%
-  mutate(across(c(treated, control), ~ replace_na(as.logical(.x), replace=FALSE)))  %>%
+data_match_flow  <- data_matched  %>%
   mutate(
     crit = case_when(
       # those who are vaccinated on day 1 of recruitment

@@ -43,21 +43,17 @@ metaparams <-
 subgroups <- metaparams %>% distinct(subgroup) %>% unlist() %>% unname()
 
 # combine and save outputs ----
-combine_and_save <- function(model, filename) {
-  
-  filename_full <- glue("{model}_{filename}_rounded")
+combine_and_save <- function(model, filenames) {
   
   metaparams %>%
+    uncount(length(filenames), .id="filename") %>% 
+    mutate(across(filename, ~filenames[.x])) %>%
     mutate(
       data = pmap(
-        list(cohort, subgroup, variant_option, outcome), 
-        function(cohort, subgroup, variant_option, outcome)  {
-          dat <- try(read_csv(here("output", cohort, "models", model, subgroup, variant_option, outcome, glue("{filename_full}.csv")))) 
-          if (
-            inherits(dat, "try-error") 
-            # add the following line for now as the adjusted cox models with split follow-up time having memory issues
-            | (model == "cox_adj" & variant_option == "split") 
-            ) {
+        list(cohort, filename, subgroup, variant_option, outcome), 
+        function(cohort, filename, subgroup, variant_option, outcome)  {
+          dat <- try(read_csv(here("output", cohort, "models", model, subgroup, variant_option, outcome, glue("{model}_{filename}_rounded.csv")))) 
+          if (inherits(dat, "try-error")) {
             dat <- tibble()
           } else {
             dat <- dat %>%
@@ -77,21 +73,15 @@ combine_and_save <- function(model, filename) {
       starts_with(c("surv", "risk", "inc", "cml.rate", "irr", "cmlirr", "sr", "rd", "rr", "cox")),
       round, digits=5
     )) %>%
-    write_csv(fs::path(output_dir, glue("{filename_full}.csv")))
+    write_csv(fs::path(output_dir, glue("{model}_rounded.csv")))
 }
 
 
 # km outputs
-for (i in c("estimates", "contrasts_daily", "contrasts_cuts", "contrasts_overall")) {
-  combine_and_save(model="km", filename = i) 
-}
+combine_and_save(model="km", filenames = c("estimates", "contrasts_daily", "contrasts_cuts", "contrasts_overall")) 
 # cox outputs
-for (i in c("contrasts_cuts", "contrasts_overall")) {
-  for (m in c("unadj", "adj")) {
-    combine_and_save(model=glue("cox_{m}"), filename = i) 
-  }
-}
-
+combine_and_save(model="cox_unadj", filenames = c("contrasts_cuts", "contrasts_overall"))
+combine_and_save(model="cox_adj", filenames = c("contrasts_cuts", "contrasts_overall"))
 
 ## move km plots to single folder ----
 fs::dir_create(here("output", cohort, "models", "combined"))

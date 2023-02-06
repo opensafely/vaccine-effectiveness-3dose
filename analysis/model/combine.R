@@ -45,14 +45,24 @@ subgroups <- metaparams %>% distinct(subgroup) %>% unlist() %>% unname()
 # combine and save outputs ----
 combine_and_save <- function(model, filenames) {
   
+  if (is.null(filenames)) {
+    metaparams <- metaparams %>%
+      mutate(filename="")
+  } else {
+    metaparams <- metaparams %>%
+      uncount(length(filenames), .id="filename") %>% 
+      mutate(across(filename, ~filenames[.x]))
+  }
+  
+  model_folder <- str_remove(model, "_contrasts|_estimates")
+  
   metaparams %>%
-    uncount(length(filenames), .id="filename") %>% 
-    mutate(across(filename, ~filenames[.x])) %>%
     mutate(
       data = pmap(
         list(cohort, filename, subgroup, variant_option, outcome), 
         function(cohort, filename, subgroup, variant_option, outcome)  {
-          dat <- try(read_csv(here("output", cohort, "models", model, subgroup, variant_option, outcome, glue("{model}_{filename}_rounded.csv")))) 
+          if (filename != "") filename <- paste0("_", filename)
+          dat <- try(read_csv(here("output", cohort, "models", model_folder, subgroup, variant_option, outcome, glue("{model}{filename}_rounded.csv")))) 
           if (inherits(dat, "try-error")) {
             dat <- tibble()
           } else {
@@ -78,10 +88,11 @@ combine_and_save <- function(model, filenames) {
 
 
 # km outputs
-combine_and_save(model="km", filenames = c("estimates", "contrasts_daily", "contrasts_cuts", "contrasts_overall")) 
+combine_and_save(model="km_estimates", filenames = NULL) 
+combine_and_save(model="km_contrasts", filenames = c("daily", "cuts", "overall")) 
 # cox outputs
-combine_and_save(model="cox_unadj", filenames = c("contrasts_cuts", "contrasts_overall"))
-combine_and_save(model="cox_adj", filenames = c("contrasts_cuts", "contrasts_overall"))
+combine_and_save(model="cox_unadj_contrasts", filenames = c("cuts", "overall"))
+combine_and_save(model="cox_adj_contrasts", filenames = c("cuts", "overall"))
 
 ## move km plots to single folder ----
 fs::dir_create(here("output", cohort, "models", "combined"))
@@ -164,17 +175,23 @@ plot_estimates <- function(.data, estimate, estimate.ll, estimate.ul, name){
 }
 
 # read data and create plots ----
-km_contrasts_overall <- read_csv(fs::path(output_dir, glue("km_contrasts_overall_rounded.csv"))) 
+km_contrasts_overall <- 
+  read_csv(fs::path(output_dir, glue("km_contrasts_rounded.csv"))) %>%
+  filter(filename == "overall")
 km_contrasts_overall %>% plot_estimates(rd, rd.ll, rd.ul, "km_rd")
 km_contrasts_overall %>% plot_estimates(rr, rr.ll, rr.ul, "km_rr")
 
 
-cox_unadj_contrasts_overall <- read_csv(fs::path(output_dir, glue("cox_unadj_contrasts_overall_rounded.csv"))) %>%
+cox_unadj_contrasts_overall <- 
+  read_csv(fs::path(output_dir, glue("cox_unadj_contrasts_rounded.csv"))) %>%
+  filter(filename == "overall") %>%
   mutate(variant=str_extract(term, str_c(variant_dates$variant, collapse = "|"))) %>%
   mutate(across(variant, ~if_else(is.na(.x), "ignore", .x)))
 cox_unadj_contrasts_overall %>% plot_estimates(coxhr, coxhr.ll, coxhr.ul, "cox_unadj")
 
-cox_adj_contrasts_overall <- read_csv(fs::path(output_dir, glue("cox_adj_contrasts_overall_rounded.csv"))) %>%
+cox_adj_contrasts_overall <- 
+  read_csv(fs::path(output_dir, glue("cox_adj_contrasts_rounded.csv"))) %>%
+  filter(filename == "overall") %>%
   filter(str_detect(term, "^treated")) %>%
   mutate(variant=str_extract(term, str_c(variant_dates$variant, collapse = "|"))) %>%
   mutate(across(variant, ~if_else(is.na(.x), "ignore", .x)))

@@ -89,7 +89,7 @@ combine_and_save <- function(model, filenames) {
 
 # km outputs
 combine_and_save(model="km_estimates", filenames = NULL) 
-combine_and_save(model="km_contrasts", filenames = c("daily", "cuts", "overall")) 
+combine_and_save(model="km_contrasts", filenames = c("cuts", "overall")) 
 # cox outputs
 combine_and_save(model="cox_unadj_contrasts", filenames = c("cuts", "overall"))
 combine_and_save(model="cox_adj_contrasts", filenames = c("cuts", "overall"))

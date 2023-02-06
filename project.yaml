@@ -3480,7 +3480,6 @@ actions:
     - cox_adj_mrna_all_split_cancerdeath
     - cox_adj_mrna_all_restrict_cancerdeath
     - cox_adj_mrna_all_ignore_fracture
-    - cox_adj_mrna_all_split_fracture
     - cox_adj_mrna_all_restrict_fracture
     - cox_adj_mrna_prior_covid_infection_ignore_postest
     - cox_adj_mrna_prior_covid_infection_ignore_covidadmitted

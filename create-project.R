@@ -385,7 +385,8 @@ action_combine <- function(
             km_args %>% filter(model=="km") %>% mutate(suffix=""),
             km_args %>% filter(str_detect(model,"cox")) %>% mutate(suffix=""),
             km_args %>% filter(str_detect(model,"cox")) %>% mutate(suffix="_overall")
-            ),
+            ) %>%
+            filter(!(model == "cox_adj" & subgroup == "all" & variant_option == "split" & outcome == "fracture" & suffix == "")),
           "{model}_{cohort}_{subgroup}_{variant_option}_{outcome}{suffix}"
         )
       )

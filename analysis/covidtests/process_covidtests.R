@@ -243,8 +243,8 @@ data_split <- local({
   # generate dataset with postbaselinecuts
   fup_split <- data_matched %>%
     select(new_id) %>%
-    uncount(weights = length(postbaselinecuts)-1, .id="period_id") %>%
-    mutate(fupstart_time = postbaselinecuts[period_id]) %>%
+    uncount(weights = length(covidtestcuts)-1, .id="period_id") %>%
+    mutate(fupstart_time = covidtestcuts[period_id]) %>%
     droplevels() %>%
     select(new_id, period_id, fupstart_time) 
   
@@ -254,7 +254,7 @@ data_split <- local({
       data1 = data_matched,
       data2 = data_matched,
       id = new_id,
-      tstart = 0,
+      tstart = covidtestcuts[1],
       tstop = tte_censor
     ) %>%
     # add post-treatment periods
@@ -365,28 +365,32 @@ data_anytest_sum <- data_anytest_long %>%
     by = c("patient_id", "trial_date", "anytest_cut" = "fup_cut")
   ) %>%
   # join data_split for persondays of follow-up per period
-  left_join(
+  right_join(
     data_split %>% select(patient_id, trial_date, treated, fup_cut, persondays),
     by = c("patient_id", "trial_date", "treated", "anytest_cut" = "fup_cut")
   ) %>%
-  # label periods as pre or post baseline
-  mutate(
-    period = factor(if_else(
-      as.character(anytest_cut) %in% covidtestcuts_labels[1:fup_params$prebaselineperiods],
-      "prebaseline",
-      "postbaseline"
-    ), levels = c("prebaseline", "postbaseline")
-    )
-  ) %>%
-  # fill in persondays for prebaseline periods 
-  # (must be postbaselinedays, otherwise they wouldn't be eligible)
   mutate(across(
-    persondays,
-    ~if_else(
-      period=="prebaseline",
-      as.integer(postbaselinedays),
-      persondays
-    )))
+    -c(patient_id, trial_date, treated, anytest_cut, persondays),
+    ~replace_na(.x, replace = 0)
+  )) #%>%
+  # # label periods as pre or post baseline
+  # mutate(
+  #   period = factor(if_else(
+  #     as.character(anytest_cut) %in% covidtestcuts_labels[1:fup_params$prebaselineperiods],
+  #     "prebaseline",
+  #     "postbaseline"
+  #   ), levels = c("prebaseline", "postbaseline")
+  #   )
+  # ) %>%
+  # # fill in persondays for prebaseline periods 
+  # # (must be postbaselinedays, otherwise they wouldn't be eligible)
+  # mutate(across(
+  #   persondays,
+  #   ~if_else(
+  #     period=="prebaseline",
+  #     as.integer(postbaselinedays),
+  #     persondays
+  #   )))
 
 
 # checks ----
@@ -407,12 +411,10 @@ data_anytest_sum %>%
 cat("When persondays=NA (i.e. patient censored before period), check sums of censored counts are always zero:\n")
 data_anytest_sum %>%
   filter(is.na(persondays)) %>%
-  # group_by(anytest_cut, persondays) %>%
   summarise(across(
     c(sum_anytest, sum_postest, sum_symptomatic, sum_firstpostest, sum_lftonly, sum_pcronly, sum_both),
     list(min=min, max=max)
   )) %>%
-  # ungroup() %>%
   pivot_longer(
     cols=starts_with("sum"),
     names_pattern = "sum_(.*)_(.*)",
@@ -452,7 +454,7 @@ plot_function <- function(result) {
   
   p <- data_anytest_sum %>%
     mutate(percent = 100*!!sym(glue("sum_{result}_uncensored"))/!!sym(result)) %>%
-    ggplot(aes(x=percent, colour=period)) +
+    ggplot(aes(x=percent)) +
     geom_freqpoly(binwidth=1) +
     facet_wrap(~anytest_cut, scales = "free_y", nrow=2) +
     theme_bw() +
@@ -485,6 +487,7 @@ data_anytest_sum %>%
   geom_freqpoly(binwidth = 1) +
   facet_grid(anytest_cut~name) +
   scale_color_discrete(name=NULL) +
+  labs(x = "Number of tests") +
   theme_bw() +
   theme(legend.position = "bottom")
 ggsave(

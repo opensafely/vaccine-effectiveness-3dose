@@ -43,7 +43,7 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("")) {
   ## Import released data ----
   release_dir <- "release20230105"
   
-  output_dir <- here(release_dir, "figures")
+  output_dir <- here("manuscript")
   fs::dir_create(output_dir)
   
   data_coverage_rounded <- read_csv(here(release_dir, "matching", "data_coverage.csv"))
@@ -196,7 +196,7 @@ ggsave(plot_coverage_n, filename="coverage_count.png", path=output_dir)
 plot_coverage_cumuln <-
   data_plot %>%
   ggplot()+
-  geom_col(
+  geom_area(
     aes(
       x=vax3_date+0.5,
       y=cumuln,
@@ -233,6 +233,7 @@ plot_coverage_cumuln <-
   theme_minimal()+
   theme(
     axis.line.x.bottom = element_line(),
+    axis.title.y = element_text(margin = margin(r=10)),
     axis.text.x.top=element_text(hjust=0),
     strip.text.y.right = element_text(angle = 0),
     axis.ticks.x=element_line(),

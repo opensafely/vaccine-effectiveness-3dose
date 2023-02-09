@@ -323,6 +323,23 @@ data_anytest_long <- data_extract %>%
   filter(!is.na(anytest_cut)) %>%
   arrange(patient_id, trial_date, anytest_cut) 
 
+
+data_split_tests <- data_extract %>%
+  select(patient_id, trial_date, matches("\\w+test_\\d+_n")) %>%
+  pivot_longer(
+    cols = matches("\\w+test_\\d+_n"),
+    names_pattern = "(.*test)_(.*)_n",
+    names_to = c(".value", "fup_cut")
+  ) %>%
+  mutate(across(
+    fup_cut, 
+    ~factor(as.integer(.x)+1, # +1 because python starts at 0
+            levels = seq_along(covidtestcuts_labels),
+            labels = covidtestcuts_labels
+    )))
+
+rm(data_extract)
+
 # calculate the sum of events per period
 data_anytest_sum <- data_anytest_long %>%
   # sum the number of tests per period
@@ -349,19 +366,7 @@ data_anytest_sum <- data_anytest_long %>%
   ungroup() %>%
   # join the total number of tests per period (extracted with returning="number_of_matches_in_period" in study definition)
   left_join(
-    data_extract %>%
-      select(patient_id, trial_date, matches("\\w+test_\\d+_n")) %>%
-      pivot_longer(
-        cols = matches("\\w+test_\\d+_n"),
-        names_pattern = "(.*test)_(.*)_n",
-        names_to = c(".value", "fup_cut")
-      ) %>%
-      mutate(across(
-        fup_cut, 
-        ~factor(as.integer(.x)+1, # +1 because python starts at 0
-                levels = seq_along(covidtestcuts_labels),
-                labels = covidtestcuts_labels
-        ))),
+    data_split_tests,
     by = c("patient_id", "trial_date", "anytest_cut" = "fup_cut")
   ) %>%
   # join data_split for persondays of follow-up per period
@@ -372,26 +377,9 @@ data_anytest_sum <- data_anytest_long %>%
   mutate(across(
     -c(patient_id, trial_date, treated, anytest_cut, persondays),
     ~replace_na(.x, replace = 0)
-  )) #%>%
-  # # label periods as pre or post baseline
-  # mutate(
-  #   period = factor(if_else(
-  #     as.character(anytest_cut) %in% covidtestcuts_labels[1:fup_params$prebaselineperiods],
-  #     "prebaseline",
-  #     "postbaseline"
-  #   ), levels = c("prebaseline", "postbaseline")
-  #   )
-  # ) %>%
-  # # fill in persondays for prebaseline periods 
-  # # (must be postbaselinedays, otherwise they wouldn't be eligible)
-  # mutate(across(
-  #   persondays,
-  #   ~if_else(
-  #     period=="prebaseline",
-  #     as.integer(postbaselinedays),
-  #     persondays
-  #   )))
+  )) 
 
+rm(data_split, data_split_tests, data_anytest_long)
 
 # checks ----
 

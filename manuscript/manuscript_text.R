@@ -7,8 +7,6 @@ library(flextable)
 source(here("analysis", "design.R"))
 source(here("lib", "functions", "utility.R"))
 
-source(here("manuscript", "functions.R"))
-
 # import data
 
 table1_rounded <- read_delim(
@@ -16,28 +14,37 @@ table1_rounded <- read_delim(
   delim = "\t", escape_double = FALSE, trim_ws = TRUE
 )
 
-km_contrasts_overall_rounded <- read_csv(
-  here("release20230105", "estimates", "km_contrasts_overall_rounded.csv")
+km_contrasts_rounded <- read_csv(
+  here("release20230207", "km_contrasts_rounded.csv")
   )
 
-km_estimates_rounded <- read_csv(
-  here("release20230105", "estimates", "km_estimates_rounded.csv")
+cox_contrasts_rounded <- read_csv(
+  here("release20230207", "cox_contrasts_rounded.csv")
+  )
+
+km_cinc4dose_rounded <- read_csv(
+  here("release20230207", "km_cinc4dose_rounded.csv")
 )
 
-cox_unadj_contrasts_cuts_rounded <- read_csv(
-  here("release20230105", "estimates", "cox_unadj_contrasts_cuts_rounded.csv")
-  )
-
-cox_adj_contrasts_cuts_rounded <- read_csv(
-  here("release20230105", "estimates", "cox_adj_contrasts_cuts_rounded.csv")
-  )
-
+flowchart_final_rounded <- read_csv(
+  here("release20230207", "flowchart_final_rounded.csv")
+)
 
 # STUDY POPULATION
 table1_rounded %>%
   filter(variable=="N", by == "Three doses") %>%
   pull(n) %>%
   scales::comma(accuracy = 1)
+
+flowchart_final_rounded %>% 
+  mutate(across(starts_with("n"), scales::comma, accuary=1)) %>%
+  mutate(across(starts_with("pct"), ~round(100*.x, 1))) %>%
+  transmute(
+    crit,
+    n = if_else(!is.na(n_exclude), paste0(n, " (", pct_all, "%)"), n),
+    n_exclude = if_else(!is.na(n_exclude), paste0(n_exclude, " (", pct_exclude, "%)"), n_exclude)
+  ) %>%
+  print(n=Inf)
 
 # create table and output to word doc
 
@@ -71,8 +78,12 @@ doc <- print(doc, target = here("manuscript", "table1.docx"))
 # MAIN ANALYSIS
 
 # event counts and persontime
-table_fu <- km_contrasts_overall_rounded %>%
-  filter(subgroup=="all", variant_option == "ignore") %>%
+table_fu <- km_contrasts_rounded %>%
+  filter(
+    filename == "overall",
+    subgroup=="all", 
+    variant_option == "ignore"
+    ) %>%
   select(outcome, starts_with(c("persontime", "n.event"))) %>%
   mutate(across(starts_with("persontime"), ~.x/365.25)) %>%
   pivot_longer(
@@ -81,7 +92,7 @@ table_fu <- km_contrasts_overall_rounded %>%
     names_to = c("name", "group")
   ) %>%
   group_by(outcome,name) %>%
-  summarise(value=scales::comma(sum(value), accuracy = 1)) %>%
+  summarise(value=scales::comma(sum(value), accuracy = 1), .groups = "keep") %>%
   ungroup() %>%
   pivot_wider(
     names_from = name,
@@ -90,8 +101,12 @@ table_fu <- km_contrasts_overall_rounded %>%
   
 
 # risk and risk differences
-table_risk <- km_contrasts_overall_rounded %>%
-  filter(subgroup=="all", variant_option == "ignore") %>%
+table_risk <- km_contrasts_rounded %>%
+  filter(
+    filename == "overall",
+    subgroup=="all", 
+    variant_option == "ignore"
+  ) %>%
   select(outcome, starts_with(c("risk", "rd"))) %>%
   select(-ends_with(".se")) %>%
   pivot_longer(
@@ -116,10 +131,23 @@ table_risk <- km_contrasts_overall_rounded %>%
     values_from = risk
   )
 
-doc <- officer::read_docx() 
+table_hr <- cox_contrasts_rounded %>%
+  filter(
+    filename == "overall",
+    subgroup=="all", 
+    variant_option == "ignore",
+    model == "cox_adj",
+    term == "treated"
+    ) %>%
+  mutate(across(starts_with("coxhr"), ~format(round(.x, 2), nsmall = 2))) %>%
+  transmute(
+    outcome, 
+    hr = paste0(coxhr, " (", coxhr.ll, ", ", coxhr.ul, ")")
+    )
 
 table_6month_out <- table_fu %>%
   left_join(table_risk, by = "outcome") %>%
+  left_join(table_hr, by = "outcome") %>%
   mutate(across(
     outcome, 
     factor, 
@@ -133,24 +161,33 @@ table_6month_out <- table_fu %>%
     `Person-time (years)` = persontime,
     `Risk in the unboosted` = risk_unboosted,
     `Risk in the boosted` = risk_boosted,
-    `Risk difference (boosted - unboosted)` = rd
-  ) %>%
-  mutate(`Vaccine effectiveness (100x(1 - hazard ratio))` = NA_character_) %>%
-  flextable() %>%
-  width(j=1:6, width=15/6, unit="cm") 
+    `Risk difference (boosted - unboosted)` = rd,
+    `Hazard ratio` = hr
+  ) 
 
-doc <- flextable::body_add_flextable(doc, value = table_6month_out, split = FALSE)  
-
+doc <- officer::read_docx() 
+doc <- flextable::body_add_flextable(
+  doc, 
+  value = flextable(table_6month_out) %>% width(j=1:ncol(table_6month_out), width=15/ncol(table_6month_out), unit="cm"), 
+  split = FALSE
+  )  
 doc <- print(doc, target = here("manuscript", "table_6month.docx"))
 
+
+# create figure ans tables of estimates
+source(here("manuscript", "functions.R"))
 # plots of hazard ratios
 combine_plot(subgroup_select = "all", variant_option_select = "ignore")
 combine_plot(subgroup_select = "all", variant_option_select = "split")
 combine_plot(subgroup_select = "agegroup", variant_option_select = "ignore")
 combine_plot(subgroup_select = "prior_covid_infection", variant_option_select = "ignore")
+combine_plot(subgroup_select = "cev_cv", variant_option_select = "ignore")
+combine_plot(subgroup_select = "vax12_type", variant_option_select = "ignore")
 
 # tables of hazard ratios
 hr_table(subgroup_select = "all", variant_option_select = "ignore")
 hr_table(subgroup_select = "all", variant_option_select = "split")
 hr_table(subgroup_select = "agegroup", variant_option_select = "ignore")
 hr_table(subgroup_select = "prior_covid_infection", variant_option_select = "ignore")
+hr_table(subgroup_select = "cev_cv", variant_option_select = "ignore")
+hr_table(subgroup_select = "vax12_type", variant_option_select = "ignore")

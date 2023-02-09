@@ -29,12 +29,19 @@ plot_params <- function(.data, colour_var) {
     
   }
   
+  # str_wrap not working nicely with outcome names, so use the following:
+  # replace the first space with a new line
+  outcome_levels_wrapped <- str_replace(levels(.data$outcome_descr), "\\s", "\\\n")
+  # replace the last space with a new line
+  outcome_levels_wrapped <- str_replace(stringi::stri_reverse(outcome_levels_wrapped), "\\s", "xxx")
+  outcome_levels_wrapped <- str_replace(stringi::stri_reverse(outcome_levels_wrapped), "xxx", "\\\n")
+  
   .data <- .data %>%
     mutate(across(
       outcome_descr,
       factor,
       levels = levels(.data$outcome_descr),
-      labels = str_replace(levels(.data$outcome_descr), "\\s", "\\\n")
+      labels = outcome_levels_wrapped
     ))
   
   return(
@@ -63,7 +70,7 @@ plot_theme <- function(...) {
       panel.spacing = unit(0.8, "lines"),
       strip.background = element_blank(),
       strip.placement = "outside",
-      strip.text.y.left = element_text(angle = 90),
+      strip.text.y.left = element_text(angle = 90, size = 10),
       
       plot.title = element_text(hjust = 0),
       plot.title.position = "plot",
@@ -71,7 +78,7 @@ plot_theme <- function(...) {
       plot.caption = element_text(hjust = 0, face= "italic"),
       
       axis.title.x = element_text(margin = margin(t = 10)),
-      axis.title.y.left = element_text(margin = margin(r=10)),
+      axis.title.y.left = element_text(margin = margin(r=2.5)),
       axis.title.y.right = element_text(margin = margin(l=10)),
       legend.box = "vertical"
       
@@ -94,24 +101,24 @@ km_plot <- function(.data, colour_var="variant_descr"#,
   if (n_levs == 1) leg.pos <- "none" else leg.pos <- "bottom"
 
   p <- .data %>%
-    # filter(time <= end_day) %>%
     group_by(treated_descr, outcome_descr, !! sym(colour_var)) %>%
     group_modify(
       ~add_row(
         .x,
         time=0,
-        lagtime=0,
-        leadtime=1,
         #interval=1,
-        surv=1,
-        surv.ll=1,
-        surv.ul=1,
+        # surv=1,
+        # surv.ll=1,
+        # surv.ul=1,
         risk=0,
         risk.ll=0,
         risk.ul=0,
         .before=0
       )
     ) %>%
+    # use lagtime for confident intervals, use default=0 as confidence interval = c(0,0) at time 0
+    # avoids error about removing x rows with missing values
+    mutate(lagtime = lag(time, default=0)) %>%
     ungroup() %>%
     mutate(across(starts_with("risk"), ~1000*.x)) %>%
     ggplot(aes(
@@ -163,6 +170,7 @@ km_plot <- function(.data, colour_var="variant_descr"#,
   
 }
 
+
 #####################################################################################
 hr_plot <- function(.data, colour_var="variant_descr") {
   
@@ -187,18 +195,18 @@ hr_plot <- function(.data, colour_var="variant_descr") {
     )
   }
   
-  model_levels <- levels(.data$model)
-  if (length(model_levels) == 1) {
-    alpha_palette <- c("unadjusted" = 0.8, "adjusted" = 0.8)[model_levels]
-    scale_alpha_custom <- scale_alpha_manual(guide = "none", values = alpha_palette)
-  } else {
-    alpha_palette <- c("unadjusted" = 0.4, "adjusted" = 0.8)[model_levels]
-    scale_alpha_custom <- scale_alpha_manual(name = NULL, values = alpha_palette)
-  }
+  # model_levels <- levels(.data$model)
+  # if (length(model_levels) == 1) {
+  #   alpha_palette <- c("unadjusted" = 0.8, "adjusted" = 0.8)[model_levels]
+  #   scale_alpha_custom <- scale_alpha_manual(guide = "none", values = alpha_palette)
+  # } else {
+  #   alpha_palette <- c("unadjusted" = 0.4, "adjusted" = 0.8)[model_levels]
+  #   scale_alpha_custom <- scale_alpha_manual(name = NULL, values = alpha_palette)
+  # }
   
   p <- .data %>%
     ggplot(
-      aes(x = midpoint, colour = !! sym(colour_var), alpha = model)
+      aes(x = midpoint, colour = !! sym(colour_var))
     ) +
     geom_hline(aes(yintercept=1), colour='grey') +
     geom_linerange(
@@ -207,6 +215,7 @@ hr_plot <- function(.data, colour_var="variant_descr") {
     ) +
     geom_point(
       aes(y = coxhr),
+      alpha = 1, size = 0.75,
       position = position_dodge(width = position_dodge_val),
       size = 2
     ) +
@@ -236,7 +245,7 @@ hr_plot <- function(.data, colour_var="variant_descr") {
       )
     ) +
     scale_color_manual(name = NULL, values = colour_palette) +
-    scale_alpha_custom +
+    # scale_alpha_custom +
     # scale_shape_manual(name = NULL, values = shape_palette) +
     # theme_bw(base_size = 12) +
     plot_theme() +
@@ -267,32 +276,52 @@ combine_plot <- function(
     colour_var <- "subgroup_level"
   }
   
-  A <- km_estimates_rounded %>%
+  # km plot
+  A <- km_contrasts_rounded %>%
     filter(
+      filename == "daily",
       subgroup %in% subgroup_select,
       variant_option %in% variant_option_select
       ) %>%
+    select(
+      outcome, subgroup, subgroup_level,
+      variant_option, variant, 
+      time = period_end,
+      starts_with("risk")
+      ) %>%
+    pivot_longer(
+      cols = starts_with("risk"),
+      names_pattern = "(.*)_(\\d)",
+      names_to = c(".value", "treated")
+    ) %>%
+    mutate(across(treated, as.integer)) %>%
     add_descr() %>%
     droplevels() %>%
     km_plot(colour_var)
   
+  # cox plot
+  cox_data <- cox_contrasts_rounded %>%
+    filter(filename == "cuts", model == "cox_adj")
+  
+  model <- "adjusted"
+  
   if (variant_option_select == "split") {
     
-    cox_data <- cox_unadj_contrasts_cuts_rounded %>%
-      mutate(variant = str_extract(term, "delta|transition|omicron")) %>%
-      mutate(across(term, ~str_trim(str_remove(.x, ";\\sdelta|;\\stransition|;\\somicron"), side="right"))) %>%
-      mutate(across(variant, ~if_else(is.na(.x), "ignore", .x)))
+    cox_data <- bind_rows(
+      cox_data,
+      # temporarily use unadjusted estimates for fracture, as the adjusted models
+      # failed due to memory issues
+      cox_contrasts_rounded %>%
+        filter(filename == "cuts", model == "cox_unadj", outcome == "fracture") 
+    )
       
-    model <- "unadjusted"
-    
-  } else {
-    
-    cox_data <- cox_adj_contrasts_cuts_rounded %>%
-      mutate(variant = "ignore")
-    
-    model <- "adjusted"
-    
   }
+  
+  # derive variant info
+  cox_data <- cox_data %>%
+    mutate(variant = str_extract(term, "delta|transition|omicron")) %>%
+    mutate(across(term, ~str_trim(str_remove(.x, ";\\sdelta|;\\stransition|;\\somicron"), side="right"))) %>%
+    mutate(across(variant, ~if_else(is.na(.x), "ignore", .x)))
   
   B <- cox_data %>%
     filter(
@@ -320,8 +349,11 @@ combine_plot <- function(
   }
   
   p <- cowplot::plot_grid(
-    A, B,
-    labels = c("A", "B"), align = "v"
+    # the NULL is reduce the space between the plots
+    A, NULL, B,
+    rel_widths = c(1, -0.15, 1),
+    nrow = 1,
+    labels = c("A", "", "B"), align = "v"
   )
   
   if ((variant_option_select != "ignore") | (subgroup_select != "all")) {
@@ -336,7 +368,7 @@ combine_plot <- function(
   ggsave(
     here("manuscript", glue("plot_{subgroup_select}_{variant_option_select}.png")),
     plot = p,
-    width = 24, height = 16, units = "cm"
+    width = 17, height = 22, units = "cm"
   )
 
   return(p)

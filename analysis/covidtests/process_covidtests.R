@@ -236,12 +236,15 @@ data_anytest_sum <- list()
 
 for (i in 1:split_n) {
   
+  cat(paste0("Split: ", i), "\n")
   
   data_anytest_sum[[i]] <- local({
     
+    cat("Read and sample data_macthed\n")
     data_matched <- read_rds(here("output", cohort, "match", "data_matched.rds")) %>%
       right_join(data_extract[[i]] %>% distinct(patient_id))
     
+    cat("Process data_matched\n")
     # derive censor date and time until censoring
     data_matched <- data_matched %>%
       mutate(
@@ -262,6 +265,9 @@ for (i in 1:split_n) {
       mutate(new_id = cur_group_id()) %>% 
       ungroup()
     
+    data_matched %>% summary()
+    
+    cat("Derive fup_split\n")
     # generate dataset with postbaselinecuts
     fup_split <- data_matched %>%
       select(new_id) %>%
@@ -270,6 +276,9 @@ for (i in 1:split_n) {
       droplevels() %>%
       select(new_id, period_id, fupstart_time) 
     
+    fup_split %>% summary()
+    
+    cat("Derive data_split\n")
     # split time until censoring by postbaseline cuts
     data_split <-
       tmerge(
@@ -299,6 +308,7 @@ for (i in 1:split_n) {
       ) %>%
       as_tibble()
     
+    cat("Derive data_anytest_long\n")
     # reshape data_extract to data_anytest_long
     data_anytest_long <- data_extract[[i]] %>%
       # select recurring date variables
@@ -341,6 +351,7 @@ for (i in 1:split_n) {
       filter(!is.na(anytest_cut)) %>%
       arrange(patient_id, trial_date, anytest_cut) 
     
+    cat("Derive data_split_tests\n")
     data_split_tests <- data_extract[[i]] %>%
       select(patient_id, trial_date, matches("\\w+test_\\d+_n")) %>%
       pivot_longer(
@@ -355,6 +366,7 @@ for (i in 1:split_n) {
                 labels = covidtestcuts_labels
         )))
     
+    cat("Derive data_anytest_sum\n")
     # calculate the sum of events per period
     data_anytest_sum <- data_anytest_long %>%
       # sum the number of tests per period

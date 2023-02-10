@@ -378,23 +378,28 @@ combine_plot <- function(
 
 #####################################################################################
 # table of period-specific HRs
-hr_table <- function(subgroup_select, variant_option_select) {
+hr_table <- function(subgroup_select, variant_option_select, model_type) {
+  
+  cox_data <- cox_contrasts_rounded %>%
+    filter(
+      filename == "cuts",
+      model == model_type
+      )  %>%
+    mutate(variant = str_extract(term, "delta|transition|omicron")) %>%
+    mutate(across(term, ~str_trim(str_remove(.x, ";\\sdelta|;\\stransition|;\\somicron"), side="right"))) %>%
+    mutate(across(variant, ~if_else(is.na(.x), "ignore", .x)))  %>%
+    mutate(across(
+      subgroup_level,
+      factor,
+      levels = unname(recoder[[subgroup_select]]),
+      labels = names(recoder[[subgroup_select]])
+    ))
+  
   
   if (variant_option_select == "split") {
     grouping_var <- c("Variant era" = "variant_descr")
-    cox_data <- cox_unadj_contrasts_cuts_rounded %>%
-      mutate(variant = str_extract(term, "delta|transition|omicron")) %>%
-      mutate(across(term, ~str_trim(str_remove(.x, ";\\sdelta|;\\stransition|;\\somicron"), side="right"))) %>%
-      mutate(across(variant, ~if_else(is.na(.x), "ignore", .x)))
   } else {
     grouping_var <- c("Subgroup" = "subgroup_level")
-    cox_data <- cox_adj_contrasts_cuts_rounded %>%
-      mutate(across(
-        subgroup_level,
-        factor,
-        levels = unname(recoder[[subgroup_select]]),
-        labels = names(recoder[[subgroup_select]])
-        ))
   }
   
   # cox model estimates
@@ -449,7 +454,7 @@ hr_table <- function(subgroup_select, variant_option_select) {
   
   doc <- flextable::body_add_flextable(doc, value = table_hrs_all, split = FALSE)  
   
-  doc <- print(doc, target = here("manuscript", glue("table_hrs_{subgroup_select}_{variant_option_select}.docx")))
+  doc <- print(doc, target = here("manuscript", glue("table_hrs_{subgroup_select}_{variant_option_select}_{model_type}.docx")))
   
 }
 

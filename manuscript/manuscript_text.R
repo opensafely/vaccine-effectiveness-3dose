@@ -95,9 +95,17 @@ table_fu <- km_contrasts_rounded %>%
   summarise(value=scales::comma(sum(value), accuracy = 1), .groups = "keep") %>%
   ungroup() %>%
   pivot_wider(
-    names_from = name,
+    names_from = outcome,
     values_from = value
-  )
+  ) %>%
+  mutate(
+    across(
+      name, 
+      factor, 
+      levels = c("n.event", "persontime"), 
+      labels = c("Event count", "Person-time (years)")
+      )
+    )
   
 
 # risk and risk differences
@@ -115,21 +123,38 @@ table_risk <- km_contrasts_rounded %>%
     names_to = c("estimate", "group")
   ) %>%
   # per 1000
-  mutate(across(where(is.numeric), ~format(round(x=.x*1000, digits=2), nsmall=2))) %>%
+  mutate(across(where(is.numeric), ~format(round(x=.x*1000, digits=2), nsmall=2, trim = TRUE))) %>%
   pivot_wider(
     names_from = estimate,
     values_from = value
   ) %>%
   transmute(
     outcome, 
-    group = factor(group, levels = c("0", "1"), labels = c("risk_unboosted", "risk_boosted")),
+    group,
     rd = paste0(rd, " (", rd.ll, ", ", rd.ul, ")"),
     risk = paste0(risk, " (", risk.ll, ", ", risk.ul, ")")
   ) %>%
+  pivot_longer(
+    cols = c(rd, risk)
+  ) %>%
   pivot_wider(
-    names_from = group,
-    values_from = risk
-  )
+    names_from = outcome,
+    values_from = value
+  ) %>%
+  mutate(
+    across(
+      group, 
+      ~ factor(
+        if_else(name == "rd", "boosted_unboosted", as.character(.x)),
+        levels = c("0", "1", "boosted_unboosted"),
+        labels = c("Risk in the unboosted", "Risk in the boosted", "Risk difference (boosted - unboosted)")
+        )
+      )
+    ) %>%
+  distinct() %>%
+  select(-name) %>%
+  rename(name = group) %>%
+  arrange(name)
 
 table_hr <- cox_contrasts_rounded %>%
   filter(
@@ -137,38 +162,41 @@ table_hr <- cox_contrasts_rounded %>%
     subgroup=="all", 
     variant_option == "ignore",
     model == "cox_adj",
-    term == "treated"
+    (term == "treated" | str_detect(term, "time_since_infection"))
     ) %>%
   mutate(across(starts_with("coxhr"), ~format(round(.x, 2), nsmall = 2))) %>%
   transmute(
     outcome, 
+    name = term,
     hr = paste0(coxhr, " (", coxhr.ll, ", ", coxhr.ul, ")")
+    ) %>%
+  pivot_wider(
+    names_from = outcome,
+    values_from = hr
+  ) %>%
+  mutate(
+    across(
+      name,
+      factor,
+      levels = c("treated", "time_since_infection31-90 days", "time_since_infection91+ days"),
+      labels = c("HR for boosted vs unboosted", "HR for 31-90 days since prior infection vs no prior infection", "HR for 91+ days since prior infection vs no prior infection")
     )
+  )
+  
 
-table_6month_out <- table_fu %>%
-  left_join(table_risk, by = "outcome") %>%
-  left_join(table_hr, by = "outcome") %>%
-  mutate(across(
-    outcome, 
-    factor, 
-    levels = events_lookup$event, 
-    labels = events_lookup$event_descr
-    )) %>%
-  arrange(outcome) %>%
-  select(
-    Outcome = outcome, 
-    `Number of events` = n.event,
-    `Person-time (years)` = persontime,
-    `Risk in the unboosted` = risk_unboosted,
-    `Risk in the boosted` = risk_boosted,
-    `Risk difference (boosted - unboosted)` = rd,
-    `Hazard ratio` = hr
-  ) 
+outcome_descr <- tibble(event=outcomes) %>%
+  left_join(events_lookup) %>%
+  pull(event_descr)
+outcome_named <- outcomes
+names(outcome_named) <- outcome_descr
+
+table_6month_out <- bind_rows(table_fu, table_risk, table_hr) %>%
+  select(name, all_of(outcome_named))
 
 doc <- officer::read_docx() 
 doc <- flextable::body_add_flextable(
   doc, 
-  value = flextable(table_6month_out) %>% width(j=1:ncol(table_6month_out), width=15/ncol(table_6month_out), unit="cm"), 
+  value = flextable(table_6month_out) %>% width(j=1:ncol(table_6month_out), width=26/ncol(table_6month_out), unit="cm"), 
   split = FALSE
   )  
 doc <- print(doc, target = here("manuscript", "table_6month.docx"))
@@ -185,9 +213,18 @@ combine_plot(subgroup_select = "cev_cv", variant_option_select = "ignore")
 combine_plot(subgroup_select = "vax12_type", variant_option_select = "ignore")
 
 # tables of hazard ratios
-hr_table(subgroup_select = "all", variant_option_select = "ignore")
-hr_table(subgroup_select = "all", variant_option_select = "split")
-hr_table(subgroup_select = "agegroup", variant_option_select = "ignore")
-hr_table(subgroup_select = "prior_covid_infection", variant_option_select = "ignore")
-hr_table(subgroup_select = "cev_cv", variant_option_select = "ignore")
-hr_table(subgroup_select = "vax12_type", variant_option_select = "ignore")
+for (s in subgroups) {
+  combine_plot(subgroup_select = s, variant_option_select = "ignore")
+  if (s =="all") {
+    combine_plot(subgroup_select = s, variant_option_select = "split")
+  }
+  for (mt in c("cox_unadj", "cox_adj")) {
+    cat(glue("{s}; ignore; {mt};"), "\n")
+    hr_table(subgroup_select = s, variant_option_select = "ignore", model_type = mt)
+    if (s == "all") {
+      cat(glue("{s}; split; {mt};"), "\n")
+      hr_table(subgroup_select = s, variant_option_select = "split", model_type = mt)
+    }
+  }
+}
+

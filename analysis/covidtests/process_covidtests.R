@@ -265,7 +265,7 @@ for (i in 1:split_n) {
       mutate(new_id = cur_group_id()) %>% 
       ungroup()
     
-    data_matched %>% summary()
+    data_matched %>% select(-ends_with("_id")) %>% summary() %>% print()
     
     cat("Derive fup_split\n")
     # generate dataset with postbaselinecuts
@@ -276,7 +276,7 @@ for (i in 1:split_n) {
       droplevels() %>%
       select(new_id, period_id, fupstart_time) 
     
-    fup_split %>% summary()
+    fup_split %>% select(-ends_with("_id")) %>% summary() %>% print()
     
     cat("Derive data_split\n")
     # split time until censoring by postbaseline cuts

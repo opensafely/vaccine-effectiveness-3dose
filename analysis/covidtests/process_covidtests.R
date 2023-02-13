@@ -247,6 +247,12 @@ for (i in 1:split_n) {
     print(nrow(data_extract[[i]]))
     print(nrow(data_matched))
     
+     cat("Characteristics of those with missing trial_date in data_matched:\n")
+     data_matched %>%
+       filter(is.na(trial_date)) %>%
+       select(treated, control, matched, controlistreated_date) %>%
+       print()
+    
     cat("Process data_matched\n")
     # derive censor date and time until censoring
     data_matched <- data_matched %>%

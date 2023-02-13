@@ -258,14 +258,18 @@ for (i in 1:split_n) {
         ),
         tte_censor = as.integer(censor_date-(trial_date-1)),
         ind_outcome = 0
-        # censor_date = trial_date + maxfup # use this to overwrite above definition until issue with `patients.minimum_of()` and date arithmetic is fixed
       ) %>%
-      select(patient_id, trial_date, treated, censor_date, tte_censor) %>%
-      group_by(patient_id, trial_date) %>%
-      mutate(new_id = cur_group_id()) %>% 
-      ungroup()
-    
-    data_matched %>% select(-ends_with("_id")) %>% summary() %>% print()
+      select(treated, trial_date, censor_date, dereg_date, death_date, controlistreated_date)
+    #   select(patient_id, trial_date, treated, censor_date, tte_censor) %>%
+    #   group_by(patient_id, trial_date) %>%
+    #   mutate(new_id = cur_group_id()) %>% 
+    #   ungroup()
+    # 
+    # data_matched %>% select(-ends_with("_id")) %>% summary() %>% print()
+    data_matched %>%
+      filter(is.na(censor_date)) %>%
+      print(n=20)
+      
     
     cat("Derive fup_split\n")
     # generate dataset with postbaselinecuts

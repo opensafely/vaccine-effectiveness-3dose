@@ -244,6 +244,9 @@ for (i in 1:split_n) {
     data_matched <- read_rds(here("output", cohort, "match", "data_matched.rds")) %>%
       right_join(data_extract[[i]] %>% distinct(patient_id))
     
+    print(nrow(data_extract[[i]]))
+    print(nrow(data_matched))
+    
     cat("Process data_matched\n")
     # derive censor date and time until censoring
     data_matched <- data_matched %>%
@@ -267,8 +270,8 @@ for (i in 1:split_n) {
     # 
     # data_matched %>% select(-ends_with("_id")) %>% summary() %>% print()
     data_matched %>%
-      filter(is.na(censor_date)) %>%
-      print(n=20)
+      filter(is.na(censor_date) | is.na(trial_date)) %>%
+      print()
       
     
     cat("Derive fup_split\n")

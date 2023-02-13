@@ -218,6 +218,14 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
 # summarise and save data_extract
 my_skim(data_extract, path = file.path(outdir, "extract", "input_treated_skim.txt"))
 
+
+data_matched <- read_rds(here("output", cohort, "match", "data_matched.rds"))
+cat("check `data_matched$treated` only takes values 0 and 1\n")
+data_matched %>% 
+  group_by(treated) %>%
+  count()
+rm(data_matched)
+
 # split data_extract into 10 to avoid hitting memory issues
 split_n <- 10
 data_extract <- data_extract %>%
@@ -242,7 +250,10 @@ for (i in 1:split_n) {
     
     cat("Read and sample data_macthed\n")
     data_matched <- read_rds(here("output", cohort, "match", "data_matched.rds")) %>%
-      right_join(data_extract[[i]] %>% distinct(patient_id))
+      right_join(
+        data_extract[[i]] %>% distinct(patient_id, trial_date),
+        by = c("patient_id", "trial_date")
+        )
     
     print(nrow(data_extract[[i]]))
     print(nrow(data_matched))

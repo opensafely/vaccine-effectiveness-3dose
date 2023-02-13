@@ -218,14 +218,6 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
 # summarise and save data_extract
 my_skim(data_extract, path = file.path(outdir, "extract", "input_treated_skim.txt"))
 
-
-data_matched <- read_rds(here("output", cohort, "match", "data_matched.rds"))
-cat("check `data_matched$treated` only takes values 0 and 1\n")
-data_matched %>% 
-  group_by(treated) %>%
-  count()
-rm(data_matched)
-
 # split data_extract into 10 to avoid hitting memory issues
 split_n <- 10
 data_extract <- data_extract %>%
@@ -255,15 +247,6 @@ for (i in 1:split_n) {
         by = c("patient_id", "trial_date")
         )
     
-    print(nrow(data_extract[[i]]))
-    print(nrow(data_matched))
-    
-     cat("Characteristics of those with missing trial_date in data_matched:\n")
-     data_matched %>%
-       filter(is.na(trial_date)) %>%
-       select(treated, control, matched, controlistreated_date) %>%
-       print()
-    
     cat("Process data_matched\n")
     # derive censor date and time until censoring
     data_matched <- data_matched %>%
@@ -279,17 +262,12 @@ for (i in 1:split_n) {
         tte_censor = as.integer(censor_date-(trial_date-1)),
         ind_outcome = 0
       ) %>%
-      select(treated, trial_date, censor_date, dereg_date, death_date, controlistreated_date)
-    #   select(patient_id, trial_date, treated, censor_date, tte_censor) %>%
-    #   group_by(patient_id, trial_date) %>%
-    #   mutate(new_id = cur_group_id()) %>% 
-    #   ungroup()
-    # 
-    # data_matched %>% select(-ends_with("_id")) %>% summary() %>% print()
-    data_matched %>%
-      filter(is.na(censor_date) | is.na(trial_date)) %>%
-      print()
-      
+      select(patient_id, trial_date, treated, censor_date, tte_censor) %>%
+      group_by(patient_id, trial_date) %>%
+      mutate(new_id = cur_group_id()) %>%
+      ungroup()
+
+    data_matched %>% select(-ends_with("_id")) %>% summary() %>% print()
     
     cat("Derive fup_split\n")
     # generate dataset with postbaselinecuts

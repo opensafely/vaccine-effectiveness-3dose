@@ -49,11 +49,10 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("")) {
   fs::dir_create(output_dir)
   
   ## import data ---
-  data_anytest_sum <- read_rds(here("output", cohort, "covidtests", "process", "data_anytest_sum.rds")) %>%
-    mutate(across(treated, as.factor)) 
+  data_anytest_sum <- read_rds(here("output", cohort, "covidtests", "process", "data_anytest_sum.rds")) 
   
    cat("Summarise `data_anytest_sum`\n")
-  data_anytest_sum %>% select(-patient_id) %>% summary()
+  data_anytest_sum %>% select(-patient_id) %>% summary() %>% print()
   
   subgroup_sym <- sym(subgroup)
   
@@ -127,7 +126,7 @@ plot_rates <- function(.data, filename, legend.position = "bottom") {
                   )) %>%
     mutate(across(treated, 
                   factor, 
-                  levels = c("0","1"), 
+                  levels = c(0,1), 
                   labels = c("two doses", "three doses")
                   )) %>%
     left_join(key, by = "anytest_cut")

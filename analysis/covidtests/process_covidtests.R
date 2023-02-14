@@ -241,6 +241,7 @@ for (i in 1:split_n) {
   data_anytest_sum[[i]] <- local({
     
     cat("Read and sample data_macthed\n")
+    # read `data_matched` and restrict to the patient_id/trial_id in split `i` of `data_extract`
     data_matched <- read_rds(here("output", cohort, "match", "data_matched.rds")) %>%
       right_join(
         data_extract[[i]] %>% distinct(patient_id, trial_date),
@@ -263,14 +264,13 @@ for (i in 1:split_n) {
         ind_outcome = 0
       ) %>%
       select(patient_id, trial_date, treated, censor_date, tte_censor) %>%
+      # derive new_id which assigns an individual a separate id for each trial they are in
       group_by(patient_id, trial_date) %>%
       mutate(new_id = cur_group_id()) %>%
       ungroup()
 
-    data_matched %>% select(-ends_with("_id")) %>% summary() %>% print()
-    
     cat("Derive fup_split\n")
-    # generate dataset with postbaselinecuts
+    # generate dataset with covidtestcuts
     fup_split <- data_matched %>%
       select(new_id) %>%
       uncount(weights = length(covidtestcuts)-1, .id="period_id") %>%
@@ -278,11 +278,9 @@ for (i in 1:split_n) {
       droplevels() %>%
       select(new_id, period_id, fupstart_time) 
     
-    fup_split %>% select(-ends_with("_id")) %>% summary() %>% print()
-    
     cat("Derive data_split\n")
-    # split time until censoring by postbaseline cuts
     data_split <-
+      # derive time until censoring
       tmerge(
         data1 = data_matched,
         data2 = data_matched,
@@ -290,13 +288,14 @@ for (i in 1:split_n) {
         tstart = covidtestcuts[1],
         tstop = tte_censor
       ) %>%
-      # add post-treatment periods
+      # split time until censoring by covidtestcuts
       tmerge(
         data1 = .,
         data2 = fup_split,
         id = new_id,
         period_id = tdc(fupstart_time, period_id)
       ) %>%
+      # fup_cut defines which covidtestcuts period each row is in
       mutate(
         fup_cut = cut(
           tstop, # because closed on the right
@@ -330,7 +329,8 @@ for (i in 1:split_n) {
       select(-index, -postest_date) %>%
       left_join(
         data_extract[[i]] %>% select(patient_id, trial_date, starts_with("firstpostest")), 
-        # joining on  "anytest_date" = "firstpostest_date" here means that firstpostest_category joined to date of individual's first ever postest
+        # joining on  "anytest_date" = "firstpostest_date" here means that 
+        # firstpostest_category joined to date of individual's first ever postest
         by = c("patient_id", "trial_date", "anytest_date" = "firstpostest_date")
       ) %>%
       # join censor date
@@ -355,6 +355,7 @@ for (i in 1:split_n) {
     
     cat("Derive data_split_tests\n")
     data_split_tests <- data_extract[[i]] %>%
+      # keep counts of tests per period
       select(patient_id, trial_date, matches("\\w+test_\\d+_n")) %>%
       pivot_longer(
         cols = matches("\\w+test_\\d+_n"),
@@ -439,23 +440,21 @@ data_anytest_sum %>%
   # max across all patient_id, trial_date
   summarise(across(c(sum_firstpostest, sum_lftonly, sum_pcronly, sum_both), max)) 
 
-cat("When persondays=NA (i.e. patient censored before period), check sums of censored counts are always zero:\n")
+cat("Check persondays is never NA:\n")
 data_anytest_sum %>%
   filter(is.na(persondays)) %>%
-  summarise(across(
-    c(sum_anytest, sum_postest, sum_symptomatic, sum_firstpostest, sum_lftonly, sum_pcronly, sum_both),
-    list(min=min, max=max)
-  )) %>%
-  pivot_longer(
-    cols=starts_with("sum"),
-    names_pattern = "sum_(.*)_(.*)",
-    names_to = c("name", ".value")
-    )
+  nrow()
 
 # check that the sums of the anytest_*_date variables match the anytest*_*_n variables
 # if not, it's a flag that we need to increase n in the study definition
 cat("------------------------------------------")
 cat("Check `n_any` and `n_pos` appropriate ----\n")
+
+# define function for mode
+getmode <- function(v) {
+  uniqv <- unique(v)
+  uniqv[which.max(tabulate(match(v, uniqv)))]
+}
 
 cat ("Summarise number of tests missing per person per period when summing dates:\n")
 data_anytest_sum %>%
@@ -466,7 +465,14 @@ data_anytest_sum %>%
   group_by(anytest_cut) %>%
   summarise(across(
     starts_with("n_missing"), 
-    list(min=min, max=max, mean=mean, median=median)
+    list(
+      min = ~min(.x),
+      p01 = ~unname(quantile(.x, probs = 0.01)),
+      median = ~median(.x),
+      mode = ~getmode(.x),
+      p99 = ~unname(quantile(.x, probs=0.99)),
+      max = ~max(.x)
+      )
     ), .groups = "keep") %>%
   ungroup() %>%
   pivot_longer(
@@ -478,6 +484,8 @@ data_anytest_sum %>%
   group_split(result) %>% as.list() 
 
 
+# plot distribution of counts derived from dates as a proportion of counts
+# derived from opensafely function
 plot_function <- function(result) {
   
   plotpath <- file.path(outdir, "checks", glue("check_n_{result}.png"))
@@ -497,31 +505,3 @@ plot_function <- function(result) {
 
 plot_function("anytest")
 plot_function("postest")
-
-cat("------------------------------------------")
-cat("Check distribution of event counts ----\n")
-plotpath <- file.path(outdir, "checks", "check_n_{result}.png")
-cat(glue("see {plotpath} for distribution of event counts"), "\n")
-data_anytest_sum %>%
-  select(-ends_with("uncensored")) %>%
-  select(patient_id, trial_date, treated, anytest_cut, starts_with("sum_")) %>%
-  pivot_longer(
-    cols = starts_with("sum")
-  ) %>%
-  mutate(across(treated, factor, levels=0:1, labels = c("control", "treated"))) %>%
-  mutate(across(name, 
-                ~factor(
-                  str_remove_all(.x, "sum_"),
-                  levels = c("anytest", "symptomatic", "postest", "firstpostest", "lftonly", "pcronly", "both"))
-                )) %>%
-  ggplot(aes(x = value, y = ..density.., colour = treated)) +
-  geom_freqpoly(binwidth = 1) +
-  facet_grid(anytest_cut~name) +
-  scale_color_discrete(name=NULL) +
-  labs(x = "Number of tests") +
-  theme_bw() +
-  theme(legend.position = "bottom")
-ggsave(
-  filename = file.path(outdir, "checks", glue("check_counts_dist.png")),
-  width = 15, height = 20, units = "cm"
-)

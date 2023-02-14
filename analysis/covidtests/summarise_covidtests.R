@@ -52,18 +52,23 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("")) {
   data_anytest_sum <- read_rds(here("output", cohort, "covidtests", "process", "data_anytest_sum.rds")) %>%
     mutate(across(treated, as.factor)) 
   
+   cat("Summarise `data_anytest_sum`\n")
+  data_anytest_sum %>% select(-patient_id) %>% summary()
+  
   subgroup_sym <- sym(subgroup)
   
-  # calculate rates ----
+  # calculate rate per 28 days ----
   
   calc_rates <- function(.data) {
     .data %>%
-      mutate(across(matches(glue("{unname(rates)}_n")), ~.x/persondays_n)) %>%
+      mutate(across(matches(glue("{unname(rates)}_n")), ~round(28*.x/persondays_n, 3))) %>%
       rename_with(.f = ~str_replace(.x, "_n", "_rate"), .cols = matches(glue("{unname(rates)}_n")))
   }
   
   data_n <- data_anytest_sum %>%
     mutate(all="all") %>%
+    # cap the number of tests per individual at one per day (assume any more are errors)
+    mutate(across(starts_with("sum"), ~if_else(.x > persondays, persondays, .x))) %>%
     group_by(treated, anytest_cut, !!subgroup_sym) %>%
     summarise(
       total_n = roundmid_any(n(), threshold),
@@ -117,7 +122,7 @@ plot_rates <- function(.data, filename, legend.position = "bottom") {
                   )) %>%
     mutate(across(treated, 
                   factor, 
-                  levels = c(0,1), 
+                  levels = c("0","1"), 
                   labels = c("two doses", "three doses")
                   )) %>%
     left_join(key, by = "anytest_cut")

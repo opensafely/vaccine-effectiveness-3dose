@@ -68,7 +68,12 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("")) {
   data_n <- data_anytest_sum %>%
     mutate(all="all") %>%
     # cap the number of tests per individual at one per day (assume any more are errors)
-    mutate(across(starts_with("sum"), ~if_else(.x > persondays, persondays, .x))) %>%
+    mutate(
+      across(
+        starts_with("sum"), 
+        ~ if_else(.x > persondays, as.integer(persondays), as.integer(.x))
+        )
+      ) %>%
     group_by(treated, anytest_cut, !!subgroup_sym) %>%
     summarise(
       total_n = roundmid_any(n(), threshold),

@@ -70,3 +70,6 @@ user/elsie_horne/dvt_icvt_icd10/30a4dcad
 user/elsie_horne/other_dvt_icd10/547f4fba
 user/elsie_horne/icvt_pregnancy_icd10/3b6fdc85
 user/elsie_horne/cancer_icd10/72c5c151
+opensafely/cancer-excluding-lung-and-haematological-snomed/2020-04-15
+opensafely/haematological-cancer-snomed/2020-04-15
+opensafely/lung-cancer-snomed/2020-04-15

@@ -14,7 +14,8 @@ if (outcome %in% c("cvddeath", "cancerdeath")) {
       # non-covid death cause data
       arrow::read_feather(here("output", cohort, "noncoviddeathcause", "extract", "input_noncoviddeathcause.feather")) %>%
         mutate(across(ends_with("_date"), as.Date)), 
-      by = "patient_id") %>%
+      by = "patient_id"
+      ) %>%
     # cvd or cancer deaths must be non-covid
     mutate(across(
       c(cvddeath_date, cancerdeath_date),
@@ -35,6 +36,42 @@ if (subgroup == "vax12_type") {
     # restrict to jcvi groups that received a roughly event split of pfizer and az
     filter(jcvi_group %in% c("03", "04a", "04b", "05", "06"))
   
+}
+
+if (subgroup == "noncancer") {
+  
+  data_matched <- data_matched %>%
+    left_join(
+      # non-covid death cause data
+      arrow::read_feather(here("output", cohort, "cancer", "extract", "input_cancer.feather")) %>%
+        mutate(across(ends_with("_date"), as.Date)), 
+      by = "patient_id"
+    ) %>%
+    mutate(
+      # flag for cancer code in previous 5 years
+      cancer_hospitalisation_5yrs = case_when(
+        !is.na(cancer_hospitalisation_before_date) & 
+          trial_date - lubridate::years(5) <= cancer_hospitalisation_before_date
+        ~ TRUE,
+        !is.na(cancer_hospitalisation_after_date) &
+          cancer_hospitalisation_after_date < trial_date
+        ~ TRUE,
+        TRUE ~ FALSE
+      ),
+      cancer_primarycare_5yrs = case_when(
+        !is.na(cancer_primarycare_before_date) & 
+          trial_date - lubridate::years(5) <= cancer_primarycare_before_date
+        ~ TRUE,
+        !is.na(cancer_primarycare_after_date) &
+          cancer_primarycare_after_date < trial_date
+        ~ TRUE,
+        TRUE ~ FALSE
+      ),
+      noncancer = !(cancer_hospitalisation_5yrs | cancer_primarycare_5yrs)
+    ) %>%
+    filter(noncancer) %>%
+    select(-starts_with("cancer")) 
+    
 }
 
 

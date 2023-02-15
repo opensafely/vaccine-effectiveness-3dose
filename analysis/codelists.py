@@ -514,3 +514,22 @@ cancer = codelist_from_csv(
     system="icd10",
     column="code",
 )
+
+# cancer snomed codes
+cancer_haem_snomed=codelist_from_csv(
+    "codelists/opensafely-haematological-cancer-snomed.csv",
+    system="snomed",
+    column="id",
+)
+
+cancer_nonhaem_nonlung_snomed=codelist_from_csv(
+    "codelists/opensafely-cancer-excluding-lung-and-haematological-snomed.csv",
+    system="snomed",
+    column="id",
+)
+
+cancer_lung_snomed=codelist_from_csv(
+    "codelists/opensafely-lung-cancer-snomed.csv",
+    system="snomed",
+    column="id",
+)

@@ -309,12 +309,14 @@ action_extract_and_match <- function(cohort){
 actions_model <- function(cohort, subgroup, variant_option, outcome){
   
   model_needs <- namelesslst(
-    glue("process_controlfinal_{cohort}")
+    glue("process_controlfinal_{cohort}"),
+    glue("extract_cancer_{cohort}")
   )
   if (outcome %in% c("cvddeath", "cancerdeath")) {
     model_needs <- namelesslst(
       glue("process_controlfinal_{cohort}"),
-      glue("extract_noncoviddeathcause_{cohort}")
+      glue("extract_noncoviddeathcause_{cohort}"),
+      glue("extract_cancer_{cohort}")
     )
   }
   
@@ -562,6 +564,27 @@ actions_list <- splice(
             extract = glue("output/{x}/noncoviddeathcause/extract/input_noncoviddeathcause.feather")
           )
         ),
+        
+        comment("# # # # # # # # # # # # # # # # # # #",
+                "Cancer diagnosis in previous 5 years",
+                "# # # # # # # # # # # # # # # # # # #"),
+        action(
+          name = glue("extract_cancer_{x}"),
+          run = glue(
+            "cohortextractor:latest generate_cohort", 
+            " --study-definition study_definition_cancer", 
+            " --output-file output/{x}/cancer/extract/input_cancer.feather",
+            " --param cohort={x}"
+          ),
+          needs = namelesslst(
+            "design",
+            glue("process_controlfinal_{x}")
+          ),
+          highly_sensitive = lst(
+            extract = glue("output/{x}/cancer/extract/input_cancer.feather")
+          )
+        ),
+        
         
         comment("# # # # # # # # # # # # # # # # # # #",
                 "Covid tests data",

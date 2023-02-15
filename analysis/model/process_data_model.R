@@ -7,29 +7,6 @@ cat("---- start process_data_matched\n")
 # read data_macthed
 data_matched <- read_rds(here("output", cohort, "match", "data_matched.rds")) 
 
-if (outcome %in% c("cvddeath", "cancerdeath")) {
-  
-  data_matched <- data_matched %>%
-    left_join(
-      # non-covid death cause data
-      arrow::read_feather(here("output", cohort, "noncoviddeathcause", "extract", "input_noncoviddeathcause.feather")) %>%
-        mutate(across(ends_with("_date"), as.Date)), 
-      by = "patient_id"
-      ) %>%
-    # cvd or cancer deaths must be non-covid
-    mutate(across(
-      c(cvddeath_date, cancerdeath_date),
-      ~if_else(
-        !is.na(.x) & is.na(coviddeath_date), 
-        # use noncoviddeath_date in there is any mismatch due to cvddeath_date and 
-        # cancerdeath_date being extracted on a different date
-        noncoviddeath_date,
-        as.Date(NA_character_)
-      )
-    ))
-  
-}
-
 if (subgroup == "vax12_type") {
   
   data_matched <- data_matched %>%
@@ -42,7 +19,7 @@ if (subgroup == "noncancer") {
   
   data_matched <- data_matched %>%
     left_join(
-      # non-covid death cause data
+      # data for cancer flag
       arrow::read_feather(here("output", cohort, "cancer", "extract", "input_cancer.feather")) %>%
         mutate(across(ends_with("_date"), as.Date)), 
       by = "patient_id"
@@ -70,8 +47,31 @@ if (subgroup == "noncancer") {
       noncancer = !(cancer_hospitalisation_5yrs | cancer_primarycare_5yrs)
     ) %>%
     filter(noncancer) %>%
-    select(-starts_with("cancer")) 
+    select(-starts_with("cancer_")) 
     
+}
+
+if (outcome %in% c("cvddeath", "cancerdeath")) {
+  
+  data_matched <- data_matched %>%
+    left_join(
+      # non-covid death cause data
+      arrow::read_feather(here("output", cohort, "noncoviddeathcause", "extract", "input_noncoviddeathcause.feather")) %>%
+        mutate(across(ends_with("_date"), as.Date)), 
+      by = "patient_id"
+    ) %>%
+    # cvd or cancer deaths must be non-covid
+    mutate(across(
+      c(cvddeath_date, cancerdeath_date),
+      ~if_else(
+        !is.na(.x) & is.na(coviddeath_date), 
+        # use noncoviddeath_date in there is any mismatch due to cvddeath_date and 
+        # cancerdeath_date being extracted on a different date
+        noncoviddeath_date,
+        as.Date(NA_character_)
+      )
+    ))
+  
 }
 
 

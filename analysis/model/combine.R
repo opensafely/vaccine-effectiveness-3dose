@@ -84,6 +84,15 @@ combine_and_save_contrasts(model_type="km", filenames = c("daily", "cuts", "over
 # cox outputs
 combine_and_save_contrasts(model_type="cox", filenames = c("cuts", "overall"))
 
+# km for noncancer
+read_csv(fs::path(output_dir, "km_contrasts_rounded.csv")) %>%
+  filter(subgroup == "noncancer") %>%
+  write_csv(fs::path(output_dir, "km_contrasts_noncancer_rounded.csv"))
+# cox for noncancer
+read_csv(fs::path(output_dir, "cox_contrasts_rounded.csv")) %>%
+  filter(subgroup == "noncancer") %>%
+  write_csv(fs::path(output_dir, "cox_contrasts_noncancer_rounded.csv"))
+
 ## move km plots to single folder ----
 for (i in c("rounded", "unrounded")) {
   metaparams %>%

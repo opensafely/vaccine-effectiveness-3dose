@@ -1,0 +1,145 @@
+---
+title: "Exporing the noncancer cohort results"
+author: "Elsie Horne"
+date: "17/02/2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(here)
+library(glue)
+cohort <- "mrna"
+source(here("analysis", "design.R"))
+```
+
+# Background
+
+In our investigation of incremental vaccine effectiveness for three vs two doses, estimated hazard ratios (HRs) against non-COVID-19 death were almost as small as those against COVID-19 death (Figure xx).
+We hypothesised that a reason for this was that many of the non-COVID-19 deaths were either COVID-19 deaths that had not been coded as such, or deaths that were indirectly linked to COVID due to health complications following COVID-19.
+To investigate this further, we estimated HRs for CVD-related non-COVID deaths and cancer-related non-COVID-19 deaths, on the basis that cancer-related non-COVID-19 deaths were less likely to be linked to complications of COVID-19 compared to CVD-related non-COVID-19 deaths.
+However, estimated HRs for cancer-related non-COVID-19 death were as small, if not smaller than those for CVD-related non-COVID-19 death (Figure xx).
+In particular, the estimated HRs were much smaller for cancer-related non-COVID-19 death in the period 0-14 days after third dose (xxx and xxx for cancer-related and CVD-related deaths respectively).
+We hypothesised that a reason for this could be that people who are dying of cancer do not receive a third dose, so are underrepresented in the three dose group and overrepresented in the two dose group.
+To investigate this we repeated the analysis in a "non-cancer" cohort, obtained by excluding people with either of the following recorded in the 5 years prior to the trial start date: 
+- a hospital admission with a cancer-related ICD10 code in any field
+- a cancer-related SNOMED code in their primary care record 
+
+This report explores the results of the analysis in the non-cancer cohort.
+
+## Study population
+```{r }
+# read data_matched
+data_matched <- read_rds(here("output", cohort, "match", "data_matched.rds")) 
+
+data <- data_matched %>%
+    left_join(
+      # data for cancer flag
+      arrow::read_feather(here("output", cohort, "cancer", "extract", "input_cancer.feather")) %>%
+        mutate(across(ends_with("_date"), as.Date)), 
+      by = "patient_id"
+    ) %>%
+    mutate(
+      # flag for cancer code in previous 5 years
+      cancer_hospitalisation_5yrs = case_when(
+        !is.na(cancer_hospitalisation_before_date) & 
+          trial_date - lubridate::years(5) <= cancer_hospitalisation_before_date
+        ~ TRUE,
+        !is.na(cancer_hospitalisation_after_date) &
+          cancer_hospitalisation_after_date < trial_date
+        ~ TRUE,
+        TRUE ~ FALSE
+      ),
+      cancer_primarycare_5yrs = case_when(
+        !is.na(cancer_primarycare_before_date) & 
+          trial_date - lubridate::years(5) <= cancer_primarycare_before_date
+        ~ TRUE,
+        !is.na(cancer_primarycare_after_date) &
+          cancer_primarycare_after_date < trial_date
+        ~ TRUE,
+        TRUE ~ FALSE
+      ),
+      noncancer = !(cancer_hospitalisation_5yrs | cancer_primarycare_5yrs)
+    ) %>%
+  left_join(
+      # non-covid death cause data
+      arrow::read_feather(here("output", cohort, "noncoviddeathcause", "extract", "input_noncoviddeathcause.feather")) %>%
+        mutate(across(ends_with("_date"), as.Date)), 
+      by = "patient_id"
+    ) %>%
+    # cvd or cancer deaths must be non-covid
+    mutate(across(
+      c(cvddeath_date, cancerdeath_date),
+      ~if_else(
+        !is.na(.x) & is.na(coviddeath_date), 
+        # use noncoviddeath_date in there is any mismatch due to cvddeath_date and 
+        # cancerdeath_date being extracted on a different date
+        noncoviddeath_date,
+        as.Date(NA_character_)
+      )
+    )) %>%
+  select(patient_id, trial_date, dereg_date, treated, noncancer, starts_with("cancer")) 
+
+n_noncancer <- data %>% filter(noncancer) %>% nrow()
+n_main <- data %>% nrow()
+pct_noncancer <- round(100*n_noncancer/n_main,2)
+```
+
+The non-cancer cohort comprised `r scales::comma(n_noncancer, accuracy=1)` individuals, (`r pct_noncancer`% of the `r scales::comma(n_main, accuracy=1)` individuals in the main cohort).
+
+```{r}
+km_contrasts_rounded <- read_csv(
+  here("output", cohort, "models", "combined", "km_contrasts_rounded.csv")
+  )
+
+km_data <- km_contrasts_rounded %>%
+  filter(
+    subgroup %in% c("all", "noncancer"),
+    filename == "overall",
+    variant_option == "ignore",
+    outcome == "cancerdeath"
+    ) %>%
+  select(subgroup, ends_with(c("_0", "_1"))) %>%
+  pivot_longer(
+    cols = ends_with(c("_0", "_1")),
+    names_pattern = "(.*)_(\\d)",
+    names_to = c(".value", "treated")
+  ) %>%
+  mutate(personyears = persontime/365.25) %>%
+  select(-treated) %>%
+  group_by(subgroup) %>%
+  summarise(across(c(personyears, n.atrisk, n.event), sum)) %>%
+  ungroup() %>%
+  mutate(inc = round(1000*n.event/personyears, 3)) %>%
+  mutate(across(c(personyears, n.event), scales::comma, accuracy=1))
+
+vals_all <- km_data %>% filter(subgroup=="all")
+vals_noncancer <- km_data %>% filter(subgroup=="noncancer")
+
+```
+
+There were `r vals_noncancer %>% pull(n.event)` cancer-related deaths in `r  vals_noncancer %>% pull(personyears)` person-years in the non-cancer cohort (incidence rate `r vals_noncancer %>% pull(inc)` per 1,000), compared to `r vals_all %>% pull(n.event)` in `r  vals_all %>% pull(personyears)` in the main cohort (`r vals_all %>% pull(inc)`).
+
+The following chunk calculates the number of cancer-related deaths in the non-cancer cohort, for which the individual had a cancer code recorded after the trial start date:
+
+```{r}
+data %>%
+  # noncancer cohort with cancer death before dereg or end of follow-up
+  filter(
+    noncancer,
+    !is.na(cancerdeath_date),
+    (is.na(dereg_date) | cancerdeath_date < dereg_date),
+    cancerdeath_date <= trial_date + lubridate::days(maxfup)
+    ) %>%
+  mutate(
+    cancer_hospitalisation = trial_date <= cancer_hospitalisation_after_date,
+    cancer_primarycare = trial_date <= cancer_primarycare_after_date
+  ) %>%
+  # mutate(across(c(cancer_hospitalisation, cancer_primarycare), replace_na, replace = FALSE)) %>%
+  group_by(cancer_hospitalisation, cancer_primarycare) %>%
+  count()
+```
+
+
+

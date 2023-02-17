@@ -679,25 +679,24 @@ actions_list <- splice(
       )
     }
   ),
-  # 
-  # comment("# # # # # # # # # # # # # # # # # # #", 
-  #         "Move files for release", 
-  #         "# # # # # # # # # # # # # # # # # # #"),
-  # 
-  # action(
-  #   name = "release",
-  #   run = glue("r:latest analysis/release_objects.R"),
-  #   needs = namelesslst(
-  #     glue("combine_km_pfizer"),
-  #     glue("table1_pfizer"),
-  #     glue("combine_km_under12"),
-  #     glue("table1_under12"),
-  #   ),
-  #   highly_sensitive = lst(
-  #     txt = glue("output/meta-release/*.txt"),
-  #     csv = glue("output/release/*.csv"),
-  #   ),
-  # ),
+
+  comment("# # # # # # # # # # # # # # # # # # #",
+          "Explore the noncancer cohort cancer deaths",
+          "# # # # # # # # # # # # # # # # # # #"),
+
+  action(
+    name = "cancer_deaths",
+    run = glue("r:latest analysis/exploratory/cancer_deaths.R"),
+    needs = namelesslst(
+      "process_controlfinal",
+      "extract_noncoviddeathcause_mrna",
+      "extract_cancer_mrna",
+      "combine_mrna"
+    ),
+    moderately_sensitive = lst(
+      hltml = glue("output/mrna/exploratory/*.html")
+    ),
+  ),
 
   comment("#### End ####")
 )

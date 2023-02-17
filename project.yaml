@@ -4273,5 +4273,20 @@ actions:
         rds: output/mrna/models/combined/*.csv
         png: output/mrna/models/combined/*.png
 
+  ## # # # # # # # # # # # # # # # # # # # 
+  ## Explore the noncancer cohort cancer deaths 
+  ## # # # # # # # # # # # # # # # # # # # 
+
+  cancer_deaths:
+    run: r:latest analysis/exploratory/cancer_deaths.R
+    needs:
+    - process_controlfinal_mrna
+    - extract_noncoviddeathcause_mrna
+    - extract_cancer_mrna
+    - combine_mrna
+    outputs:
+      moderately_sensitive:
+        hltml: output/mrna/exploratory/*.html
+
   ## #### End #### 
 

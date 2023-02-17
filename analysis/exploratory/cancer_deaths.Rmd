@@ -30,6 +30,7 @@ combine_plot <- function(
     colour_var <- "subgroup_level"
   }
   
+  print(cat("plot A:\n"))
   # km plot
   A <- km_contrasts_rounded %>%
     filter(
@@ -53,6 +54,7 @@ combine_plot <- function(
     droplevels() %>%
     km_plot(colour_var)
   
+  print(cat("cox data:\n"))
   # cox plot
   cox_data <- cox_contrasts_rounded %>%
     filter(filename == "cuts", model == "cox_adj")
@@ -77,6 +79,7 @@ combine_plot <- function(
     mutate(across(term, ~str_trim(str_remove(.x, ";\\sdelta|;\\stransition|;\\somicron"), side="right"))) %>%
     mutate(across(variant, ~if_else(is.na(.x), "ignore", .x)))
   
+  print(cat("plot B:\n"))
   B <- cox_data %>%
     filter(
       subgroup %in% subgroup_select,
@@ -102,6 +105,7 @@ combine_plot <- function(
     
   }
   
+  print(cat("combine plots:\n"))
   p <- cowplot::plot_grid(
     # the NULL is reduce the space between the plots
     A, NULL, B,

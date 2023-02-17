@@ -156,7 +156,8 @@ recoder <-
       `Clinically at-risk` = "Clinically at-risk",
       `Clinically extremely vulnerable` = "Clinically extremely vulnerable"
     ),
-    noncancer = c(`No evidence of cancer in previous 5 years` = "TRUE")
+    noncancer = c(`No evidence of cancer in previous 5 years` = "TRUE"),
+    cancer_deaths = c(`Main` = "all", `No evidence of cancer in previous 5 years` = "noncancer")
   )
 
 subgroups <- c("all", "prior_covid_infection", "vax12_type", "agegroup", "cev_cv", "noncancer") # , "vax3_type")

@@ -6,12 +6,151 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, message = FALSE)
 library(tidyverse)
 library(here)
 library(glue)
 cohort <- "mrna"
 source(here("analysis", "design.R"))
+source(here("lib", "functions", "utility.R"))
+outdir <- here::here("output", "mrna", "exploratory")
+```
+
+```{r, include=FALSE, echo=FALSE}
+source(here("manuscript", "functions.R"))
+# redefine combine_plot
+combine_plot <- function(
+  subgroup_select = "all", 
+  variant_option_select = "ignore"
+) {
+  
+  if (subgroup_select == "all") {
+    colour_var <- "variant_descr"
+  } else {
+    colour_var <- "subgroup_level"
+  }
+  
+  # km plot
+  A <- km_contrasts_rounded %>%
+    filter(
+      filename == "daily",
+      subgroup %in% subgroup_select,
+      variant_option %in% variant_option_select
+      ) %>%
+    select(
+      outcome, subgroup, subgroup_level,
+      variant_option, variant, 
+      time = period_end,
+      starts_with("risk")
+      ) %>%
+    pivot_longer(
+      cols = starts_with("risk"),
+      names_pattern = "(.*)_(\\d)",
+      names_to = c(".value", "treated")
+    ) %>%
+    mutate(across(treated, as.integer)) %>%
+    add_descr(subgroup = FALSE) %>%
+    droplevels() %>%
+    km_plot(colour_var)
+  
+  # cox plot
+  cox_data <- cox_contrasts_rounded %>%
+    filter(filename == "cuts", model == "cox_adj")
+  
+  model <- "adjusted"
+  
+  if (variant_option_select == "split") {
+    
+    cox_data <- bind_rows(
+      cox_data,
+      # temporarily use unadjusted estimates for fracture, as the adjusted models
+      # failed due to memory issues
+      cox_contrasts_rounded %>%
+        filter(filename == "cuts", model == "cox_unadj", outcome == "fracture") 
+    )
+      
+  }
+  
+  # derive variant info
+  cox_data <- cox_data %>%
+    mutate(variant = str_extract(term, "delta|transition|omicron")) %>%
+    mutate(across(term, ~str_trim(str_remove(.x, ";\\sdelta|;\\stransition|;\\somicron"), side="right"))) %>%
+    mutate(across(variant, ~if_else(is.na(.x), "ignore", .x)))
+  
+  B <- cox_data %>%
+    filter(
+      subgroup %in% subgroup_select,
+      variant_option %in% variant_option_select,
+      str_detect(term, "^treated")
+    ) %>%
+    add_descr(subgroup=FALSE) %>%
+    mutate(
+      period_start = as.integer(str_extract(term, "\\d+")),
+      period_end = as.integer(str_extract(term, "\\d+$")),
+      midpoint = (period_start + period_end)/2,
+      model = factor(model)
+    ) %>%
+    droplevels() %>%
+    hr_plot(colour_var) 
+  
+  if ((variant_option_select != "ignore") | (subgroup_select != "all")) {
+    
+    plot_legend <- cowplot::get_legend(B)
+    
+    A <- A + theme(legend.position = "none")
+    B <- B + theme(legend.position = "none")
+    
+  }
+  
+  p <- cowplot::plot_grid(
+    # the NULL is reduce the space between the plots
+    A, NULL, B,
+    rel_widths = c(1, -0.15, 1),
+    nrow = 1,
+    labels = c("A", "", "B"), align = "v"
+  )
+  
+  if ((variant_option_select != "ignore") | (subgroup_select != "all")) {
+    
+    p <-  cowplot::plot_grid(
+     p, plot_legend,
+     nrow=2, rel_heights = c(14,1)
+    )
+    
+  }
+
+  ggsave(
+    filename = "combined_plot.png",
+    path = outdir,
+    plot = p,
+    width = 17, height = 22, units = "cm"
+  )
+
+}
+```
+
+
+```{r, echo=FALSE, include=FALSE}
+km_contrasts_rounded <- read_csv(
+  here("output", "mrna", "models", "combined", "km_contrasts_rounded.csv")
+  ) %>%
+  filter(subgroup %in% c("all", "noncancer")) %>%
+  mutate(
+    subgroup_level = factor(subgroup, levels = c("all", "noncancer")),
+    subgroup = factor("cancer_deaths")
+    )
+
+cox_contrasts_rounded <- read_csv(
+  here("output", "mrna", "models", "combined", "cox_contrasts_rounded.csv")
+  ) %>%
+  filter(subgroup %in% c("all", "noncancer")) %>%
+  mutate(
+    subgroup_level = factor(subgroup, levels = c("all", "noncancer")),
+    subgroup = factor("cancer_deaths")
+    )
+
+combine_plot(subgroup_select = "cancer_deaths", variant_option_select = "ignore")
+
 ```
 
 # Background
@@ -27,6 +166,10 @@ To investigate this we repeated the analysis in a "non-cancer" cohort, obtained 
 - a cancer-related SNOMED code in their primary care record 
 
 This report explores the results of the analysis in the non-cancer cohort.
+
+```{r, echo=FALSE, include=TRUE, fig.cap = "Figure 1. (A) Kaplan-Meier estimates of cumulative incidence in matched boosted and unboosted treatment groups, without further adjustment for confounders. Dashed line = unboosted, solid line = boosted. (B) Cox hazard ratio estimates for boosted vs unboosted, with adjustment for confounders.", out.width="100%"}
+knitr::include_graphics(file.path(outdir, "combined_plot.png"))
+```
 
 ## Study population
 ```{r }
@@ -111,7 +254,7 @@ km_data <- km_contrasts_rounded %>%
   group_by(subgroup) %>%
   summarise(across(c(personyears, n.atrisk, n.event), sum)) %>%
   ungroup() %>%
-  mutate(inc = round(1000*n.event/personyears, 3)) %>%
+  mutate(inc = round(10000*n.event/personyears, 3)) %>%
   mutate(across(c(personyears, n.event), scales::comma, accuracy=1))
 
 vals_all <- km_data %>% filter(subgroup=="all")
@@ -119,7 +262,7 @@ vals_noncancer <- km_data %>% filter(subgroup=="noncancer")
 
 ```
 
-There were `r vals_noncancer %>% pull(n.event)` cancer-related deaths in `r  vals_noncancer %>% pull(personyears)` person-years in the non-cancer cohort (incidence rate `r vals_noncancer %>% pull(inc)` per 1,000), compared to `r vals_all %>% pull(n.event)` in `r  vals_all %>% pull(personyears)` in the main cohort (`r vals_all %>% pull(inc)`).
+There were `r vals_noncancer %>% pull(n.event)` cancer-related deaths in `r  vals_noncancer %>% pull(personyears)` person-years in the non-cancer cohort (incidence rate `r vals_noncancer %>% pull(inc)` per 10,000), compared to `r vals_all %>% pull(n.event)` in `r  vals_all %>% pull(personyears)` in the main cohort (`r vals_all %>% pull(inc)`).
 
 The following chunk calculates the number of cancer-related deaths in the non-cancer cohort, for which the individual had a cancer code recorded after the trial start date:
 
@@ -138,7 +281,11 @@ data %>%
   ) %>%
   # mutate(across(c(cancer_hospitalisation, cancer_primarycare), replace_na, replace = FALSE)) %>%
   group_by(cancer_hospitalisation, cancer_primarycare) %>%
-  count()
+  count() %>% 
+  ungroup() %>%
+  mutate(pct = round(100*n/sum(n), 2))
+  # there should be NAs in the output here, but no FALSEs, 
+  # as cancer_*_after_date occurs after trial_date  by definition
 ```
 
 

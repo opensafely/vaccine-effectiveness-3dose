@@ -128,25 +128,15 @@ my_skim <- function(
 }
 
 # define function to add descriptive variables ----
-add_descr <- function(.data) {
+add_descr <- function(.data, treated=TRUE, subgroup=TRUE, outcome=TRUE, variant=TRUE) {
   
   # brand_descr <- brand_lookup %>% filter(brand %in% model_brands) %>% pull(brand_descr)
-  treated_levs <- c(0,1)
-  treated_descr <- c("Unboosted", "Boosted")
-  subgroup_descr <- names(recoder$subgroups[recoder$subgroups %in% subgroups])
-  outcome_descr <- events_lookup %>% filter(event %in% outcomes) %>% pull(event_descr)
   
-  .data <- .data %>%
-    mutate( 
-      # brand_descr = factor(brand, levels = model_brands, labels = brand_descr),
-      subgroup_descr = factor(subgroup, levels = subgroups, labels = subgroup_descr),
-      outcome_descr = factor(outcome, levels = outcomes, labels = outcome_descr),
-    ) %>%
-    # mutate(across(brand, factor, levels = model_brands)) %>%
-    mutate(across(subgroup, factor, levels = subgroups)) %>%
-    mutate(across(outcome, factor, levels = outcomes)) 
-  
-  if ("treated" %in% names(.data)) {
+  if (treated & ("treated" %in% names(.data))) {
+    
+    treated_levs <- c(0,1)
+    treated_descr <- c("Unboosted", "Boosted")
+    
     .data <- .data %>%
       mutate( 
         treated_descr = factor(treated, levels = treated_levs, labels = treated_descr)
@@ -154,7 +144,31 @@ add_descr <- function(.data) {
       mutate(across(treated, factor, levels = treated_levs)) 
   }
   
-  if ("variant" %in% names(.data)) {
+  if (subgroup) {
+    
+    subgroup_descr <- names(recoder$subgroups[recoder$subgroups %in% subgroups])
+    
+    .data <- .data %>%
+      mutate( 
+        subgroup_descr = factor(subgroup, levels = subgroups, labels = subgroup_descr),
+      ) %>%
+      mutate(across(subgroup, factor, levels = subgroups)) 
+    
+  }
+  
+  if (outcome) {
+    
+    outcome_descr <- events_lookup %>% filter(event %in% outcomes) %>% pull(event_descr)
+    
+    .data <- .data %>%
+      mutate( 
+        outcome_descr = factor(outcome, levels = outcomes, labels = outcome_descr),
+      ) %>%
+      mutate(across(outcome, factor, levels = outcomes)) 
+    
+  }
+  
+  if (variant & ("variant" %in% names(.data))) {
     
     variant_levs <- c(
       "all variants" = "ignore", 

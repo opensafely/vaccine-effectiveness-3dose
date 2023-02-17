@@ -688,7 +688,7 @@ actions_list <- splice(
     name = "cancer_deaths",
     run = glue("r:latest analysis/exploratory/cancer_deaths.R"),
     needs = namelesslst(
-      "process_controlfinal",
+      "process_controlfinal_mrna",
       "extract_noncoviddeathcause_mrna",
       "extract_cancer_mrna",
       "combine_mrna"

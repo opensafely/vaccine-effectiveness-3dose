@@ -4280,7 +4280,7 @@ actions:
   cancer_deaths:
     run: r:latest analysis/exploratory/cancer_deaths.R
     needs:
-    - process_controlfinal
+    - process_controlfinal_mrna
     - extract_noncoviddeathcause_mrna
     - extract_cancer_mrna
     - combine_mrna

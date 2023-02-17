@@ -694,7 +694,8 @@ actions_list <- splice(
       "combine_mrna"
     ),
     moderately_sensitive = lst(
-      hltml = glue("output/mrna/exploratory/*.html")
+      hltml = "output/mrna/exploratory/*.html",
+      png = "output/mrna/exploratory/*.png"
     ),
   ),
 

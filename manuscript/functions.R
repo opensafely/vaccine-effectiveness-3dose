@@ -89,16 +89,25 @@ plot_theme <- function(...) {
 
 ################################################################################
 
-km_plot <- function(.data, colour_var="variant_descr"#, 
-                    # end_day = max(postbaselinecuts), 
+km_plot <- function(.data, colour_var="variant_descr", 
+                    end_day = max(postbaselinecuts),
+                    x_breaks = NULL
                     # padding=7, breaks = 14
                     ) {
+  
+  .data <- .data %>% filter(time <= end_day)
   
   list2env(.data %>% plot_params(colour_var), envir = environment())
   
   n_levs <- .data %>% distinct(!! sym(colour_var)) %>% nrow()
 
   if (n_levs == 1) leg.pos <- "none" else leg.pos <- "bottom"
+  
+  if (is.null(x_breaks)) {
+    x_breaks <- postbaselinecuts
+  } else {
+    x_breaks <- seq(0, end_day, x_breaks)
+  }
 
   p <- .data %>%
     group_by(treated_descr, outcome_descr, !! sym(colour_var)) %>%
@@ -144,7 +153,7 @@ km_plot <- function(.data, colour_var="variant_descr"#,
     scale_fill_manual(name = NULL, guide="none", values = colour_palette) +
     scale_linetype_manual(name = NULL, values = linetype_palette, guide = "none") +
     scale_x_continuous(
-      breaks = postbaselinecuts,
+      breaks = x_breaks,
       expand = expansion(
         add = c(0,0)
         # add=padding

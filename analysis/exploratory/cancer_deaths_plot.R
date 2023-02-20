@@ -20,7 +20,7 @@ combine_plot <- function(
     colour_var <- "subgroup_level"
   }
   
-  print(cat("plot A:\n"))
+  print(cat("data A:\n"))
   # km plot
   A <- km_contrasts_rounded %>%
     filter(
@@ -41,7 +41,10 @@ combine_plot <- function(
     ) %>%
     mutate(across(treated, as.integer)) %>%
     add_descr(subgroup = FALSE) %>%
-    droplevels() %>%
+    droplevels() 
+  
+  print(cat("plot A:\n"))
+  A <- A %>%
     km_plot(colour_var)
   
   print(cat("cox data:\n"))
@@ -69,7 +72,7 @@ combine_plot <- function(
     mutate(across(term, ~str_trim(str_remove(.x, ";\\sdelta|;\\stransition|;\\somicron"), side="right"))) %>%
     mutate(across(variant, ~if_else(is.na(.x), "ignore", .x)))
   
-  print(cat("plot B:\n"))
+  print(cat("data B:\n"))
   B <- cox_data %>%
     filter(
       subgroup %in% subgroup_select,
@@ -83,7 +86,10 @@ combine_plot <- function(
       midpoint = (period_start + period_end)/2,
       model = factor(model)
     ) %>%
-    droplevels() %>%
+    droplevels() 
+  
+  print(cat("plot B:\n"))
+  B <- B %>%
     hr_plot(colour_var) 
   
   if ((variant_option_select != "ignore") | (subgroup_select != "all")) {

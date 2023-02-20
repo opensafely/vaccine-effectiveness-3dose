@@ -212,11 +212,52 @@ combine_plot(subgroup_select = "prior_covid_infection", variant_option_select = 
 combine_plot(subgroup_select = "cev_cv", variant_option_select = "ignore")
 combine_plot(subgroup_select = "vax12_type", variant_option_select = "ignore")
 
+
+# km plot
+km_plot_trunc <- function(subgroup_select, variant_option_select, end_day = 28, x_breaks = 7) {
+  
+  if (subgroup_select == "all") {
+    colour_var <- "variant_descr"
+  } else {
+    colour_var <- "subgroup_level"
+  }
+  
+  km_contrasts_rounded %>%
+    filter(
+      filename == "daily",
+      subgroup %in% subgroup_select,
+      variant_option %in% variant_option_select
+    ) %>%
+    select(
+      outcome, subgroup, subgroup_level,
+      variant_option, variant, 
+      time = period_end,
+      starts_with("risk")
+    ) %>%
+    pivot_longer(
+      cols = starts_with("risk"),
+      names_pattern = "(.*)_(\\d)",
+      names_to = c(".value", "treated")
+    ) %>%
+    mutate(across(treated, as.integer)) %>%
+    add_descr() %>%
+    droplevels() %>%
+    km_plot(colour_var, end_day = end_day, x_breaks = x_breaks)
+  
+  ggsave(
+    filename = glue("km_{end_day}_{subgroup_select}_{variant_option_select}.png"),
+    path = here("manuscript"),
+    width = 17, height = 22, units = "cm"
+  )
+  
+}
+
 # tables of hazard ratios
 for (s in subgroups) {
   combine_plot(subgroup_select = s, variant_option_select = "ignore")
   if (s =="all") {
-    combine_plot(subgroup_select = s, variant_option_select = "split")
+    # combine_plot(subgroup_select = s, variant_option_select = "split")
+    km_plot_trunc(subgroup_select = s, variant_option_select = "ignore")
   }
   for (mt in c("cox_unadj", "cox_adj")) {
     cat(glue("{s}; ignore; {mt};"), "\n")

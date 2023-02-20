@@ -166,7 +166,7 @@ km_plot <- function(.data, colour_var="variant_descr",
     coord_cartesian(xlim=c(0, NA)) +
     labs(
       x="Days since third dose",
-      y="Cumulative incidence (x 1,000)",
+      y="Cumulative incidence (x 1,000)"
     ) +
     guides(nrow = 2) +
     plot_theme() +

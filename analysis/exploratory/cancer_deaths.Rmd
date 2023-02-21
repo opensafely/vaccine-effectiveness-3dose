@@ -16,13 +16,36 @@ source(here("lib", "functions", "utility.R"))
 outdir <- here::here("output", "mrna", "exploratory")
 ```
 
+```{r, echo=FALSE}
+cox_contrasts_rounded <- read_csv(
+  here("output", cohort, "models", "combined", "cox_contrasts_rounded.csv")
+  )
+
+estimates_for_text <- cox_contrasts_rounded %>%
+  filter(
+    model == "cox_adj",
+    subgroup == "all",
+    # outcome %in% c("postest", "covidadmitted"),
+    outcome %in% c("cvddeath", "cancerdeath"),
+    filename == "cuts",
+    variant_option == "ignore",
+    str_detect(term, "1-14$")
+    ) %>%
+  mutate(across(starts_with("cox"), round, 3)) %>%
+  transmute(
+    outcome,
+    value = glue("{coxhr} ({coxhr.ll}, {coxhr.ul})")
+  )
+```
+
+
 # Background
 
-In our investigation of incremental vaccine effectiveness for three vs two doses, estimated hazard ratios (HRs) against non-COVID-19 death were almost as small as those against COVID-19 death (Figure xx).
+In our investigation of incremental vaccine effectiveness for three vs two doses, estimated hazard ratios (HRs) against non-COVID-19 death were almost as small as those against COVID-19 death (see "Main" estimates on Figure 1).
 We hypothesised that a reason for this was that many of the non-COVID-19 deaths were either COVID-19 deaths that had not been coded as such, or deaths that were indirectly linked to COVID due to health complications following COVID-19.
-To investigate this further, we estimated HRs for CVD-related non-COVID deaths and cancer-related non-COVID-19 deaths, on the basis that cancer-related non-COVID-19 deaths were less likely to be linked to complications of COVID-19 compared to CVD-related non-COVID-19 deaths.
-However, estimated HRs for cancer-related non-COVID-19 death were as small, if not smaller than those for CVD-related non-COVID-19 death (Figure xx).
-In particular, the estimated HRs were much smaller for cancer-related non-COVID-19 death in the period 0-14 days after third dose (xxx and xxx for cancer-related and CVD-related deaths respectively).
+To investigate this further, we estimated HRs for CVD-related and cancer-related non-COVID-19 deaths, on the basis that cancer-related non-COVID-19 deaths were less likely to be linked to complications following COVID-19 compared to CVD-related non-COVID-19 deaths.
+However, estimated HRs for cancer-related non-COVID-19 death were as small, if not smaller than those for CVD-related non-COVID-19 death (see "Main" estimates for CVD-related and cancer-realted non-COVID-19 deaths on Figure 1).
+In particular, the estimated HRs were much smaller for cancer-related non-COVID-19 death in the period 0-14 days after third dose (`r estimates_for_text %>% filter(outcome == "cancerdeath") %>% pull(value)` and `r estimates_for_text %>% filter(outcome == "cvddeath") %>% pull(value)` for cancer-related and CVD-related deaths respectively).
 We hypothesised that a reason for this could be that people who are dying of cancer do not receive a third dose, so are underrepresented in the three dose group and overrepresented in the two dose group.
 To investigate this we repeated the analysis in a "non-cancer" cohort, obtained by excluding people with either of the following recorded in the 5 years prior to the trial start date: 
 - a hospital admission with a cancer-related ICD10 code in any field
@@ -41,7 +64,7 @@ data_matched <- read_rds(here("output", cohort, "match", "data_matched.rds"))
 
 data <- data_matched %>%
     left_join(
-      # data for cancer flag
+      # data for cancer flag, see analysis/study_definition_cancer.py
       arrow::read_feather(here("output", cohort, "cancer", "extract", "input_cancer.feather")) %>%
         mutate(across(ends_with("_date"), as.Date)), 
       by = "patient_id"

@@ -4,9 +4,49 @@ library(glue)
 
 source(here("analysis", "design.R"))
 source(here("lib", "functions", "utility.R"))
-outdir <- here::here("output", "mrna", "exploratory")
-
 source(here("manuscript", "functions.R"))
+
+if(Sys.getenv("OPENSAFELY_BACKEND") == ""){
+  
+  outdir <- here("manuscript")
+  
+  km_contrasts_rounded <- bind_rows(
+    read_csv(here("release20230207", "km_contrasts_rounded.csv")),
+    read_csv(here("release20230217", "km_contrasts_noncancer_rounded.csv")) %>%
+      mutate(across(subgroup_level, as.character))
+  ) 
+  
+  cox_contrasts_rounded <- bind_rows(
+    read_csv(here("release20230207", "cox_contrasts_rounded.csv")),
+    read_csv(here("release20230217", "cox_contrasts_noncancer_rounded.csv")) %>%
+      mutate(across(subgroup_level, as.character))
+  ) 
+  
+} else {
+  
+  km_contrasts_rounded <- read_csv(
+    here("output", "mrna", "models", "combined", "km_contrasts_rounded.csv")
+  ) 
+  
+  cox_contrasts_rounded <- read_csv(
+    here("output", "mrna", "models", "combined", "cox_contrasts_rounded.csv")
+  )
+  
+}
+
+km_contrasts_rounded <- km_contrasts_rounded %>%
+  filter(subgroup %in% c("all", "noncancer")) %>%
+  mutate(
+    subgroup_level = factor(subgroup, levels = c("all", "noncancer")),
+    subgroup = factor("cancer_deaths")
+  )
+
+cox_contrasts_rounded <- cox_contrasts_rounded %>%
+  filter(subgroup %in% c("all", "noncancer")) %>%
+  mutate(
+    subgroup_level = factor(subgroup, levels = c("all", "noncancer")),
+    subgroup = factor("cancer_deaths")
+  )
 
 # redefine combine_plot
 combine_plot <- function(
@@ -127,23 +167,5 @@ combine_plot <- function(
   )
   
 }
-
-km_contrasts_rounded <- read_csv(
-  here("output", "mrna", "models", "combined", "km_contrasts_rounded.csv")
-) %>%
-  filter(subgroup %in% c("all", "noncancer")) %>%
-  mutate(
-    subgroup_level = factor(subgroup, levels = c("all", "noncancer")),
-    subgroup = factor("cancer_deaths")
-  )
-
-cox_contrasts_rounded <- read_csv(
-  here("output", "mrna", "models", "combined", "cox_contrasts_rounded.csv")
-) %>%
-  filter(subgroup %in% c("all", "noncancer")) %>%
-  mutate(
-    subgroup_level = factor(subgroup, levels = c("all", "noncancer")),
-    subgroup = factor("cancer_deaths")
-  )
 
 combine_plot(subgroup_select = "cancer_deaths", variant_option_select = "ignore")

@@ -70,7 +70,7 @@ plot_theme <- function(...) {
       panel.spacing = unit(0.8, "lines"),
       strip.background = element_blank(),
       strip.placement = "outside",
-      strip.text.y.left = element_text(angle = 90, size = 8),
+      strip.text.y.left = element_text(angle = 90, size = 10),
       
       plot.title = element_text(hjust = 0),
       plot.title.position = "plot",

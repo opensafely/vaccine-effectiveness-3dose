@@ -16,11 +16,21 @@ table1_rounded <- read_delim(
 
 km_contrasts_rounded <- read_csv(
   here("release20230207", "km_contrasts_rounded.csv")
-  )
+  ) %>%
+  # add noncancer subgroup results
+  bind_rows(
+    read_csv(here("release20230217", "km_contrasts_noncancer_rounded.csv")) %>%
+      mutate(mutate(across(subgroup_level, as.character)))
+    )
 
 cox_contrasts_rounded <- read_csv(
   here("release20230207", "cox_contrasts_rounded.csv")
-  )
+  )  %>%
+  # add noncancer subgroup results
+  bind_rows(
+    read_csv(here("release20230217", "cox_contrasts_noncancer_rounded.csv")) %>%
+      mutate(mutate(across(subgroup_level, as.character)))
+    )
 
 km_cinc4dose_rounded <- read_csv(
   here("release20230207", "km_cinc4dose_rounded.csv")
@@ -205,12 +215,12 @@ doc <- print(doc, target = here("manuscript", "table_6month.docx"))
 # create figure ans tables of estimates
 source(here("manuscript", "functions.R"))
 # plots of hazard ratios
-combine_plot(subgroup_select = "all", variant_option_select = "ignore")
-combine_plot(subgroup_select = "all", variant_option_select = "split")
-combine_plot(subgroup_select = "agegroup", variant_option_select = "ignore")
-combine_plot(subgroup_select = "prior_covid_infection", variant_option_select = "ignore")
-combine_plot(subgroup_select = "cev_cv", variant_option_select = "ignore")
-combine_plot(subgroup_select = "vax12_type", variant_option_select = "ignore")
+# combine_plot(subgroup_select = "all", variant_option_select = "ignore")
+# combine_plot(subgroup_select = "all", variant_option_select = "split")
+# combine_plot(subgroup_select = "agegroup", variant_option_select = "ignore")
+# combine_plot(subgroup_select = "prior_covid_infection", variant_option_select = "ignore")
+# combine_plot(subgroup_select = "cev_cv", variant_option_select = "ignore")
+# combine_plot(subgroup_select = "vax12_type", variant_option_select = "ignore")
 
 
 # km plot
@@ -256,7 +266,7 @@ km_plot_trunc <- function(subgroup_select, variant_option_select, end_day = 28, 
 for (s in subgroups) {
   combine_plot(subgroup_select = s, variant_option_select = "ignore")
   if (s =="all") {
-    # combine_plot(subgroup_select = s, variant_option_select = "split")
+    combine_plot(subgroup_select = s, variant_option_select = "split")
     km_plot_trunc(subgroup_select = s, variant_option_select = "ignore")
   }
   for (mt in c("cox_unadj", "cox_adj")) {
@@ -269,3 +279,16 @@ for (s in subgroups) {
   }
 }
 
+# non cancer numbers
+km_contrasts_rounded %>%
+  filter(
+    filename == "overall",
+    variant_option == "ignore",
+    subgroup %in% c("all","noncancer")
+  ) %>%
+  distinct(subgroup, n.atrisk_0, n.atrisk_1) %>%
+  mutate(n.atrisk = n.atrisk_0 + n.atrisk_1) %>%
+  pivot_longer(cols = starts_with("n.atrisk")) %>%
+  pivot_wider(names_from = subgroup, values_from = value) %>%
+  mutate(pct = 100*noncancer/all) %>%
+  mutate(across(c(all, noncancer), scales::comma, accuracy=1))

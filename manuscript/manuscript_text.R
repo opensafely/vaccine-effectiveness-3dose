@@ -101,9 +101,10 @@ table_fu <- km_contrasts_rounded %>%
     names_pattern = "(.*)_(.)",
     names_to = c("name", "group")
   ) %>%
-  group_by(outcome,name) %>%
-  summarise(value=scales::comma(sum(value), accuracy = 1), .groups = "keep") %>%
-  ungroup() %>%
+  mutate(across(value, ~scales::comma(value, accuracy = 1))) %>%
+  # group_by(outcome,name) %>%
+  # summarise(value=scales::comma(sum(value), accuracy = 1), .groups = "keep") %>%
+  # ungroup() %>%
   pivot_wider(
     names_from = outcome,
     values_from = value
@@ -115,7 +116,17 @@ table_fu <- km_contrasts_rounded %>%
       levels = c("n.event", "persontime"), 
       labels = c("Event count", "Person-time (years)")
       )
+    ) %>%
+  mutate(
+    across(
+      group,
+      factor,
+      levels = c(0,1),
+      labels=c("unboosted", "boosted")
     )
+  ) %>%
+  mutate(name = str_c(as.character(name), " in the ", as.character(group))) %>%
+  select(-group)
   
 
 # risk and risk differences

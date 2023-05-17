@@ -248,6 +248,9 @@ for (i in 1:split_n) {
         by = c("patient_id", "trial_date")
         )
     
+    cat("Check for missing values in `treated`:\n")
+    data_matched %>% group_by(treated) %>% count() %>% print()
+    
     cat("Process data_matched\n")
     # derive censor date and time until censoring
     data_matched <- data_matched %>%
@@ -268,6 +271,9 @@ for (i in 1:split_n) {
       group_by(patient_id, trial_date) %>%
       mutate(new_id = cur_group_id()) %>%
       ungroup()
+    
+    cat("Check for missing values in `treated`:\n")
+    data_matched %>% group_by(treated) %>% count() %>% print()
 
     cat("Derive fup_split\n")
     # generate dataset with covidtestcuts
@@ -353,6 +359,9 @@ for (i in 1:split_n) {
       filter(!is.na(anytest_cut)) %>%
       arrange(patient_id, trial_date, anytest_cut) 
     
+    cat("Check for missing values in `treated`:\n")
+    data_anytest_long %>% group_by(treated) %>% count() %>% print()
+    
     cat("Derive data_split_tests\n")
     data_split_tests <- data_extract[[i]] %>%
       # keep counts of tests per period
@@ -408,6 +417,9 @@ for (i in 1:split_n) {
         -c(patient_id, trial_date, treated, anytest_cut, persondays),
         ~replace_na(.x, replace = 0)
       )) 
+    
+    cat("Check for missing values in `treated`:\n")
+    data_anytest_sum %>% group_by(treated) %>% count() %>% print()
     
     return(data_anytest_sum)
     

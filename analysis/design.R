@@ -238,6 +238,8 @@ covariates_summarise <- c(
 
 covariates <- c(covariates_model, covariates_summarise)
 
+strata_vars <- c("trial_date", "vax12_type", "region")
+
 # other variables -----
 # keep all variables starting with these strings
 other_variables <- c("trial", "treated", "control", "match", "vax", "jcvi")

@@ -159,6 +159,7 @@ data_matched <- data_matched %>%
     controlistreated_date,
     vax3_date,
     death_date, dereg_date, coviddeath_date, noncoviddeath_date, vax4_date,
+    all_of(strata_vars),
     all_of(covariates_model),
     all_of(c(glue("{outcome}_date"), subgroup))
   ) %>%

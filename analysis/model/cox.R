@@ -42,7 +42,7 @@ if(length(args)==0){
   # use for interactive testing
   cohort <- "mrna"
   type <- "unadj"
-  subgroup <- "vax3_type"
+  subgroup <- "all"
   variant_option <- "ignore" # ignore, split, restrict (delta, transition, omicron)
   outcome <- "cvddeath"
   cuts <- "cuts"
@@ -170,7 +170,8 @@ coxcontrast <- function(data, adj = FALSE, cuts=NULL){
       period_id = tdc(fupstart_time, period_id)
     ) 
   
-  cox_formula_string <- "Surv(tstart, tstop, ind_outcome) ~ treated"
+  cox_formula_string <- 
+    "Surv(tstart, tstop, ind_outcome) ~ strata(trial_date) + strata(region) + strata(vax12_type) + treated"
   
   # only keep periods with >2 events per level of exposure
   data_cox <- data_split %>%
@@ -188,7 +189,7 @@ coxcontrast <- function(data, adj = FALSE, cuts=NULL){
       if_else(
         n_distinct(.x$period_id) == 1,
         cox_formula_string,
-        str_c(cox_formula_string, ":strata(period_id)")
+        str_c(cox_formula_string, ":period_id")
       )
     })) %>%
     unnest(cox_formula)

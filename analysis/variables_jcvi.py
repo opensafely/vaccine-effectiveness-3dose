@@ -73,8 +73,8 @@ def generate_jcvi_variables(index_date):
 
     sev_obesity = patients.satisfying(
       """
-      sev_obesity_date > bmi_date OR
-      bmi_value1 >= 40
+      (sev_obesity_date > bmi_date) OR
+      (bmi_value1 >= 40)
       """,
 
       bmi_stage_date=patients.with_these_clinical_events(
@@ -164,7 +164,8 @@ def generate_jcvi_variables(index_date):
   chronic_kidney_disease=patients.satisfying(
     """
     ckd OR
-    (ckd15_date AND ckd35_date >= ckd15_date)
+    ((ckd35_date AND ckd15_date) AND (ckd35_date >= ckd15_date)) OR
+    (ckd35_date AND NOT ckd15_date)
     """,
 
     # Chronic kidney disease codes - all stages

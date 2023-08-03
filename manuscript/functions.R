@@ -165,7 +165,7 @@ km_plot <- function(.data, colour_var="variant_descr",
     ) +
     coord_cartesian(xlim=c(0, NA)) +
     labs(
-      x="Days since third dose",
+      x="Days since booster dose",
       y="Cumulative incidence (x 1,000)"
     ) +
     guides(nrow = 2) +
@@ -230,7 +230,7 @@ hr_plot <- function(.data, colour_var="variant_descr") {
     ) +
     facet_grid(rows = vars(outcome_descr), switch = "y", scales = "free", space = "free_x") +
     scale_x_continuous(
-      name = "Days since third dose",
+      name = "Days since booster dose",
       breaks = postbaselinecuts,
       limits = c(min(postbaselinecuts), max(postbaselinecuts)),
       expand = expansion(

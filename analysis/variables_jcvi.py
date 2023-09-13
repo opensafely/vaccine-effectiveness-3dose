@@ -73,8 +73,8 @@ def generate_jcvi_variables(index_date):
 
     sev_obesity = patients.satisfying(
       """
-      (sev_obesity_date > bmi_date) OR
-      (bmi_value1 >= 40)
+      sev_obesity_date > bmi_date OR
+      bmi_value1 >= 40
       """,
 
       bmi_stage_date=patients.with_these_clinical_events(

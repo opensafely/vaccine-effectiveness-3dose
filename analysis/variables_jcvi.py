@@ -164,7 +164,8 @@ def generate_jcvi_variables(index_date):
   chronic_kidney_disease=patients.satisfying(
     """
     ckd OR
-    (ckd15_date AND ckd35_date >= ckd15_date)
+    ((ckd35_date AND ckd15_date) AND (ckd35_date >= ckd15_date)) OR
+    (ckd35_date AND NOT ckd15_date)
     """,
 
     # Chronic kidney disease codes - all stages

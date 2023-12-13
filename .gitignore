@@ -11,7 +11,8 @@ venv/
 .Rproj.user/
 
 release*/*
-report/*
+report/old/*
+report/*.png
 
 manuscript/*.docx
 manuscript/*.png

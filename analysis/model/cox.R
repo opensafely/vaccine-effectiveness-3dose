@@ -184,7 +184,7 @@ coxcontrast <- function(data, adj = FALSE, cuts=NULL){
     select(-n_events, -min_events) %>%
     group_by(!!subgroup_sym) %>%
     nest() %>%
-    # add strata(period_id) to cox_formula if period_id has more than one distinct values
+    # add :period_id to cox_formula if period_id has more than one distinct values
     mutate(cox_formula = map(data, ~{
       if_else(
         n_distinct(.x$period_id) == 1,

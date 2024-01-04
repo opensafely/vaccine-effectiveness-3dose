@@ -170,8 +170,15 @@ coxcontrast <- function(data, adj = FALSE, cuts=NULL){
       period_id = tdc(fupstart_time, period_id)
     ) 
   
+  
   cox_formula_string <- 
     "Surv(tstart, tstop, ind_outcome) ~ strata(trial_date) + strata(region) + strata(vax12_type) + treated"
+  
+  if(subgroup=="vax12_type"){
+    cox_formula_string <- 
+      "Surv(tstart, tstop, ind_outcome) ~ strata(trial_date) + strata(region) + treated"
+  }
+  
   
   # only keep periods with >2 events per level of exposure
   data_cox <- data_split %>%
